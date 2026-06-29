@@ -35,12 +35,40 @@
 - Todo proveedor mapea su dato crudo al mismo esquema normalizado, de modo que las capas posteriores no dependen del origen.
 - Añadir un proveedor o una alternativa es implementar un conector y registrarlo; nada río abajo cambia.
 
+### 4.1 Registro de conectores y catálogo de categorías
+
+Un registro (registry) asocia cada (categoría, proveedor) con su conector, su
+modo de ingesta y sus `capabilities`. Las capas río abajo (normalización,
+persistencia, MCP, web) resuelven por el registro; añadir una categoría o un
+proveedor es implementar y registrar un conector. (D21)
+
+Catálogo objetivo de categorías y su proveedor inicial:
+
+| Categoría | Proveedor | Modo |
+|-----------|-----------|------|
+| Juegos | Steam | API |
+| Música | ListenBrainz | API |
+| Cine y TV | Trakt | API |
+| Anime y manga | AniList | API |
+| Actividad física | Strava | API |
+| Libros | Goodreads | Import |
+| Lugares | Swarm | API |
+| Comida | Beli | Import |
+| Juegos de mesa | BoardGameGeek | Import |
+
+Generalización del contrato: la mayoría son "obra + relación" (rating, estado,
+engagement); Lugares y Comida encajan tratando el sitio o el plato como obra.
+Actividad física (Strava) es de tipo evento/métrica (distancia, duración) y no
+es una "obra", por lo que el contrato normalizado debe admitir también esa
+forma. Por confirmar la forma exacta (D23).
+
 ## 5. Servidor MCP
 
 - Transporte: streamable-HTTP, con `stateless_http=True` para escalar sin estado de sesión en memoria.
 - Autenticación: token simple por usuario, validado por middleware. Migrable a OAuth 2.1 más adelante.
 - Expone: un resource de resumen compacto (lo siempre relevante) y tools de consulta parametrizadas (ventana, tipo, límite) sobre datos indexados.
 - Regla de seguridad: el token con que la IA se autentica ante el MCP nunca se reenvía a las APIs de terceros; las tools usan las credenciales del servidor.
+- Guardrail (D22): las tools que exponen datos del usuario requieren el middleware de token por usuario. Mientras no exista, solo se publican tools no sensibles (hoy `ping`); el endpoint `/mcp` no debe servir datos sin auth.
 
 ## 6. Refresco
 
@@ -53,6 +81,18 @@
 - Tokens de terceros: cifrados a nivel de app (Fernet/AES-GCM) antes de guardarse en Postgres; la llave vive en el secret manager, nunca en el repo. Se descifran solo en memoria al llamar la API. Mejora futura opcional: envelope encryption con KMS.
 - Aislamiento entre usuarios: Row-Level Security en Postgres.
 - Login de la app: Supabase Auth.
+
+### 7.1 Sesión y credenciales de terceros (planificado)
+
+- Sesión: Supabase Auth autentica al usuario de la app (JWT/cookie de sesión).
+- "Guardar las APIs": las credenciales de terceros que aporta el usuario (tokens
+  o keys, p. ej. ListenBrainz, Trakt) se guardan en la tabla `user_credentials`
+  cifradas a nivel de app (Fernet/AES-GCM), con la llave en el secret manager
+  (D9, D20). Se descifran solo en memoria al llamar la API; nunca viajan al cliente.
+- RLS owner-only en `user_credentials` (aislamiento por usuario).
+- Para proveedores OpenID/OAuth (Steam, Trakt, Strava), el identificador o los
+  tokens OAuth resultantes se custodian en el mismo almacén cifrado.
+- El token del MCP por usuario es independiente y nunca se reenvía a terceros.
 
 ## 8. Costo y compromisos
 

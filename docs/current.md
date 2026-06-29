@@ -49,3 +49,9 @@ ping y poblar el secret manager (llave de cifrado y Steam API key).
   cliente HTTP con httpx + normalización de biblioteca, jugados recientes y
   perfil). Tests de fixtures (golden-file) y `httpx.MockTransport`. `httpx`
   pasó a dependencia de runtime. ruff, mypy y pytest (8) en verde.
+- Revisión de seguridad + planificación: auditado `/api` y `/supabase` (sin
+  vulnerabilidad activa: sin secretos hardcodeados, RLS owner-only, timeouts, sin
+  fuga de la API key). Planificado: sesión + credenciales cifradas
+  (`user_credentials`, D20), registro de conectores (D21), guardrail de auth del
+  MCP (D22) y catálogo de 9 categorías con generalización del contrato (D23).
+  Docs actualizados (architecture, data-model, decisions, roadmap).

@@ -75,3 +75,26 @@ Mantener el número total de tools bajo (la precisión del modelo al elegir herr
 ## 5. Frescura
 
 `source_state.last_synced_at` por fuente alimenta el aviso de frescura en el dump y los estados del botón de refresco (inactivo / en cola / actualizando / error).
+
+## 6. Sesión y credenciales (planificado)
+
+Para "guardar las APIs" del usuario, tabla `user_credentials`:
+
+| Columna | Contenido |
+|---------|-----------|
+| user_id | dueño (FK a `auth.users`) |
+| category | categoría (games, music, ...) |
+| provider | proveedor (steam, listenbrainz, ...) |
+| encrypted_token | credencial cifrada a nivel de app (Fernet/AES-GCM) |
+| created_at / updated_at | timestamps |
+
+Una credencial por `(user_id, provider)`. RLS owner-only (`auth.uid() = user_id`).
+La llave de cifrado vive en el secret manager, nunca en la BD ni en el repo; el
+texto plano solo existe en memoria al llamar la API. (D9, D20)
+
+## 7. Catálogo de categorías
+
+Nueve categorías objetivo, cada una con un proveedor activo intercambiable
+(D4/D6). El enum del contrato (`MediaCategory`) se generaliza a `Category` y se
+amplía a las nueve. Detalle del catálogo y de la generalización del contrato
+(p. ej. Actividad física como evento/métrica) en `architecture.md` 4.1 y en D23.

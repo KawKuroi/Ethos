@@ -22,6 +22,9 @@ fase entera se mueve a `## Histórico de fases completadas`.
 - [ ] Web: panel de estadísticas (dump) de juegos.
 - [ ] Refresco asíncrono con cola y estados de frescura.
 - [ ] Sección de ayuda y guía "conecta tu IA".
+- [ ] Sesión de usuario (Supabase Auth) y almacenamiento cifrado de credenciales de terceros (tabla `user_credentials`). (D20)
+- [ ] Middleware de auth del MCP (token por usuario) antes de exponer tools de datos. (D22)
+- [ ] Registro de conectores (registry) y modelo de extensión de categorías/proveedores. (D21)
 - [ ] Tests de todas las capas pasando en CI.
 
 ## Fase 2 — Segunda categoría: Música / ListenBrainz
@@ -33,8 +36,15 @@ fase entera se mueve a `## Histórico de fases completadas`.
 
 ## Fase 3 — Categorías restantes
 
-- [ ] Cine/TV: Trakt (API) y Letterboxd (import).
-- [ ] Libros: Goodreads / StoryGraph (import) y Hardcover (API).
+Catálogo objetivo (proveedor inicial; alternativas por categoría según D4/D6):
+
+- [ ] Cine y TV: Trakt (API). Alternativa: Letterboxd (import).
+- [ ] Anime y manga: AniList (API).
+- [ ] Libros: Goodreads (import). Alternativas: StoryGraph (import), Hardcover (API).
+- [ ] Juegos de mesa: BoardGameGeek (import).
+- [ ] Lugares: Swarm (API).
+- [ ] Comida: Beli (import).
+- [ ] Actividad física: Strava (API) — requiere el contrato generalizado (evento/métrica, D23).
 - [ ] Modo import genérico con autodetección de archivo.
 
 ## Fase 4 — Pulido y robustez
