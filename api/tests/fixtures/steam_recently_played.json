@@ -1,0 +1,13 @@
+{
+  "response": {
+    "total_count": 1,
+    "games": [
+      {
+        "appid": 440,
+        "name": "Team Fortress 2",
+        "playtime_2weeks": 90,
+        "playtime_forever": 1200
+      }
+    ]
+  }
+}

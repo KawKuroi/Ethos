@@ -11,10 +11,12 @@ código inicial se centra en backend + infraestructura.
 
 ## Activo
 
-**Fase 0 — Fundación** (en curso). Andamiado: backend `/api` (FastAPI + FastMCP
-en un solo servicio, `/health` + `/mcp`), esquema base en `/supabase` con RLS,
-CI en GitHub Actions, `.gitignore` y `.env.example`. `/web` se deja para Claude
-Design e integración posterior.
+**Fase 1 — Slice Juegos / Steam** (en curso, backend). Hecho: contrato de datos
+normalizado (`schema.py`), interfaz de conector (`connectors/base.py`) y conector
+de Steam (cliente HTTP + normalización de biblioteca, jugados recientes y perfil)
+con tests de fixtures. Pendiente de Fase 1: persistencia indexada en Postgres,
+wishlist y completado% (decisiones abiertas), generador del resumen, tools del
+MCP de juegos, refresco asíncrono, login OpenID y la web (Claude Design).
 
 Pendiente de Fase 0 (requiere cuentas/credenciales): crear el proyecto Supabase
 real y aplicar la migración, servicio en Render, proyecto en Vercel, keep-alive
@@ -42,3 +44,8 @@ ping y poblar el secret manager (llave de cifrado y Steam API key).
   triggers y RLS owner-only), CI (`.github/workflows/ci.yml`), `.gitignore` y
   `.env.example`. Verificado en local: ruff, mypy y pytest en verde. Eliminado
   `design-brief.md` (no lo usa efesto). README del proyecto actualizado.
+- Fase 1 (backend, parte 1): contrato normalizado (`schema.py`), interfaz de
+  conector (`connectors/base.py`) y conector de Steam (`connectors/steam/`:
+  cliente HTTP con httpx + normalización de biblioteca, jugados recientes y
+  perfil). Tests de fixtures (golden-file) y `httpx.MockTransport`. `httpx`
+  pasó a dependencia de runtime. ruff, mypy y pytest (8) en verde.

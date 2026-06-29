@@ -1,133 +1,130 @@
-# ACTIVE_TASK — Fase 0: andamiaje backend + infraestructura
+# ACTIVE_TASK — Fase 1 (backend, parte 1): conector de Steam + contrato normalizado
 
-Tarea: crear el esqueleto de código e infraestructura del monorepo, sin diseño
-ni `/web` (lo lleva Claude Design). Cubre los bullets de Fase 0 que no requieren
-cuentas externas: monorepo + `/api` (FastAPI+FastMCP), esquema base en
-`/supabase` con RLS, CI en GitHub Actions, configuración raíz, y git local.
+Tarea: implementar el contrato de datos normalizado (transversal a categorías),
+la interfaz de conector, y el conector de Steam para su núcleo (biblioteca con
+horas, jugados recientes y perfil), con normalización al esquema común y tests
+de fixtures (golden-file). Sin web, sin persistencia y sin las piezas con
+decisiones abiertas.
 
 ## 1. Contexto y Archivos Afectados
 
-Proyecto greenfield: no hay código previo, se crean archivos nuevos (el límite
-de 5 archivos del Lector aplica a lectura de código existente, no a un
-andamiaje). Archivos a crear:
+Trabajo dentro de `/api` (Python). No hay aún capa de datos ni conectores: se
+crea un módulo nuevo, por lo que el límite de 5 archivos del Lector no aplica
+(creación de estructura, no lectura de código existente). Archivos:
 
-- `.gitignore` — Python, Node, env, OS, IDE.
-- `.env.example` — variables de entorno sin valores (sin secretos).
-- `api/pyproject.toml` — proyecto Python (uv), deps mínimas y dev.
-- `api/.python-version` — fija intérprete compatible.
-- `api/README.md` — cómo correr el backend.
-- `api/src/ethos_api/__init__.py`
-- `api/src/ethos_api/config.py` — Settings con pydantic-settings (env only).
-- `api/src/ethos_api/main.py` — FastAPI, `/health`, monta el MCP.
-- `api/src/ethos_api/mcp_server.py` — FastMCP (stateless), tool `ping` de prueba.
-- `api/tests/__init__.py`
-- `api/tests/test_health.py` — verifica `/health`.
-- `api/tests/test_mcp.py` — verifica que el MCP está montado.
-- `supabase/migrations/0001_foundation.sql` — `profiles`, `source_state`, RLS.
-- `supabase/README.md` — cómo aplicar migraciones.
-- `.github/workflows/ci.yml` — lint + tipos + tests de `/api`.
+- `api/src/ethos_api/schema.py` — contrato normalizado (enums + modelos Pydantic).
+- `api/src/ethos_api/connectors/__init__.py`
+- `api/src/ethos_api/connectors/base.py` — interfaz de conector (identidad + normalización).
+- `api/src/ethos_api/connectors/steam/__init__.py`
+- `api/src/ethos_api/connectors/steam/client.py` — cliente HTTP de la Steam Web API.
+- `api/src/ethos_api/connectors/steam/connector.py` — conector: identidad + normalización.
+- `api/pyproject.toml` — añadir `httpx` a dependencias de runtime (hoy solo dev).
+- `api/tests/connectors/__init__.py`
+- `api/tests/connectors/test_steam_connector.py` — normalización contra fixtures.
+- `api/tests/connectors/test_steam_client.py` — cliente con `httpx.MockTransport`.
+- `api/tests/fixtures/steam_owned_games.json`
+- `api/tests/fixtures/steam_player_summary.json`
+- `api/tests/fixtures/steam_recently_played.json`
 
-Fuera de esta tarea (requieren cuentas/credenciales, quedan abiertos en
-roadmap): proyecto Supabase real, servicio Render, proyecto Vercel, keep-alive,
-valores del secret manager. Diferidos a Fase 1: polars, cliente Supabase y las
-tablas específicas de Steam (`games`, `user_games`, `user_wishlist`,
-`user_profile_steam`).
+Fuente: `data-model.md` (secciones 1, 2 y 4). Endpoints cubiertos:
+`GetOwnedGames`, `GetRecentlyPlayedGames`, `GetPlayerSummaries`.
+
+Diferido (no inventar / depende de otras piezas):
+- Wishlist y completado% por logros — decisiones abiertas (campos, rate limits).
+- Persistencia indexada en Postgres — necesita la migración de Fase 1 y Supabase real.
+- Login OpenID de Steam — auth, entrelazado con la web.
 
 ## 2. Evaluación Crítica
 
-**Veredicto: viable / bueno.** El enfoque (andamiar backend+infra y dejar `/web`
-a Claude Design) es de bajo riesgo y respeta la arquitectura: el documento pide
-"un único servicio combinando API y endpoint `/mcp`", y `main.py` montando
-FastMCP bajo `/mcp` lo cumple. No hay choque con PRD/arquitectura.
+**Veredicto: viable / bueno.** Es el cimiento del slice de juegos y no depende de
+cuentas externas ni de la web: se valida con fixtures. Respeta `data-model.md`
+(el conector mapea crudo → contrato común, desacoplando las capas de arriba) y
+la decisión D15 (conectores con golden-file). Sin choques con PRD/arquitectura.
 
 Decisiones con trade-off (recomendada marcada):
 
-1. **Versión de Python**: el sistema tiene 3.14.5, muy nuevo; varios paquetes
-   (FastMCP y, más adelante, polars/pydantic-core) pueden no tener wheels aún.
-   - (Rec.) Fijar Python 3.12 vía `uv` → wheels estables, sin compilar.
-   - Usar 3.14 del sistema → riesgo de fallos de instalación.
+1. **Objetivo de la normalización**: contrato genérico vs modelos Steam-específicos.
+   - (Rec.) `NormalizedItem` genérico (capa universal + obra + metadatos) → las
+     capas posteriores no dependen del origen (lo pide `data-model.md`).
+   - Modelos solo-Steam → más simples ahora, pero acoplan y rompen el contrato.
 
-2. **Dependencias ahora**: minimalismo vs completo.
-   - (Rec.) Mínimas: fastapi, uvicorn, fastmcp, pydantic-settings + dev
-     (pytest, ruff, mypy, httpx). Fase 0 solo pide "tests vacíos corriendo".
-   - Completo (incluir polars, supabase) → instala más, sin uso real aún.
+2. **Cliente HTTP**: añadir `httpx` (runtime) vs `urllib` de la stdlib.
+   - (Rec.) `httpx`: testeable con `MockTransport` sin red, ergonómico, estándar
+     del ecosistema. Coste: una dependencia más.
+   - `urllib`: sin dependencia, pero verboso y difícil de testear.
 
-3. **Alcance del SQL**: fundación vs esquema Steam completo.
-   - (Rec.) Solo fundación: `profiles` (ligada a `auth.users`) y `source_state`,
-     ambas con RLS. Las tablas de Steam son de Fase 1.
-   - Esquema Steam completo ahora → adelanta decisiones de tipos de Fase 1.
+3. **Base del conector**: `Protocol` vs `ABC` genérico.
+   - (Rec.) `ABC` genérico (`Connector[RawT]`) con identidad como `ClassVar` y
+     `normalize` abstracto tipado → fuerza el contrato y mypy lo valida.
+   - `Protocol` → más laxo; no obliga a implementar.
 
 **Deuda técnica prevista (concreta):**
-- *MCP ↔ FastAPI*: el `lifespan` del app de FastMCP debe pasarse a FastAPI o la
-  inicialización de sesión MCP falla. Mitigación: test de montaje + verificación.
-- *Despliegue*: sin configs de Render/Vercel todavía; esos bullets quedan
-  abiertos y dependen de cuentas. Riesgo: olvidarlos; mitigado en `current.md`.
-- *Tooling*: `pnpm` y `gh` no instalados; se necesitarán para `/web` y PRs.
-- *RLS*: las políticas deben validarse contra Supabase Auth (`auth.uid()`); sin
-  proyecto real solo se valida sintaxis, no comportamiento. Riesgo aceptado.
-- *Push*: el remoto ya puede tener un commit inicial; el primer push podría
-  divergir. Se reportará sin forzar (regla del Publicador).
+- *Sin persistencia*: los `NormalizedItem` se producen pero no se guardan; la
+  persistencia indexada es la siguiente tarea (requiere migración + Supabase).
+- *Campos no provistos por Steam*: `GetOwnedGames` no da creadores, año ni
+  calificación; quedan vacíos y `capabilities` lo declara (transparencia).
+- *Fixtures estáticas*: si Steam cambia su API, los golden-file se desactualizan;
+  riesgo aceptado (D15 manda golden-file).
+- *Errores HTTP / perfil privado*: el cliente lanzará un error claro, pero el
+  manejo de UX de "perfil privado" es de la web (diferido).
 
 ## 3. Plan de Acción Detallado
 
-### Bloque A — Configuración raíz
-- [x] **Paso 1: [.gitignore]** ignorar `.venv/`, `__pycache__/`, `*.pyc`,
-  `.env`, `.env.*` (salvo `.env.example`), `node_modules/`, `.next/`, `dist/`,
-  `.DS_Store`, `.idea/`, `.vscode/` (salvo settings compartibles), `.mypy_cache/`,
-  `.pytest_cache/`, `.ruff_cache/`.
-- [x] **Paso 2: [.env.example]** claves sin valores con comentario en español:
-  `ENVIRONMENT`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
-  `ENCRYPTION_KEY`, `STEAM_API_KEY`. Ningún valor real.
+### Bloque A — Contrato normalizado
+- [x] **Paso 1: [api/src/ethos_api/schema.py]** enums `MediaCategory`,
+  `ItemStatus`, `IngestMode`; modelos Pydantic `Work` (title, creators, year,
+  external_ids, extra) y `NormalizedItem` (capa universal: status, rating
+  normalizado 0-100 + original, favorite, fechas, engagement, review, tags;
+  más `work` y metadatos: source, provenance, schema_version).
 
-### Bloque B — Backend `/api`
-- [x] **Paso 3: [api/pyproject.toml]** metadata, `requires-python = ">=3.12"`,
-  deps mínimas y grupo dev; configurar ruff, mypy y pytest; build con hatchling
-  (paquete `ethos_api` en `src/`).
-- [x] **Paso 4: [api/.python-version]** fijar `3.12`.
-- [x] **Paso 5: [api/src/ethos_api/__init__.py]** versión del paquete.
-- [x] **Paso 6: [api/src/ethos_api/config.py]** `Settings(BaseSettings)` leyendo
-  del entorno (sin valores por defecto sensibles), con `environment`.
-- [x] **Paso 7: [api/src/ethos_api/mcp_server.py]** instancia `FastMCP`
-  (stateless), una tool `ping` de prueba; expone el app ASGI del MCP.
-- [x] **Paso 8: [api/src/ethos_api/main.py]** crea FastAPI con el `lifespan` del
-  MCP, endpoint `GET /health`, y monta el MCP en `/mcp`.
-- [x] **Paso 9: [api/README.md]** instrucciones con `uv` (sync, run, test).
+### Bloque B — Interfaz de conector
+- [x] **Paso 2: [api/src/ethos_api/connectors/__init__.py]** paquete.
+- [x] **Paso 3: [api/src/ethos_api/connectors/base.py]** `Connector[RawT]` (ABC
+  genérico) con `id`, `category`, `ingest_mode`, `capabilities` como `ClassVar`
+  y `normalize(raw: RawT) -> list[NormalizedItem]` abstracto.
 
-### Bloque C — Tests `/api`
-- [x] **Paso 10: [api/tests/__init__.py]** paquete de tests.
-- [x] **Paso 11: [api/tests/test_health.py]** `TestClient` → `/health` devuelve
-  200 y estado ok.
-- [x] **Paso 12: [api/tests/test_mcp.py]** verifica que la ruta `/mcp` está
-  montada (no 404).
+### Bloque C — Cliente Steam
+- [x] **Paso 4: [api/src/ethos_api/connectors/steam/__init__.py]** paquete.
+- [x] **Paso 5: [api/src/ethos_api/connectors/steam/client.py]** `SteamApiClient`
+  (httpx) con `api_key` inyectable y transporte inyectable para tests:
+  `get_owned_games(steamid)`, `get_recently_played(steamid)`,
+  `get_player_summary(steamid)`; error claro ante respuesta no-200.
 
-### Bloque D — Datos `/supabase`
-- [x] **Paso 13: [supabase/migrations/0001_foundation.sql]** extensiones,
-  tabla `profiles` (id → `auth.users`, timestamps) y `source_state`
-  (user_id, category, provider, mode, last_synced_at, status), índices,
-  `ENABLE ROW LEVEL SECURITY` y políticas owner-only (`auth.uid()`); comentarios
-  en español, identificadores en inglés.
-- [x] **Paso 14: [supabase/README.md]** cómo aplicar la migración (Supabase CLI).
+### Bloque D — Conector y normalización
+- [x] **Paso 6: [api/src/ethos_api/connectors/steam/connector.py]** `SteamRawData`
+  (owned/recent/profile) y `SteamConnector(Connector[SteamRawData])`: identidad
+  (`id="steam"`, `category=games`, `ingest_mode=api`, `capabilities`), y
+  `normalize` que mapea juegos a `NormalizedItem` (status `in_library`,
+  engagement con minutos jugados totales y de 2 semanas, `external_ids` con
+  `steam_appid`, `extra` con `last_played_at`), fusionando jugados recientes.
 
-### Bloque E — CI
-- [x] **Paso 15: [.github/workflows/ci.yml]** en push/PR: instalar uv, `uv sync`,
-  `ruff check`, `mypy`, `pytest` sobre `/api`. (Job de `/web` se añadirá al
-  integrarla.)
+### Bloque E — Dependencia
+- [x] **Paso 7: [api/pyproject.toml]** mover/añadir `httpx` a `dependencies`
+  (runtime); mantenerlo disponible para tests.
 
-### Bloque F — Git local (en el Publicador)
-- [ ] **Paso 16:** `git init`, conectar remoto `KawKuroi/Ethos`, stagear lo
-  creado + `/docs`, commit, push (todo tras el gate de commit).
+### Bloque F — Tests y fixtures
+- [x] **Paso 8: [api/tests/fixtures/steam_owned_games.json]** respuesta de muestra.
+- [x] **Paso 9: [api/tests/fixtures/steam_player_summary.json]** respuesta de muestra.
+- [x] **Paso 10: [api/tests/fixtures/steam_recently_played.json]** respuesta de muestra.
+- [x] **Paso 11: [api/tests/connectors/__init__.py]** paquete de tests.
+- [x] **Paso 12: [api/tests/connectors/test_steam_client.py]** el cliente parsea
+  las respuestas usando `httpx.MockTransport` (sin red) y lanza error en no-200.
+- [x] **Paso 13: [api/tests/connectors/test_steam_connector.py]** la
+  normalización produce los `NormalizedItem` esperados desde las fixtures
+  (golden-file): conteo, appids, minutos, status y engagement.
 
 ## 4. Reporte de Pruebas
 
 **[APROBADO]**
 
-- Cumplimiento funcional: backend con `/health` y MCP montado en `/mcp`, según
-  el plan y la arquitectura (un solo servicio API+MCP).
+- Cumplimiento funcional: contrato normalizado (`schema.py`), interfaz de
+  conector y conector de Steam (owned games, jugados recientes, perfil) con
+  normalización a `NormalizedItem`; cubre lo planeado.
 - Idioma del código: identificadores en inglés, comentarios/docstrings en
   español (conforme a `global.md`).
-- Secretos: grep sin coincidencias en lo modificado; `.env` ignorado, solo
-  `.env.example` (vacío) versionado.
-- Verificación de stack (`/api`, uv): `ruff check` sin issues; `mypy` sin
-  issues (7 archivos); `pytest` 2 passed.
-- Incidencia resuelta: la versión instalada de FastMCP movió `stateless_http`
-  del constructor a `http_app()`; corregido el wiring y reverificado en verde.
+- Secretos: grep sin coincidencias en `/api`.
+- Verificación de stack (uv): `ruff check` sin issues; `mypy` sin issues
+  (16 archivos); `pytest` 8 passed.
+- Incidencias resueltas: ruff señaló modernizaciones de Python 3.12 (UP042 →
+  `StrEnum`, UP046 → genéricos PEP 695 `Connector[RawT]`, UP017 →
+  `datetime.UTC`); aplicadas y reverificado en verde.
