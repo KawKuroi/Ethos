@@ -1,95 +1,112 @@
-# ACTIVE_TASK — Revisión de seguridad + planificación (auth/sesión y categorías)
+# ACTIVE_TASK — Backend de credenciales de usuario (sesión + cifrado + endpoints)
 
-Tarea: 1) revisar la seguridad de todo lo construido; 2) planificar la sesión de
-usuario y el almacenamiento cifrado de credenciales de terceros ("guardar las
-APIs"); 3) planificar el modelo para incorporar las categorías que aún no están.
-Es planificación + revisión: se actualizan docs y se registran decisiones y
-guardrails; la implementación de esas features llega en tareas posteriores.
+Tarea: implementar el sistema con que cada usuario conecta su credencial personal
+de un proveedor (p. ej. ListenBrainz): autenticación de sesión (Supabase Auth
+JWT), cifrado de la credencial a nivel de app, y endpoints para conectar, listar
+y desconectar. La persistencia usa un repositorio abstracto con implementación en
+memoria; el repositorio respaldado por Supabase queda para el siguiente ciclo.
+
+Steam no entra aquí: usa OpenID + key del servidor (D12), no credencial por
+usuario.
 
 ## 1. Contexto y Archivos Afectados
 
-Revisión sobre el código actual de `/api` y `/supabase` (sin cambios de código:
-la revisión no encontró vulnerabilidad activa que corregir ya). Cambios en docs:
+Trabajo en `/api` y una migración nueva en `/supabase`. Archivos:
 
-- `docs/architecture.md` — registro de conectores; guardrail de auth del MCP;
-  flujo de sesión y almacenamiento cifrado de credenciales.
-- `docs/data-model.md` — tabla planificada `user_credentials` y nota de registro.
-- `docs/decisions.md` — D20 (sesión + credenciales cifradas), D21 (registro de
-  conectores), D22 (auth del MCP antes de tools de datos).
-- `docs/roadmap.md` — tareas de auth/sesión, credenciales, middleware MCP y
-  registro de conectores.
-- `docs/current.md` — snapshot de seguridad y bitácora.
+- `supabase/migrations/0002_user_credentials.sql` — tabla + RLS owner-only.
+- `api/pyproject.toml` — deps `cryptography` y `pyjwt`; ruff: permitir `Depends`.
+- `.env.example` y `api/src/ethos_api/config.py` — `SUPABASE_JWT_SECRET`.
+- `api/src/ethos_api/security.py` — `TokenCipher` (Fernet) cifra/descifra.
+- `api/src/ethos_api/auth.py` — dependencia `get_current_user_id` (verifica JWT).
+- `api/src/ethos_api/credentials/__init__.py`
+- `api/src/ethos_api/credentials/models.py` — modelos de credencial.
+- `api/src/ethos_api/credentials/repository.py` — Protocol + impl en memoria.
+- `api/src/ethos_api/credentials/deps.py` — provider del repositorio.
+- `api/src/ethos_api/credentials/router.py` — endpoints `/credentials`.
+- `api/src/ethos_api/main.py` — incluir el router.
+- `api/tests/test_security.py`, `api/tests/test_auth.py`,
+  `api/tests/credentials/__init__.py`,
+  `api/tests/credentials/test_credentials_api.py`.
+
+Diferido: repositorio respaldado por Supabase (conexión a Postgres + estrategia
+RLS, decisión por tomar); flujo OAuth/OpenID de proveedores; generalización de
+categorías (D23, hoy `MediaCategory` cubre las 4 actuales, ListenBrainz=music).
 
 ## 2. Evaluación Crítica
 
-**Veredicto: viable.** Planificación bien anclada en lo ya documentado (D6, D8,
-D9) y en el modelo de conectores; sin invenciones. La revisión confirma que el
-código actual no tiene vulnerabilidades activas; los pendientes son de diseño y
-quedan con guardrails para no introducir riesgo al implementarlos.
+**Veredicto: viable / bueno.** Implementa D20 (sesión + credenciales cifradas) y
+respeta el guardrail D22 (estos endpoints van por HTTP autenticado, no por el
+MCP). El cifrado a nivel de app (Fernet) cumple D9; la llave vive en el entorno.
 
 Decisiones con trade-off (recomendada marcada):
 
-1. **Almacenamiento de credenciales de terceros**:
-   - (Rec.) Tabla `user_credentials` con token cifrado a nivel de app
-     (Fernet/AES-GCM), llave en secret manager, RLS owner-only (coherente con D9).
-   - Guardar en texto plano o en el cliente → inseguro; descartado.
+1. **Verificación de sesión**:
+   - (Rec.) Verificar el JWT de Supabase (HS256 con `SUPABASE_JWT_SECRET`),
+     comprobando `aud="authenticated"` y extrayendo `sub` como user_id. Sin red.
+   - Llamar a la API de Supabase por cada request → latencia y acoplamiento.
 
-2. **Extensión de categorías/proveedores**:
-   - (Rec.) Registro de conectores (registry) por (categoría, proveedor) con
-     `capabilities`; las capas río abajo resuelven por el registro.
-   - Condicionales/if por proveedor → acopla y no escala; descartado.
+2. **Persistencia ahora**:
+   - (Rec.) Repositorio abstracto + impl en memoria → feature completa y testeable
+     sin BD; el repo Supabase (con su estrategia RLS) se añade después.
+   - Ir directo a Supabase ahora → arrastra decisión de conexión/RLS no tomada.
 
-3. **Auth del MCP**:
-   - (Rec.) Middleware de token por usuario (D8); hasta tenerlo, solo tools no
-     sensibles (hoy `ping`).
-   - Exponer tools de datos sin auth → fuga de datos; prohibido (guardrail D22).
+3. **Cifrado**:
+   - (Rec.) Fernet (AES-128-CBC + HMAC), llave urlsafe-base64 de 32 bytes en
+     `ENCRYPTION_KEY` (la que ya generaste). Estándar y simple (D9).
 
-**Deuda/riesgos vigilados:** cifrado de credenciales y middleware MCP están
-diseñados pero no implementados; RLS debe replicarse en toda tabla nueva; CORS
-deberá restringirse al integrar `/web`.
+**Deuda/riesgos vigilados:** sin persistencia real aún (las credenciales viven en
+memoria del proceso); el repo Supabase y la estrategia RLS (service_role + filtro
+por user_id vs reenvío de JWT) es el siguiente ciclo; el token plano solo existe
+en memoria y nunca se devuelve en las respuestas.
 
 ## 3. Plan de Acción Detallado
 
-### Bloque A — Revisión de seguridad
-- [x] **Paso 1: [revisión]** auditar `/api` y `/supabase` (secretos, RLS, fugas
-  de credenciales, timeouts, auth del MCP); reportar hallazgos. Sin fix de código
-  porque no hay vulnerabilidad activa; los pendientes pasan a plan/guardrails.
+### Bloque A — Datos
+- [x] **Paso 1: [supabase/migrations/0002_user_credentials.sql]** tabla
+  `user_credentials` (user_id, category, provider, encrypted_token, timestamps),
+  `unique(user_id, provider)`, índice, trigger de `updated_at`, RLS owner-only.
 
-### Bloque B — Diseño de sesión y credenciales
-- [x] **Paso 2: [docs/architecture.md]** añadir el flujo: Supabase Auth (sesión)
-  → la app guarda credenciales de terceros cifradas → se descifran solo en
-  memoria al llamar la API; el token del MCP nunca se reenvía a terceros.
-- [x] **Paso 3: [docs/data-model.md]** especificar la tabla planificada
-  `user_credentials` (user_id, category, provider, encrypted_token, timestamps)
-  con RLS owner-only.
+### Bloque B — Configuración y dependencias
+- [x] **Paso 2: [api/pyproject.toml]** añadir `cryptography` y `pyjwt` a runtime;
+  configurar ruff para permitir `fastapi.Depends`/`Security` en defaults (B008).
+- [x] **Paso 3: [.env.example] + [config.py]** añadir `SUPABASE_JWT_SECRET`.
 
-### Bloque C — Extensión de categorías
-- [x] **Paso 4: [docs/architecture.md]** detallar el registro de conectores y el
-  catálogo completo de 9 categorías (Juegos, Música, Cine y TV, Anime y manga,
-  Actividad física, Libros, Lugares, Comida, Juegos de mesa) con proveedor y
-  modo; señalar la generalización del contrato (Actividad física = evento/métrica).
+### Bloque C — Seguridad
+- [x] **Paso 4: [api/src/ethos_api/security.py]** `TokenCipher` (Fernet) con
+  `encrypt`/`decrypt` y `get_cipher()` desde `settings.encryption_key`.
+- [x] **Paso 5: [api/src/ethos_api/auth.py]** `get_current_user_id`: lee el Bearer,
+  verifica el JWT (HS256, `aud="authenticated"`), devuelve `sub`; 401 si falla.
 
-### Bloque D — Decisiones y roadmap
-- [x] **Paso 5: [docs/decisions.md]** añadir D20, D21, D22 y D23 (catálogo de
-  categorías y generalización del contrato).
-- [x] **Paso 6: [docs/roadmap.md]** añadir a Fase 1 las tareas de sesión +
-  credenciales cifradas, middleware de auth del MCP, y registro de conectores.
+### Bloque D — Credenciales
+- [x] **Paso 6: [credentials/models.py]** `ConnectCredentialInput` (provider,
+  category, token), `UserCredential` (con `encrypted_token`) y `CredentialSummary`
+  (sin token).
+- [x] **Paso 7: [credentials/repository.py]** `CredentialRepository` (Protocol) e
+  `InMemoryCredentialRepository` (upsert/list/get/delete por user_id+provider).
+- [x] **Paso 8: [credentials/deps.py]** `get_repository()` (singleton en memoria).
+- [x] **Paso 9: [credentials/router.py]** `POST /credentials` (cifra y guarda),
+  `GET /credentials` (lista resúmenes sin token), `DELETE /credentials/{provider}`.
+- [x] **Paso 10: [main.py]** incluir el router.
 
-### Bloque E — Estado
-- [x] **Paso 7: [docs/current.md]** snapshot de seguridad y entrada de bitácora.
+### Bloque E — Tests
+- [x] **Paso 11: [tests/test_security.py]** roundtrip de cifrado y fallo con otra
+  llave.
+- [x] **Paso 12: [tests/test_auth.py]** JWT válido → user_id; sin token y firma
+  inválida → 401.
+- [x] **Paso 13: [tests/credentials/test_credentials_api.py]** conectar (token
+  guardado cifrado, no devuelto), listar, aislamiento por usuario, requiere auth,
+  desconectar.
 
 ## 4. Reporte de Pruebas
 
 **[APROBADO]**
 
-- Cumplimiento funcional: revisión de seguridad hecha + planificación (sesión y
-  credenciales cifradas, registro de conectores, catálogo de 9 categorías y
-  generalización del contrato) documentada en architecture/data-model/decisions/
-  roadmap.
-- Idioma: docs en español; sin cambios de código.
-- Secretos: grep sin coincidencias en `/docs`.
-- Verificación de stack: sin cambios de código; suite reverificada
-  (`pytest` 8 passed) para confirmar que nada se rompió.
-- Revisión de seguridad: sin vulnerabilidad activa en el código actual; los
-  pendientes (cifrado de credenciales, middleware del MCP) quedan planificados y
-  con guardrail (D22).
+- Cumplimiento funcional: sesión (verificación de JWT de Supabase), cifrado
+  Fernet de credenciales y endpoints `POST/GET/DELETE /credentials` sobre
+  repositorio en memoria; el token se guarda cifrado y nunca se devuelve.
+- Idioma del código: identificadores en inglés, comentarios en español.
+- Secretos: grep sin coincidencias en `src`.
+- Verificación de stack (uv): `ruff` sin issues; `mypy` sin issues (27
+  archivos); `pytest` 17 passed.
+- Limpieza: se usaron claves de prueba de ≥32 bytes para evitar el
+  `InsecureKeyLengthWarning` de PyJWT (los secretos reales de Supabase ya lo son).

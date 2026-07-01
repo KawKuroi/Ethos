@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_anon_key: str = ""
     supabase_service_role_key: str = ""
+    # Secreto para verificar los JWT de sesión de Supabase Auth (HS256).
+    supabase_jwt_secret: str = ""
     encryption_key: str = ""
     steam_api_key: str = ""
 

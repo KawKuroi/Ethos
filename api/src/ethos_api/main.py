@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from ethos_api.config import settings
+from ethos_api.credentials.router import router as credentials_router
 from ethos_api.mcp_server import mcp
 
 # El app del MCP trae su propio lifespan; debe pasarse a FastAPI para que
@@ -20,6 +21,9 @@ app = FastAPI(
 
 # Un único servicio combina la API y el endpoint MCP (montado en /mcp).
 app.mount("/mcp", mcp_app)
+
+# Endpoints HTTP de la API (autenticados con la sesión de Supabase).
+app.include_router(credentials_router)
 
 
 @app.get("/health")

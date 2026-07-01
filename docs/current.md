@@ -14,9 +14,12 @@ código inicial se centra en backend + infraestructura.
 **Fase 1 — Slice Juegos / Steam** (en curso, backend). Hecho: contrato de datos
 normalizado (`schema.py`), interfaz de conector (`connectors/base.py`) y conector
 de Steam (cliente HTTP + normalización de biblioteca, jugados recientes y perfil)
-con tests de fixtures. Pendiente de Fase 1: persistencia indexada en Postgres,
-wishlist y completado% (decisiones abiertas), generador del resumen, tools del
-MCP de juegos, refresco asíncrono, login OpenID y la web (Claude Design).
+con tests de fixtures; backend de credenciales de usuario (sesión por JWT de
+Supabase, cifrado Fernet y endpoints `/credentials`) sobre repositorio en memoria.
+Pendiente de Fase 1: repositorio de credenciales respaldado por Supabase (con
+estrategia RLS), persistencia indexada de juegos, wishlist y completado%
+(decisiones abiertas), generador del resumen, tools del MCP de juegos, refresco
+asíncrono, login OpenID y la web (Claude Design).
 
 Pendiente de Fase 0 (requiere cuentas/credenciales): crear el proyecto Supabase
 real y aplicar la migración, servicio en Render, proyecto en Vercel, keep-alive
@@ -30,6 +33,15 @@ ping y poblar el secret manager (llave de cifrado y Steam API key).
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-06-30
+
+- Backend de credenciales de usuario (D20): migración `0002_user_credentials.sql`
+  (tabla + RLS owner-only), cifrado Fernet (`security.py`), verificación de JWT de
+  Supabase (`auth.py`) y endpoints `/credentials` (conectar/listar/desconectar)
+  sobre repositorio en memoria. Deps `cryptography` y `pyjwt`. ruff, mypy y
+  pytest (17) en verde. Pendiente: repositorio respaldado por Supabase y su
+  estrategia RLS. Confirmado: Steam sigue con OpenID + key del servidor (D12).
 
 ### 2026-06-29
 
