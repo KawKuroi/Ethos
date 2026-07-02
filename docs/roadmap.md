@@ -5,7 +5,7 @@ fase entera se mueve a `## Histórico de fases completadas`.
 
 ## Fase 0 — Fundación
 
-- [ ] Monorepo con `/web` (TS) y `/api` (Python, incluye MCP).
+- [x] Monorepo con `/web` (TS) y `/api` (Python, incluye MCP).
 - [ ] Supabase: proyecto, Auth, esquema base, Row-Level Security.
 - [ ] Servicio en Render (backend + MCP combinados) y web en Vercel, desplegando un esqueleto.
 - [ ] Keep-alive ping configurado.
@@ -30,7 +30,7 @@ Backend:
 
 Web — implementación del diseño (`design.md`, D25/D29):
 
-- [ ] Fundación de `/web`: Next.js + tokens CSS (paleta slate, acentos por categoría), `next/font`, `next-themes`, transiciones y `prefers-reduced-motion`.
+- [x] Fundación de `/web`: Next.js + tokens CSS (paleta slate, acentos por categoría), `next/font`, `next-themes`, transiciones y `prefers-reduced-motion`.
 - [ ] Auth: login/registro (correo + Google + GitHub), recuperación de contraseña. (D26)
 - [ ] Shell de la app: navegación lateral, header, badge de "Conectar IA".
 - [ ] Inicio: banner de IA, alertas agregadas, "El gusto en números", panorama de categorías, actividad reciente (Juegos activa; las otras ocho como "en desarrollo").

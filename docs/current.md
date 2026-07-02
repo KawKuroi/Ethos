@@ -37,6 +37,19 @@ ping y poblar el secret manager (llave de cifrado y Steam API key).
 
 ## Bitácora
 
+### 2026-07-02 (Fase 0/1: fundación de /web)
+
+- Creado `/web`: Next.js 16 (App Router, TS, src-dir, ESLint, sin Tailwind,
+  pnpm). Fundación del diseño (D25/D29): tokens en `globals.css` (paleta slate
+  clara/oscura vía `data-theme`, acentos de las 9 categorías, salud/alerta,
+  radios, sombras, keyframes `ethScreen`/`spin`/`pulse`, reduced-motion),
+  fuentes `next/font` (Bricolage Grotesque + Hanken Grotesk), `next-themes`
+  (claro/oscuro/sistema, `ethos_theme_mode`) y placeholder. Testing: Vitest +
+  Testing Library (jsdom, 3 tests). CI: job `web` (eslint, tsc, vitest,
+  build). READMEs actualizados. Cierra el item de monorepo de Fase 0; el
+  resto de Fase 0 (Supabase real, Render, Vercel, ping, secretos) requiere
+  cuentas del usuario.
+
 ### 2026-07-02 (Fase 1: contrato generalizado + registry)
 
 - `MediaCategory` → `Category` con los 9 ids del diseño (games, music, film,

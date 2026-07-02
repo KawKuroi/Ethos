@@ -8,7 +8,7 @@ estadísticas. Monorepo hospedado, objetivo 0 USD/mes.
 
 ```
 /api        backend Python (FastAPI + FastMCP): API y servidor MCP
-/web        app Next.js (en diseño con Claude Design)
+/web        app Next.js (App Router); implementa el diseño (docs/design.md)
 /supabase   migraciones SQL, esquema y RLS
 /docs       documentación de contexto
 ```
@@ -21,6 +21,16 @@ Requiere [uv](https://docs.astral.sh/uv/). Detalle en [api/README.md](api/README
 cd api
 uv sync
 uv run uvicorn ethos_api.main:app --reload   # expone /health y /mcp/
+```
+
+## Web
+
+Requiere Node 24 y pnpm. Detalle en [web/README.md](web/README.md).
+
+```bash
+cd web
+pnpm install
+pnpm dev   # http://localhost:3000
 ```
 
 ## Documentación

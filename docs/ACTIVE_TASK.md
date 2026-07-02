@@ -1,68 +1,83 @@
-# ACTIVE_TASK — Generalización del contrato (Category, 9) + registry de conectores
+# ACTIVE_TASK — Fundación de /web (Next.js + tokens del diseño)
 
-Tarea: renombrar `MediaCategory` → `Category` ampliándolo a las 9 categorías del
-catálogo (D27, ids del diseño) y añadir el registro de conectores (D21):
-(categoría, proveedor) → clase de conector, con Steam registrado.
+Tarea: crear `/web` (Next.js App Router, pnpm) con la fundación del diseño
+(D25/D29): tokens CSS de la paleta slate + acentos por categoría, tipografías
+con `next/font` (Bricolage Grotesque + Hanken Grotesk), tema
+claro/oscuro/sistema con `next-themes`, animaciones base con
+`prefers-reduced-motion`, testing con Vitest + Testing Library y job de CI.
+Cierra la mitad `/web` del item de monorepo de Fase 0.
 
 ## 1. Contexto y Archivos Afectados
 
-- `api/src/ethos_api/schema.py` — enum `Category` (9) y referencias.
-- `api/src/ethos_api/connectors/base.py` — tipado con `Category`.
-- `api/src/ethos_api/connectors/registry.py` — NUEVO: `ConnectorRegistry` + registro por defecto.
-- `api/src/ethos_api/connectors/steam/connector.py` — import/uso de `Category`.
-- `api/src/ethos_api/credentials/models.py` — `Category` en los modelos.
-- Tests: `tests/connectors/test_steam_connector.py` (ajuste) y `tests/connectors/test_registry.py` (nuevo).
+- `web/` — NUEVO: scaffold Next.js (TS, App Router, src-dir, ESLint, sin Tailwind).
+- `web/src/app/globals.css` — tokens del diseño (design.md §1) y animaciones.
+- `web/src/app/layout.tsx` — fuentes `next/font` + ThemeProvider.
+- `web/src/components/theme-provider.tsx` — next-themes (claro/oscuro/sistema).
+- `.github/workflows/ci.yml` — job `web` (lint, tipos, tests, build).
+- Apoyo: `web/vitest.config.ts`, test inicial, `README.md` raíz.
 
 ## 2. Evaluación Crítica
 
-**Veredicto: bueno.** Ejecuta D21 y la parte de enum de D23/D27; la web enseña
-el catálogo completo desde el día 1, así que retrasarlo encarecía cada tabla y
-endpoint intermedio. Sin choques con PRD/arquitectura.
+**Veredicto: bueno.** Ejecuta la fundación que Fase 1 lista primero y la parte
+de código de Fase 0; el diseño está cerrado (D25), así que no hay riesgo de
+rehacer tokens. Sin choques con PRD/arquitectura.
 
 Opciones:
-1. (Rec.) Ids del diseño como valores (`games, music, film, anime, fitness,
-   books, places, food, board`) + registry de clases con registro explícito.
-   Coherente con URLs, archivos de contexto y estado de la web.
-2. Valores compuestos (`film_tv`, `board_games`): más descriptivos pero
-   divergen de los ids que usa el diseño en todas partes.
-3. Registry con auto-descubrimiento: magia innecesaria para 9 conectores.
+1. (Rec.) create-next-app sin Tailwind + tokens CSS/CSS Modules + next-themes
+   + Vitest. Traducción directa del prototipo (D29).
+2. Tailwind v4: contradice D29 (el prototipo habla CSS variables nativas).
+3. SPA Vite: contradice D18 (Next.js decidido).
 
-Deuda prevista: el catálogo de UI (proveedor inicial + alternativas por
-categoría) aún no vive en código — llegará con el endpoint de Fuentes; el
-namespace MCP de Juegos de mesa (`tabletop.*`) difiere del id (`board`) y se
-mapeará en la capa MCP (D28).
+Deuda prevista: Playwright (E2E) se difiere a cuando haya pantallas reales —
+instalarlo hoy añade peso sin nada que recorrer; queda Vitest como base. El
+ThemeProvider usa `suppressHydrationWarning` (patrón estándar de next-themes).
 
 ## 3. Plan de Acción Detallado
 
-### Bloque A — Contrato
-- [x] **Paso 1: [schema.py]** renombrar `MediaCategory` → `Category` con las 9
-  categorías (ids del diseño) y actualizar `NormalizedItem` y docstrings.
+### Bloque A — Scaffold
+- [x] **Paso 1: [web/]** `create-next-app` (TS, App Router, src-dir, ESLint,
+  sin Tailwind, alias `@/*`, pnpm).
+- [x] **Paso 2: [web/package.json]** deps `next-themes`; dev-deps Vitest +
+  Testing Library + jsdom; scripts `test` y `typecheck`.
 
-### Bloque B — Conectores
-- [x] **Paso 2: [connectors/base.py]** tipar `category: ClassVar[Category]`.
-- [x] **Paso 3: [connectors/registry.py]** `ConnectorRegistry` con `register`
-  (duplicado → `ValueError`), `get` (ausente → `LookupError`) y `providers`;
-  instancia global `registry` con `SteamConnector` registrado.
-- [x] **Paso 4: [connectors/steam/connector.py]** usar `Category.games`.
+### Bloque B — Fundación del diseño
+- [x] **Paso 3: [web/src/app/globals.css]** tokens de design.md: paleta slate
+  clara/oscura (`data-theme`), acentos por categoría, salud/alerta, radios,
+  sombras, tipos; keyframes (`ethScreen`, `spin`, `pulse`) y bloque
+  `prefers-reduced-motion`.
+- [x] **Paso 4: [web/src/app/layout.tsx]** `next/font/google` (Bricolage
+  Grotesque 500-800, Hanken Grotesk 400-800) como variables CSS; metadata
+  Ethos; `lang="es"`; ThemeProvider.
+- [x] **Paso 5: [web/src/components/theme-provider.tsx]** wrapper de
+  next-themes (`attribute="data-theme"`, system por defecto, storageKey
+  `ethos_theme_mode`).
+- [x] **Paso 6: [web/src/app/page.tsx]** placeholder mínimo con tokens (se
+  sustituye por la landing real en su tarea).
 
-### Bloque C — Credenciales
-- [x] **Paso 5: [credentials/models.py]** `Category` en input, credencial y resumen.
+### Bloque C — Tests y CI
+- [x] **Paso 7: [web/vitest.config.ts + web/src/app/page.test.tsx]** Vitest +
+  jsdom + Testing Library; test de render y de variables de tema.
+- [x] **Paso 8: [.github/workflows/ci.yml]** job `web`: pnpm frozen-lockfile,
+  eslint, `tsc --noEmit`, vitest, build.
 
-### Bloque D — Tests
-- [x] **Paso 6: [tests/connectors/test_steam_connector.py]** imports y asserts a `Category`.
-- [x] **Paso 7: [tests/connectors/test_registry.py]** NUEVO: enum con las 9;
-  registro por defecto resuelve (games, steam); `get` inexistente →
-  `LookupError`; duplicado → `ValueError`; `providers` por categoría.
+### Bloque D — Docs
+- [x] **Paso 9: [README.md raíz + web/README.md]** estructura real y comandos.
 
 ## 4. Reporte de Pruebas
 
 **[APROBADO]**
 
-- Funcional: `Category` con los 9 ids del diseño (D27); el registry (D21)
-  resuelve (games, steam) y rechaza duplicados/ausentes; las credenciales
-  aceptan las 9 categorías.
-- Idioma: identificadores en inglés; comentarios y docstrings en español.
-- Secretos: grep limpio en lo modificado (solo la declaración `token: str`
-  del modelo, sin valores).
-- Stack (uv): ruff sin issues; mypy sin issues (31 archivos); pytest 31
-  passed; cobertura 96.07% (umbral 85%).
+- Funcional: `/web` con Next.js 16 (App Router, src-dir, sin Tailwind),
+  tokens del diseño en `globals.css` (paleta slate clara/oscura, acentos por
+  categoría, salud, radios, sombras, keyframes, reduced-motion), fuentes
+  `next/font` (Bricolage Grotesque + Hanken Grotesk), `next-themes`
+  (claro/oscuro/sistema, storageKey `ethos_theme_mode`), placeholder con
+  `.eth-screen`.
+- Idioma: identificadores en inglés; comentarios y textos en español.
+- Secretos: grep limpio (solo coincidencias con la palabra "tokens de diseño").
+- Stack (pnpm): eslint sin issues; `tsc --noEmit` sin issues; vitest 3
+  passed (con auto-cleanup y polyfill de matchMedia para next-themes); build
+  de producción estático OK. CI amplía con job `web` (lint, tipos, tests,
+  build) con cache de pnpm.
+- Nota: dos fallos iniciales eran del setup de tests recién escrito (cleanup
+  de Testing Library y matchMedia en jsdom), corregidos dentro del paso 7.
