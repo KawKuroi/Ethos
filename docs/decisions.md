@@ -54,7 +54,7 @@ Steam no da géneros en la biblioteca; enriquecerlos requiere otra fuente. Por d
 Re-consultar solo lo que cambió desde el último sync. Estado: por confirmar la llave de cambio por proveedor.
 
 ## D18 — Framework web: Next.js (App Router)
-Se resuelve la opción abierta "Next.js o Astro" a favor de Next.js. Motivo: mejor ajuste para auth (Supabase), dashboards interactivos con Recharts y la guía "conecta tu IA"; ecosistema Vercel nativo. Estado: firme.
+Se resuelve la opción abierta "Next.js o Astro" a favor de Next.js. Motivo: mejor ajuste para auth (Supabase), dashboards interactivos y la guía "conecta tu IA"; ecosistema Vercel nativo. Estado: firme (la mención original a Recharts queda sustituida por D29).
 
 ## D19 — Idioma del código: identificadores en inglés
 Identificadores (variables, funciones, tablas, columnas, claves) en inglés; comentarios, docs, commits y textos de UI en español. Motivo: convención estándar de Python/TS, evita acentos en SQL/código y mantenibilidad. Los nombres en español de los docs de datos son descriptivos, no DDL literal. Estado: firme. Detalle en `global.md`.
@@ -69,4 +69,22 @@ Un registro asocia (categoría, proveedor) → conector, modo de ingesta y `capa
 Las tools que exponen datos del usuario requieren el middleware de token por usuario (D8). Mientras no exista, solo se publican tools no sensibles (hoy `ping`); el endpoint `/mcp` no sirve datos sin auth. Guardrail de seguridad. Estado: firme.
 
 ## D23 — Catálogo de categorías y generalización del contrato (por confirmar)
-Categorías objetivo (9) con su proveedor inicial: Juegos/Steam (API), Música/ListenBrainz (API), Cine y TV/Trakt (API), Anime y manga/AniList (API), Actividad física/Strava (API), Libros/Goodreads (import), Lugares/Swarm (API), Comida/Beli (import), Juegos de mesa/BoardGameGeek (import). La mayoría encaja en "obra + relación" (rating, estado, engagement); Lugares y Comida tratando el sitio o el plato como obra. Actividad física (Strava) es de tipo evento/métrica (distancia, duración) y no es una "obra": el contrato normalizado deberá admitir también esa forma. El enum `MediaCategory` se renombrará a `Category` y se ampliará a las 9. Estado: por confirmar la forma exacta del contrato generalizado.
+Categorías objetivo (9) con su proveedor inicial: Juegos/Steam (API), Música/ListenBrainz (API), Cine y TV/Trakt (API), Anime y manga/AniList (API), Actividad física/Strava (API), Libros/Goodreads (import), Lugares/Swarm (API), Comida/Beli (import), Juegos de mesa/BoardGameGeek (import). La mayoría encaja en "obra + relación" (rating, estado, engagement); Lugares y Comida tratando el sitio o el plato como obra. Actividad física (Strava) es de tipo evento/métrica (distancia, duración) y no es una "obra": el contrato normalizado deberá admitir también esa forma. El enum `MediaCategory` se renombrará a `Category` y se ampliará. Estado: catálogo fijado en 9 por D27; sigue por confirmar la forma exacta del contrato generalizado.
+
+## D24 — Dos salidas del contexto: descarga y MCP
+El contexto para la IA se entrega de dos formas equivalentes en origen: archivos descargables por categoría (`<categoria>.context.json`, vía `GET /context/{category}`) y el servidor MCP en vivo. Motivo: el diseño final las trata como par de primera clase ("El panel" / "Servidor MCP" + "Descargar contexto" en cada categoría); la descarga sirve a cualquier IA sin soporte MCP. Sustituye la idea previa de que el MCP era la única vía. Estado: firme.
+
+## D25 — El diseño de Claude Design es la fuente de verdad de la UI
+Proyecto "Prototipo creativo de aplicación" (`c3e4858c-944b-427a-b1b7-6c327a8a1dd1`): app, auth y landing en alta fidelidad (tokens, textos, animaciones e interacciones finales). Cualquier duda de implementación se resuelve mirando el prototipo, no los docs; `design.md` es solo el resumen. Estado: firme.
+
+## D26 — Auth de la app: correo + Google + GitHub (Supabase Auth)
+Login/registro con correo y contraseña (mínimo 8, recuperación) y OAuth de Google y GitHub, según el diseño de auth. Steam NO es login de la app: su OpenID es el flujo de conexión de la fuente de Juegos (D12). Estado: firme.
+
+## D27 — Catálogo de 9 categorías con estados y despliegue secuencial
+El catálogo del producto son 9 categorías: Juegos, Música, Cine y TV, Anime y manga, Actividad física, Libros, Lugares, Comida y Juegos de mesa (alternativas por categoría en `architecture.md` 4.1; Comida y Juegos de mesa solo-import). Pódcasts y YouTube, presentes en el prototipo, quedan fuera del catálogo por ahora. Cada categoría tiene estado visible: activa, apagada (sin datos) o en desarrollo (no activable). El despliegue es secuencial: se construye una categoría de punta a punta, se prueba y se confirma antes de pasar a la siguiente; las no implementadas aparecen "en desarrollo" (en la v1, todas salvo Juegos). Amplía D23. Estado: firme.
+
+## D28 — Tools del MCP con namespace por categoría
+Las tools se nombran `<categoria>.<accion>` (`games.top_by_hours`, `music.recent`, `books.currently_reading`, `<categoria>.summary`…), más `profile.search` global. Cada respuesta reporta los KB servidos frente al contexto total ("0,4 KB de 84 KB"), métrica que la web enseña en el playground. Motivo: escala a las 9 categorías manteniendo pocas tools por dominio y hace tangible el valor "consulta acotada". Estado: firme.
+
+## D29 — Web fiel al diseño: tokens CSS + CSS Modules, SVG propio, sin Recharts
+El prototipo está expresado en CSS variables, estilos inline y SVG simples (sparklines, barras). La web se implementa traduciendo eso directo: tokens como CSS variables globales, CSS Modules, componentes de gráfico propios, `next/font` para Bricolage Grotesque + Hanken Grotesk y `next-themes` para claro/oscuro/sistema. Recharts (D18) queda descartado: no hay gráficos que lo necesiten y pelearía contra la fidelidad. Estado: firme.

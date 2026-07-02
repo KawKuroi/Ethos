@@ -19,7 +19,7 @@ Capa específica del dominio (la obra):
 
 Metadatos:
 - source (conector que produjo el registro)
-- provenance (de qué fuente vino cada campo) — alimenta la transparencia del dump
+- provenance (de qué fuente vino cada campo) — alimenta la transparencia del panel
 - schema_version (para evolucionar el contrato sin romper datos viejos)
 
 ## 2. Contrato de conector
@@ -37,7 +37,26 @@ Añadir un proveedor = implementar el conector, registrarlo y agregar fixtures d
 - Estados: traducir el vocabulario propio de cada app al enum común.
 - Calificaciones: normalizar la escala a 0-100 conservando el original.
 
-## 4. Slice de Steam (v1)
+## 4. Contexto descargable (D24)
+
+Un archivo por categoría, `<categoria>.context.json`, generado del almacén:
+
+```json
+{
+  "namespace": "games.*",
+  "provider": "Steam",
+  "updated": "2026-06-30T09:12Z",
+  "summary": { "juegos": "312", "horas": "1.840", "deseados": "47" },
+  "top_por_horas": [ { "rank": 1, "name": "…", "value": "…", "tag": "…" } ],
+  "tags": ["…"]
+}
+```
+
+La vista previa de la web enseña este fragmento; el archivo completo incluye
+además el histórico normalizado de la categoría. Forma exacta por afinar al
+implementar el generador.
+
+## 5. Slice de Steam (v1)
 
 ### Fuentes de datos (Steam Web API)
 - Biblioteca, horas y última sesión: `GetOwnedGames`.
@@ -60,25 +79,34 @@ Conexión: "Sign in through Steam" (OpenID); el servidor obtiene el SteamID64 y 
 
 Índices: `(user_id, última_sesión)`, `(user_id, horas_totales)`, `(user_id, completado_pct)`, `(user_id, appid)`.
 
-### Diseño del MCP para juegos
+### Diseño del MCP para juegos (D28)
+
 - Resource `profile://games/summary`: resumen compacto (tamaño de biblioteca, total de horas, juegos top, completado medio, deseados destacados).
-- Tools (pocas y parametrizadas):
-  - `top_games(by="playtime"|"recent", limit)`
-  - `recently_played(window)`
-  - `search_games(query)`
-  - `game_detail(juego)` — horas, completado, estado
-  - `wishlist(limit)`
-  - `games_by_completion(min_pct)`
+- Tools (pocas y parametrizadas, namespace `games.*`):
+  - `games.summary()` — el resumen como tool
+  - `games.top_by_hours(limit)` y `games.top(by="playtime"|"recent", limit)`
+  - `games.recent(window)`
+  - `games.search(query)`
+  - `games.detail(juego)` — horas, completado, estado
+  - `games.wishlist(limit)`
+  - `games.by_completion(min_pct)`
 
-Mantener el número total de tools bajo (la precisión del modelo al elegir herramienta cae pasadas ~25-30).
+Global (transversal): `profile.search(q)` — localiza en qué categoría vive
+algo. Mantener el número total de tools bajo (la precisión del modelo al
+elegir herramienta cae pasadas ~25-30). Cada respuesta reporta los KB servidos
+frente al tamaño total del contexto de la categoría.
 
-## 5. Frescura
+## 6. Frescura y salud
 
-`source_state.last_synced_at` por fuente alimenta el aviso de frescura en el dump y los estados del botón de refresco (inactivo / en cola / actualizando / error).
+- `source_state.last_synced_at` por fuente alimenta la etiqueta de frescura (fresh / stale / syncing) y los estados del botón de refresco (inactivo / en cola / actualizando / error).
+- Salud derivada por fuente (para Fuentes e Inicio): error de sync > requiere atención (warn o stale) > operativa.
+- Alertas por fuente con nivel (info / warn / error), texto, fecha y acción opcional (p. ej. "Renovar", "Reintentar"). Las no-info se agregan en Inicio.
 
-## 6. Sesión y credenciales (planificado)
+## 7. Cuenta, sesión y credenciales
 
-Para "guardar las APIs" del usuario, tabla `user_credentials`:
+Sesión con Supabase Auth (correo/contraseña, Google, GitHub — D26).
+
+Tabla `user_credentials` (D20) para "guardar las APIs" del usuario:
 
 | Columna | Contenido |
 |---------|-----------|
@@ -92,9 +120,26 @@ Una credencial por `(user_id, provider)`. RLS owner-only (`auth.uid() = user_id`
 La llave de cifrado vive en el secret manager, nunca en la BD ni en el repo; el
 texto plano solo existe en memoria al llamar la API. (D9, D20)
 
-## 7. Catálogo de categorías
+Perfil de usuario (`profiles`): nombre visible, handle y zona horaria (para
+fechar sincronizaciones y actividad). Token del MCP por usuario, independiente
+de las credenciales de terceros.
 
-Nueve categorías objetivo, cada una con un proveedor activo intercambiable
-(D4/D6). El enum del contrato (`MediaCategory`) se generaliza a `Category` y se
-amplía a las nueve. Detalle del catálogo y de la generalización del contrato
-(p. ej. Actividad física como evento/métrica) en `architecture.md` 4.1 y en D23.
+Sugerencias (`suggestions`): user_id opcional, categoría (General o una del
+catálogo), tipo (`idea` / `provider` / `bug`), texto, created_at. Alimentada
+desde Ayuda y desde la landing.
+
+Borrado: "eliminar datos" limpia el contexto del usuario conservando la
+cuenta; "eliminar cuenta" marca borrado diferido (30 días para deshacer vía
+correo) antes de la purga definitiva.
+
+## 8. Catálogo de categorías
+
+Nueve categorías (D27), cada una con un proveedor activo intercambiable
+(D4/D6) y estado activa / apagada / en desarrollo: Juegos, Música, Cine y TV,
+Anime y manga, Actividad física, Libros, Lugares, Comida (solo import) y
+Juegos de mesa (solo import). Se habilitan secuencialmente: las no
+implementadas se muestran "en desarrollo" (en la v1, todas salvo Juegos). El
+enum del contrato (`MediaCategory`) se generaliza a `Category` y se amplía a
+las nueve. Detalle del catálogo en `architecture.md` 4.1 y de la
+generalización del contrato (p. ej. Actividad física como evento/métrica) en
+D23.

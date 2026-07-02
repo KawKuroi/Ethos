@@ -14,17 +14,30 @@ fase entera se mueve a `## Histórico de fases completadas`.
 
 ## Fase 1 — Slice vertical: Juegos / Steam (la v1)
 
-- [ ] Login con Steam (OpenID) y manejo de perfil privado.
+Backend:
+
+- [ ] Conexión de Steam por OpenID (fuente de Juegos, no login de la app) y manejo de perfil privado.
 - [ ] Conector de Steam: biblioteca, deseados, horas, completado agregado, perfil.
 - [ ] Normalización al esquema común y persistencia indexada.
 - [ ] Generador del resumen de juegos.
-- [ ] Servidor MCP: resource de resumen + tools de juegos.
-- [ ] Web: panel de estadísticas (dump) de juegos.
+- [ ] Servidor MCP: resource de resumen + tools `games.*` y `profile.search`, reportando KB servidos. (D28)
+- [ ] Descarga de contexto: `GET /context/games` → `games.context.json`. (D24)
 - [ ] Refresco asíncrono con cola y estados de frescura.
-- [ ] Sección de ayuda y guía "conecta tu IA".
 - [ ] Sesión de usuario (Supabase Auth) y almacenamiento cifrado de credenciales de terceros (tabla `user_credentials`). (D20)
 - [ ] Middleware de auth del MCP (token por usuario) antes de exponer tools de datos. (D22)
 - [ ] Registro de conectores (registry) y modelo de extensión de categorías/proveedores. (D21)
+
+Web — implementación del diseño (`design.md`, D25/D29):
+
+- [ ] Fundación de `/web`: Next.js + tokens CSS (paleta slate, acentos por categoría), `next/font`, `next-themes`, transiciones y `prefers-reduced-motion`.
+- [ ] Auth: login/registro (correo + Google + GitHub), recuperación de contraseña. (D26)
+- [ ] Shell de la app: navegación lateral, header, badge de "Conectar IA".
+- [ ] Inicio: banner de IA, alertas agregadas, "El gusto en números", panorama de categorías, actividad reciente (Juegos activa; las otras ocho como "en desarrollo").
+- [ ] Detalle de categoría (Juegos): status strip, stat band, Destacados/Reciente/Listas, refrescar, modal de descarga con preview JSON/MCP.
+- [ ] Fuentes: grupos activas / apagadas / en desarrollo, salud y método.
+- [ ] Conectar IA: endpoint + token reales, tres pasos, playground simulado con datos reales del usuario (sin LLM en v1).
+- [ ] Ayuda (FAQ + sugerencias) y Ajustes (perfil, zona horaria, tema, zona de peligro).
+- [ ] Landing pública según el diseño (hero, dos salidas, categorías, cómo se usa, FAQ, sugerencias).
 - [ ] Tests de todas las capas pasando en CI.
 
 ## Fase 2 — Segunda categoría: Música / ListenBrainz
@@ -32,23 +45,32 @@ fase entera se mueve a `## Histórico de fases completadas`.
 - [ ] Conector de ListenBrainz por API (listens con timestamp).
 - [ ] Estrena la consulta temporal real ("más escuchadas en los últimos 30 días").
 - [ ] Modelo de eventos con timestamp y sus índices.
-- [ ] Tools del MCP para música (artistas, álbumes, tracks, ventanas temporales).
+- [ ] Tools del MCP para música (`music.*`: artistas, álbumes, tracks, ventanas temporales).
+- [ ] Música sale de "en desarrollo" y queda activa en la web (el detalle por categoría ya es genérico).
 
-## Fase 3 — Categorías restantes
+## Fase 3 — Categorías restantes (secuencial, D27)
 
-Catálogo objetivo (proveedor inicial; alternativas por categoría según D4/D6):
+Una categoría a la vez: construir, probar y confirmar antes de empezar la
+siguiente; al activarse sale de "en desarrollo". Orden tentativo (proveedor
+inicial; alternativas según D4/D6/D27):
 
 - [ ] Cine y TV: Trakt (API). Alternativa: Letterboxd (import).
 - [ ] Anime y manga: AniList (API).
 - [ ] Libros: Goodreads (import). Alternativas: StoryGraph (import), Hardcover (API).
-- [ ] Juegos de mesa: BoardGameGeek (import).
+- [ ] Juegos de mesa: BoardGameGeek (import, solo import).
 - [ ] Lugares: Swarm (API).
-- [ ] Comida: Beli (import).
+- [ ] Comida: Beli (import, solo import).
 - [ ] Actividad física: Strava (API) — requiere el contrato generalizado (evento/métrica, D23).
-- [ ] Modo import genérico con autodetección de archivo.
+- [ ] Modo import genérico con autodetección de archivo y guías por proveedor.
+- [ ] Contrato generalizado a `Category` con las 9 categorías y estados (D23/D27).
 
 ## Fase 4 — Pulido y robustez
 
+- [ ] "Avísame cuando esté lista" para categorías en desarrollo.
+- [ ] Entradas a mano (añadir registros sin proveedor).
+- [ ] Envío real de sugerencias y contacto (persistencia + notificación).
+- [ ] Borrado de cuenta con deshacer de 30 días (correo + purga diferida).
+- [ ] Playground de Conectar IA con LLM real (opcional; la v1 lo simula).
 - [ ] Migración del auth del MCP a OAuth 2.1 (si se requiere).
 - [ ] Enriquecimiento de géneros de juegos.
 - [ ] Envelope encryption con KMS (si se requiere).
@@ -57,15 +79,15 @@ Catálogo objetivo (proveedor inicial; alternativas por categoría según D4/D6)
 
 ## Pendientes y decisiones por resolver
 
-- Nombre definitivo del proyecto (provisional: Ethos).
 - Géneros de juegos: fuente de enriquecimiento (store API de Steam vs IGDB/RAWG). (D16)
 - Refresco incremental: llave de cambio por proveedor. (D17)
+- Forma exacta del contexto descargable completo (qué histórico incluye, tamaño). (D24)
 - Esquema fino del perfil por categoría: qué va en el resumen (resource) vs en las tools, para música, cine y libros.
 - Granularidad de música (artista / álbum / track) — por defecto los tres; confirmar el corte del resumen.
 - Wishlist de Steam: campos disponibles (prioridad, fecha agregado, precio) y endpoint exacto.
 - Manejo de límites de tasa de Steam al calcular el completado (una llamada por juego).
 - Política de retención del histórico inactivo (cuánto tiempo se conserva).
-- Diseño detallado de la guía "conecta tu IA" para usuarios no técnicos (con Claude Design).
+- Destino de las sugerencias (tabla + ¿aviso por correo?) y del contacto personal.
 - Objetivos concretos de cobertura de tests y umbrales de CI.
 - Estrategia de caché de catálogos globales (esquema de logros, metadatos de juegos) compartidos entre usuarios.
 

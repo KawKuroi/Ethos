@@ -7,8 +7,8 @@ Las IA no conocen el gusto real de una persona, y los datos que lo describen est
 ## 2. Objetivos
 
 - Reunir la información de tracking de una persona en un almacén normalizado e indexado.
-- Entregar esa información a cualquier IA mediante un servidor MCP, sin manipulación manual de archivos.
-- Permitir consultas eficientes y acotadas (por ejemplo, "mis canciones más escuchadas de los últimos 30 días") sin cargar todo el contexto.
+- Entregar ese contexto a cualquier IA de dos formas (D24): archivos de contexto descargables por categoría, o un servidor MCP que lo sirve en vivo con consultas acotadas.
+- Permitir consultas eficientes y acotadas (por ejemplo, "mis canciones más escuchadas de los últimos 30 días") sin cargar todo el contexto; hacer visible cuánto contexto viaja en cada consulta ("0,4 KB de 84 KB").
 - Dar a la persona un panel visual para ver y controlar qué contexto existe y qué se entrega.
 
 ## 3. No objetivos (por ahora)
@@ -24,23 +24,31 @@ Las IA no conocen el gusto real de una persona, y los datos que lo describen est
 
 ## 5. Conceptos centrales
 
-- Categoría: dominio de medios (Música, Cine/TV, Libros, Juegos).
-- Proveedor: la plataforma concreta de una categoría (ej. Steam para Juegos). Una sola activa por categoría, intercambiable.
-- Modo de conexión: API (donde exista) o import (subir el export). El usuario elige.
+- Categoría: dominio de gusto. Nueve en catálogo (D27): Juegos, Música, Cine y TV, Anime y manga, Actividad física, Libros, Lugares, Comida y Juegos de mesa. Estados: activa, apagada (existe sin datos) o en desarrollo (conector no listo). El catálogo se habilita secuencialmente: cada categoría se construye, prueba y confirma antes de pasar a la siguiente; las no implementadas aparecen "en desarrollo".
+- Proveedor: la plataforma concreta de una categoría (ej. Steam para Juegos). Una sola activa por categoría, intercambiable entre alternativas.
+- Modo de conexión: API (donde exista) o import (subir el export, con guía por proveedor). Comida y Juegos de mesa son solo import.
 - Perfil: el conjunto normalizado de la persona, base de las dos salidas.
-- Servidor MCP: expone el perfil a la IA (resumen + tools de consulta).
-- Dump: el panel visual de la persona.
+- Contexto: la vista del perfil lista para una IA. Por categoría, descargable como archivo (`<categoria>.context.json`) o servido en vivo por el MCP.
+- Servidor MCP: expone el perfil a la IA (resumen + tools de consulta con namespace por categoría).
+- Panel: la interfaz visual de la persona (pantallas Inicio, Detalle de categoría, Fuentes, Conectar IA, Ayuda, Ajustes).
+
+La UI está completamente especificada en el diseño de Claude Design (ver `design.md`, D25); ese prototipo manda sobre cualquier descripción textual.
 
 ## 6. Requisitos funcionales
 
-- Cuenta y autenticación de usuario.
+- Cuenta y autenticación de usuario: correo/contraseña, Google y GitHub, con recuperación de contraseña (D26).
 - Por cada categoría: elegir proveedor y modo (API o import); conectar; cambiar de proveedor, preguntando si se conserva el histórico o se reemplaza.
 - Extracción de datos (vía API o parseo de import) y normalización a un esquema común.
 - Almacenamiento normalizado e indexado, multiusuario y aislado por usuario.
-- Refresco bajo demanda para fuentes API, asíncrono, con estado visible.
-- Panel visual (dump) con estadísticas y estados de frescura por fuente.
-- Servidor MCP con resumen (resource) y tools de consulta parametrizadas.
-- Sección de ayuda dentro de la app: qué es, qué hace, qué no hace con los datos, y guía paso a paso para conectar la IA, con recordatorio mientras no esté conectada.
+- Refresco bajo demanda para fuentes API (por categoría y global), asíncrono, con estado visible.
+- Panel visual según el diseño: Inicio (cifras del gusto, panorama de categorías, alertas agregadas, actividad reciente), Detalle por categoría (stats, destacados, recientes, listas, conexión), Fuentes (salud y método por categoría) y Ajustes (perfil, zona horaria, tema, borrado de datos y de cuenta con 30 días para deshacer).
+- Descarga de contexto por categoría con vista previa (JSON / MCP) desde el detalle.
+- Servidor MCP con resumen (resource) y tools de consulta parametrizadas, con token por usuario.
+- Pantalla Conectar IA: endpoint y token del usuario, guía de tres pasos y playground que demuestra la tool llamada, el contexto que viaja y la respuesta cruda.
+- Alertas por fuente (token por caducar, sync fallida, datos sin actualizar) con acción directa, agregadas en Inicio.
+- Sección de ayuda: FAQ, formulario de sugerencias (categoría + tipo + texto) y contacto; recordatorio persistente mientras la IA no esté conectada.
+- Landing pública con las dos salidas, el catálogo de categorías, cómo se usa, FAQ y sugerencias.
+- Tema claro / oscuro / sistema persistido; animaciones desactivables con `prefers-reduced-motion`.
 
 ## 7. Requisitos no funcionales
 
@@ -51,13 +59,14 @@ Las IA no conocen el gusto real de una persona, y los datos que lo describen est
 
 ## 8. Alcance de la v1 (slice vertical: Juegos / Steam)
 
-Incluye: login con Steam (OpenID), extracción de biblioteca, deseados, horas de juego, porcentaje de completado agregado por juego y datos de perfil; almacenamiento indexado; tools del MCP para juegos; panel de estadísticas; refresco asíncrono; estados de frescura.
+Incluye: conexión de Steam (OpenID) con manejo de perfil privado; extracción de biblioteca, deseados, horas de juego, porcentaje de completado agregado por juego y datos de perfil; almacenamiento indexado; tools del MCP de juegos; descarga del contexto de juegos; la web del slice con el diseño final (auth, Inicio, Detalle de Juegos, Fuentes, Conectar IA, Ayuda, Ajustes) y la landing, con Juegos como única categoría activa y las otras ocho visibles como "en desarrollo"; refresco asíncrono; estados de frescura.
 
-Fuera de la v1: detalle de logros individuales, géneros (diferido), resto de categorías, OAuth 2.1 para el MCP.
+Fuera de la v1: detalle de logros individuales, géneros (diferido), resto de categorías, OAuth 2.1 para el MCP, entradas a mano, playground con LLM real (la v1 lo simula con datos reales, como el prototipo).
 
 ## 9. Criterios de éxito de la v1
 
-- La persona conecta Steam en un clic y ve sus estadísticas.
+- La persona conecta Steam en un clic y ve sus estadísticas en el panel con el diseño final.
 - Una IA conectada al MCP responde correctamente consultas como "mis juegos con más horas" o "qué jugué recientemente" sin cargar toda la biblioteca.
+- El contexto de juegos se puede descargar como archivo y pasar a cualquier IA.
 - El refresco actualiza los datos sin bloquear la interfaz y el estado de frescura lo refleja.
 - Todas las capas tienen tests que pasan en CI.

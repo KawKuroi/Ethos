@@ -4,13 +4,18 @@
 
 | Capa | Tecnología |
 |------|-----------|
-| Web (UI, dump, onboarding) | TypeScript — Next.js o Astro + Recharts |
+| Web (landing, auth, panel) | TypeScript — Next.js (App Router); tokens como CSS variables + CSS Modules; gráficos SVG propios (sparklines y barras); `next/font` (Bricolage Grotesque + Hanken Grotesk); `next-themes` (claro/oscuro/sistema) |
 | Backend API + servidor MCP | Python — FastAPI + FastMCP (un solo servicio) |
 | Procesamiento / normalización | Polars + Pydantic v2 |
 | Datos, auth, secretos, cola | Supabase (Postgres + Auth + Vault + Queues) |
 | Gestor de paquetes Python | uv |
 | Gestor de paquetes TS | pnpm |
 | Repositorio | Monorepo |
+
+La UI no usa librería de componentes ni de gráficos: el diseño (ver
+`design.md`) está expresado en CSS variables y SVG simples, y se traduce
+directo (D29). Recharts queda descartado salvo que aparezcan gráficos que lo
+justifiquen.
 
 ## 2. Hospedaje
 
@@ -21,12 +26,12 @@
 
 ## 3. Flujo de datos
 
-1. La persona se autentica (Supabase Auth).
-2. Por categoría, conecta un proveedor vía API o sube un import.
+1. La persona se autentica (Supabase Auth: correo/contraseña, Google, GitHub — D26).
+2. Por categoría, conecta un proveedor vía API o sube un import (guiado por proveedor).
 3. El backend extrae (API) o parsea (import) y normaliza al esquema común.
 4. Se guarda en Postgres, normalizado e indexado, aislado por usuario (RLS).
 5. Un generador produce el resumen curado a partir del almacén.
-6. Dos consumidores leen el mismo almacén: el servidor MCP (para la IA) y la web (para el dump).
+6. Tres consumidores leen el mismo almacén (D24): la web (el panel), el servidor MCP (consulta en vivo de la IA) y la descarga de contexto (archivos por categoría).
 
 ## 4. Modelo de conectores
 
@@ -42,47 +47,65 @@ modo de ingesta y sus `capabilities`. Las capas río abajo (normalización,
 persistencia, MCP, web) resuelven por el registro; añadir una categoría o un
 proveedor es implementar y registrar un conector. (D21)
 
-Catálogo objetivo de categorías y su proveedor inicial:
+Catálogo (D27) — proveedor inicial y alternativas visibles en la UI:
 
-| Categoría | Proveedor | Modo |
-|-----------|-----------|------|
-| Juegos | Steam | API |
-| Música | ListenBrainz | API |
-| Cine y TV | Trakt | API |
-| Anime y manga | AniList | API |
-| Actividad física | Strava | API |
-| Libros | Goodreads | Import |
-| Lugares | Swarm | API |
-| Comida | Beli | Import |
-| Juegos de mesa | BoardGameGeek | Import |
+| Categoría | Proveedor inicial | Modo | Alternativas |
+|-----------|------------------|------|--------------|
+| Juegos | Steam | API | GOG, PlayStation, Xbox, Epic |
+| Música | ListenBrainz | API | Last.fm, Spotify, Apple Music |
+| Cine y TV | Trakt | API | Letterboxd, TMDB, IMDb |
+| Anime y manga | AniList | API | MyAnimeList, Kitsu |
+| Actividad física | Strava | API | Garmin, Fitbit |
+| Libros | Goodreads | Import | StoryGraph, Hardcover, Open Library |
+| Lugares | Swarm | API | Google Maps |
+| Comida | Beli | Import (solo) | Untappd |
+| Juegos de mesa | BoardGameGeek | Import (solo) | — |
 
-Generalización del contrato: la mayoría son "obra + relación" (rating, estado,
-engagement); Lugares y Comida encajan tratando el sitio o el plato como obra.
-Actividad física (Strava) es de tipo evento/métrica (distancia, duración) y no
-es una "obra", por lo que el contrato normalizado debe admitir también esa
-forma. Por confirmar la forma exacta (D23).
+Estados por categoría: activa, apagada (sin datos) o en desarrollo (conector
+no listo; visible pero no activable). El catálogo se habilita secuencialmente
+(D27): en la v1 solo Juegos está implementada y las otras ocho aparecen "en
+desarrollo"; cada nueva categoría se construye, prueba y confirma antes de
+pasar a la siguiente. Generalización del contrato: la mayoría
+son "obra + relación" (rating, estado, engagement); Lugares y Comida encajan
+tratando el sitio o el plato como obra. Actividad física (Strava) es de tipo
+evento/métrica (distancia, duración) y no es una "obra", por lo que el
+contrato normalizado debe admitir también esa forma. Por confirmar la forma
+exacta (D23).
 
-## 5. Servidor MCP
+## 5. Salidas del contexto (D24)
+
+- **Descarga**: `GET /context/{category}` (autenticado) devuelve el archivo
+  `<categoria>.context.json` — resumen, tops, etiquetas y el histórico
+  normalizado de esa categoría. La web muestra vista previa (pestañas
+  JSON / MCP) antes de descargar.
+- **Servidor MCP**: la IA consulta en vivo, sin archivos. Ambas salidas se
+  generan del mismo almacén; el archivo es un corte estático, el MCP responde
+  acotado por consulta.
+
+## 6. Servidor MCP
 
 - Transporte: streamable-HTTP, con `stateless_http=True` para escalar sin estado de sesión en memoria.
-- Autenticación: token simple por usuario, validado por middleware. Migrable a OAuth 2.1 más adelante.
+- Autenticación: token simple por usuario (`eth_live_…`), validado por middleware; endpoint por usuario (`/mcp/u/<id>`). Migrable a OAuth 2.1 más adelante.
 - Expone: un resource de resumen compacto (lo siempre relevante) y tools de consulta parametrizadas (ventana, tipo, límite) sobre datos indexados.
+- Tools con namespace por categoría (D28): `games.top_by_hours`, `music.recent`, `books.currently_reading`, `<categoria>.summary`, …, más `profile.search` global. Mantener el total bajo (~25-30 máximo).
+- Cada respuesta informa cuánto contexto viajó (KB servidos vs. tamaño total del contexto de la categoría); la web lo enseña en el playground de Conectar IA.
 - Regla de seguridad: el token con que la IA se autentica ante el MCP nunca se reenvía a las APIs de terceros; las tools usan las credenciales del servidor.
 - Guardrail (D22): las tools que exponen datos del usuario requieren el middleware de token por usuario. Mientras no exista, solo se publican tools no sensibles (hoy `ping`); el endpoint `/mcp` no debe servir datos sin auth.
 
-## 6. Refresco
+## 7. Refresco
 
-- Solo para fuentes API. El botón encola una tarea en Supabase Queues; un worker la procesa, actualiza los datos y marca `last_synced_at`.
+- Solo para fuentes API. El botón (por categoría, o global desde Inicio) encola una tarea en Supabase Queues; un worker la procesa, actualiza los datos y marca `last_synced_at`.
 - Estrategia: incremental (solo re-consultar lo que cambió desde el último sync). Pendiente de afinar la llave de cambio por proveedor.
 - Para fuentes import, el equivalente a refrescar es volver a subir el export.
 
-## 7. Seguridad y privacidad
+## 8. Seguridad y privacidad
 
 - Tokens de terceros: cifrados a nivel de app (Fernet/AES-GCM) antes de guardarse en Postgres; la llave vive en el secret manager, nunca en el repo. Se descifran solo en memoria al llamar la API. Mejora futura opcional: envelope encryption con KMS.
 - Aislamiento entre usuarios: Row-Level Security en Postgres.
-- Login de la app: Supabase Auth.
+- Login de la app: Supabase Auth con correo/contraseña, Google y GitHub (D26). Steam no es login de la app: su OpenID es el flujo de conexión de la fuente de Juegos (D12).
+- Borrado: "eliminar todos los datos" borra el contexto conservando la cuenta; "eliminar cuenta" es borrado diferido con correo de deshacer de 30 días.
 
-### 7.1 Sesión y credenciales de terceros (planificado)
+### 8.1 Sesión y credenciales de terceros
 
 - Sesión: Supabase Auth autentica al usuario de la app (JWT/cookie de sesión).
 - "Guardar las APIs": las credenciales de terceros que aporta el usuario (tokens
@@ -94,15 +117,16 @@ forma. Por confirmar la forma exacta (D23).
   tokens OAuth resultantes se custodian en el mismo almacén cifrado.
 - El token del MCP por usuario es independiente y nunca se reenvía a terceros.
 
-## 8. Costo y compromisos
+## 9. Costo y compromisos
 
 - Objetivo: 0 USD/mes.
 - Compromiso de Render (free): el servicio se duerme tras inactividad y arranca en 30-50 s. Se mitiga combinando backend+MCP en un solo servicio, keep-alive ping, warm-up al cargar la web, estados "despertando" y reintento con backoff.
 - Compromiso de Supabase (free): los proyectos se pausan tras 7 días de inactividad; se mitiga con el mismo ping.
 - Sin lock-in: el mismo contenedor se mueve a Cloud Run sin cambiar código si se necesita rapidez (requiere tarjeta con tope de gasto).
 
-## 9. Repositorio y herramientas
+## 10. Repositorio y herramientas
 
 - Monorepo con carpetas claras: `/web` (TS), `/api` (Python, incluye el MCP), `/packages` o `/shared` para tipos comunes.
+- `/web` implementa el diseño de Claude Design (ver `design.md`): landing pública en `/`, auth, y el panel autenticado.
 - Tipos del esquema compartibles generando tipos TS desde el esquema Python (vía OpenAPI).
 - CI en GitHub Actions corriendo tests de todas las capas.

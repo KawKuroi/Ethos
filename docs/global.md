@@ -23,7 +23,7 @@ descriptivos (prosa), no DDL literal: al implementar se traducen a inglés.
 
 | Capa | Tecnología | Gestor |
 |------|-----------|--------|
-| Web (`/web`) | TypeScript — Next.js (App Router) + Recharts | pnpm |
+| Web (`/web`) | TypeScript — Next.js (App Router); tokens CSS + CSS Modules, SVG propio, `next/font`, `next-themes` (D29) | pnpm |
 | Backend + MCP (`/api`) | Python — FastAPI + FastMCP (un servicio) | uv |
 | Procesamiento | Polars + Pydantic v2 | uv |
 | Datos / auth / secretos / cola | Supabase (Postgres + Auth + Vault + Queues) | — |
@@ -37,7 +37,7 @@ costo: 0 USD/mes (free tiers).
 ```
 /                 raíz del monorepo
   /api            backend Python: FastAPI + FastMCP, conectores, normalización
-  /web            app Next.js (la diseña Claude Design; se integra después)
+  /web            app Next.js; implementa el diseño de Claude Design (design.md, D25)
   /packages       tipos y contratos compartidos (TS generados desde el esquema)
   /supabase       migraciones SQL, esquema y políticas RLS
   /docs           documentación de contexto (este directorio)
@@ -80,7 +80,8 @@ efesto reconoce cinco docs base más documentos de apoyo:
 - `roadmap.md` — fases con checkboxes y `## Histórico de fases completadas`.
 - `current.md` — estado vivo: fase activa, estado general y bitácora con fechas.
 - `global.md` — este documento (reglas invariables).
-- Apoyo: `data-model.md`, `decisions.md`.
+- Apoyo: `data-model.md`, `decisions.md`, `design.md` (resumen del diseño de
+  la UI; la fuente de verdad es el prototipo de Claude Design, D25).
 
 Reglas operativas de efesto: cero invenciones (ante ambigüedad real, preguntar),
 cero emojis, output condensado, dos únicos gates (enfoque y commit). El `commit`

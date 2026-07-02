@@ -5,9 +5,10 @@ estamos y lo actualiza al cerrar cada tarea (entrada con fecha `AAAA-MM-DD`).
 
 ## Estado general
 
-Proyecto en arranque. Documentación de contexto completa y adaptada a efesto.
-La interfaz (`/web`) se está diseñando aparte con Claude Design. El trabajo de
-código inicial se centra en backend + infraestructura.
+Proyecto en arranque. El diseño de la interfaz (Claude Design) está terminado
+y es la fuente de verdad de la UI (D25, `design.md`); los docs quedaron
+re-planteados a partir de él el 2026-07-02. El trabajo de código sigue en
+backend + infraestructura; `/web` se implementará contra el diseño.
 
 ## Activo
 
@@ -33,6 +34,21 @@ ping y poblar el secret manager (llave de cifrado y Steam API key).
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-02
+
+- Diseño de Claude Design revisado (app, auth y landing) y adoptado como
+  fuente de verdad de la UI. Docs re-planteados: nuevo `design.md` (tokens,
+  pantallas, interacciones); PRD con las dos salidas del contexto (descarga +
+  MCP) y el concepto "panel" (sustituye a "dump"); catálogo fijado en 9
+  categorías con estados y despliegue secuencial —una por una, probada y
+  confirmada antes de la siguiente; en la v1 solo Juegos activa y el resto
+  "en desarrollo"; Pódcasts y YouTube del prototipo quedan fuera—; auth de la
+  app = correo + Google + GitHub (Steam OpenID queda solo como conexión de
+  fuente); tools del MCP con namespace (`games.top_by_hours`…) y métrica de
+  KB servidos; web sin Recharts (tokens CSS + CSS Modules + SVG propio).
+  Decisiones D24-D29; roadmap con la implementación del diseño en Fase 1 y
+  pulido en Fase 4.
 
 ### 2026-06-30
 
