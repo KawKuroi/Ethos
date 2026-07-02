@@ -13,10 +13,12 @@ backend + infraestructura; `/web` se implementará contra el diseño.
 ## Activo
 
 **Fase 1 — Slice Juegos / Steam** (en curso, backend). Hecho: contrato de datos
-normalizado (`schema.py`), interfaz de conector (`connectors/base.py`) y conector
-de Steam (cliente HTTP + normalización de biblioteca, jugados recientes y perfil)
-con tests de fixtures; backend de credenciales de usuario (sesión por JWT de
-Supabase, cifrado Fernet y endpoints `/credentials`) sobre repositorio en memoria.
+normalizado (`schema.py`) generalizado a `Category` con las 9 categorías (D27),
+interfaz de conector (`connectors/base.py`), registro de conectores
+(`connectors/registry.py`, D21) y conector de Steam (cliente HTTP +
+normalización de biblioteca, jugados recientes y perfil) con tests de fixtures;
+backend de credenciales de usuario (sesión por JWT de Supabase con JWKS,
+cifrado Fernet y endpoints `/credentials`) sobre repositorio en memoria.
 Pendiente de Fase 1: repositorio de credenciales respaldado por Supabase (con
 estrategia RLS), persistencia indexada de juegos, wishlist y completado%
 (decisiones abiertas), generador del resumen, tools del MCP de juegos, refresco
@@ -34,6 +36,15 @@ ping y poblar el secret manager (llave de cifrado y Steam API key).
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-02 (Fase 1: contrato generalizado + registry)
+
+- `MediaCategory` → `Category` con los 9 ids del diseño (games, music, film,
+  anime, fitness, books, places, food, board) (D27) y registro de conectores
+  `connectors/registry.py` (D21): (categoría, proveedor) → clase de conector,
+  duplicado → ValueError, ausente → LookupError; Steam registrado. Credenciales
+  y conector de Steam sobre el enum nuevo. Tests nuevos del registry y del
+  catálogo. ruff, mypy y pytest (31, cobertura 96%) en verde.
 
 ### 2026-07-02 (revisión técnica)
 

@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ethos_api.connectors.steam.connector import SteamConnector, SteamRawData
-from ethos_api.schema import IngestMode, ItemStatus, MediaCategory
+from ethos_api.schema import Category, IngestMode, ItemStatus
 
 _FIXTURES = Path(__file__).parent.parent / "fixtures"
 
@@ -26,7 +26,7 @@ def _raw() -> SteamRawData:
 
 def test_identidad_del_conector() -> None:
     assert SteamConnector.id == "steam"
-    assert SteamConnector.category is MediaCategory.games
+    assert SteamConnector.category is Category.games
     assert SteamConnector.ingest_mode is IngestMode.api
 
 
@@ -37,7 +37,7 @@ def test_normaliza_biblioteca() -> None:
     por_appid = {item.work.external_ids["steam_appid"]: item for item in items}
 
     tf2 = por_appid["440"]
-    assert tf2.category is MediaCategory.games
+    assert tf2.category is Category.games
     assert tf2.status is ItemStatus.in_library
     assert tf2.work.title == "Team Fortress 2"
     assert tf2.engagement["playtime_minutes"] == 1200

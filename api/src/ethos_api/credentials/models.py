@@ -6,14 +6,14 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from ethos_api.schema import MediaCategory
+from ethos_api.schema import Category
 
 
 class ConnectCredentialInput(BaseModel):
     """Entrada para conectar una credencial (el token llega en claro y se cifra)."""
 
     provider: str
-    category: MediaCategory
+    category: Category
     token: str
 
 
@@ -22,7 +22,7 @@ class UserCredential(BaseModel):
 
     user_id: str
     provider: str
-    category: MediaCategory
+    category: Category
     encrypted_token: str
     created_at: datetime
     updated_at: datetime
@@ -32,6 +32,6 @@ class CredentialSummary(BaseModel):
     """Vista pública de una credencial: sin el token."""
 
     provider: str
-    category: MediaCategory
+    category: Category
     created_at: datetime
     updated_at: datetime

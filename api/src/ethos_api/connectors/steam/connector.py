@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from typing import Any, ClassVar
 
 from ethos_api.connectors.base import Connector
-from ethos_api.schema import IngestMode, ItemStatus, MediaCategory, NormalizedItem, Work
+from ethos_api.schema import Category, IngestMode, ItemStatus, NormalizedItem, Work
 
 
 @dataclass
@@ -34,7 +34,7 @@ class SteamConnector(Connector[SteamRawData]):
     """Conector del proveedor Steam."""
 
     id: ClassVar[str] = "steam"
-    category: ClassVar[MediaCategory] = MediaCategory.games
+    category: ClassVar[Category] = Category.games
     ingest_mode: ClassVar[IngestMode] = IngestMode.api
     capabilities: ClassVar[frozenset[str]] = frozenset(
         {"title", "status", "engagement", "external_ids"}
@@ -84,7 +84,7 @@ class SteamConnector(Connector[SteamRawData]):
         )
         return NormalizedItem(
             work=work,
-            category=MediaCategory.games,
+            category=Category.games,
             status=ItemStatus.in_library,
             engagement=engagement,
             source=self.id,

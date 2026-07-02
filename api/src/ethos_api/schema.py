@@ -13,13 +13,22 @@ from enum import StrEnum
 from pydantic import BaseModel, Field
 
 
-class MediaCategory(StrEnum):
-    """Dominio de medios al que pertenece una obra."""
+class Category(StrEnum):
+    """Dominio de gusto del catálogo (D27). Los valores son los ids del diseño."""
 
-    music = "music"
-    film_tv = "film_tv"
-    books = "books"
     games = "games"
+    music = "music"
+    # Cine y TV
+    film = "film"
+    # Anime y manga
+    anime = "anime"
+    # Actividad física
+    fitness = "fitness"
+    books = "books"
+    places = "places"
+    food = "food"
+    # Juegos de mesa (el namespace MCP es tabletop.*; se mapea en esa capa)
+    board = "board"
 
 
 class ItemStatus(StrEnum):
@@ -56,7 +65,7 @@ class NormalizedItem(BaseModel):
     """Un registro normalizado: la obra, la relación con ella y metadatos."""
 
     work: Work
-    category: MediaCategory
+    category: Category
     status: ItemStatus
 
     # Capa universal de la relación.

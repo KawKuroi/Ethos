@@ -25,8 +25,8 @@ Backend:
 - [ ] Refresco asíncrono con cola y estados de frescura.
 - [ ] Sesión de usuario (Supabase Auth) y almacenamiento cifrado de credenciales de terceros (tabla `user_credentials`). (D20)
 - [ ] Middleware de auth del MCP (token por usuario) antes de exponer tools de datos. (D22)
-- [ ] Registro de conectores (registry) y modelo de extensión de categorías/proveedores. (D21)
-- [ ] Generalización del enum: `MediaCategory` → `Category` con las 9 categorías (la web enseña el catálogo completo desde el día 1). (D23/D27)
+- [x] Registro de conectores (registry) y modelo de extensión de categorías/proveedores. (D21)
+- [x] Generalización del enum: `MediaCategory` → `Category` con las 9 categorías (la web enseña el catálogo completo desde el día 1). (D23/D27)
 
 Web — implementación del diseño (`design.md`, D25/D29):
 

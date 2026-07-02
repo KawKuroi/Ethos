@@ -11,7 +11,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import ClassVar
 
-from ethos_api.schema import IngestMode, MediaCategory, NormalizedItem
+from ethos_api.schema import Category, IngestMode, NormalizedItem
 
 
 class Connector[RawT](ABC):
@@ -19,7 +19,7 @@ class Connector[RawT](ABC):
 
     # Identidad del conector.
     id: ClassVar[str]
-    category: ClassVar[MediaCategory]
+    category: ClassVar[Category]
     ingest_mode: ClassVar[IngestMode]
     # Campos del contrato normalizado que esta fuente puede poblar.
     capabilities: ClassVar[frozenset[str]]
