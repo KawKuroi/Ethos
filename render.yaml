@@ -1,0 +1,27 @@
+# Blueprint de Render: un único servicio con la API y el MCP (D3).
+# Los secretos se piden en el dashboard al crear el blueprint (sync: false);
+# nunca viven en el repo.
+services:
+  - type: web
+    name: ethos-api
+    runtime: python
+    plan: free
+    rootDir: api
+    buildCommand: pip install uv && uv sync --frozen --no-dev
+    startCommand: uv run uvicorn ethos_api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: ENVIRONMENT
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: STEAM_API_KEY
+        sync: false
