@@ -113,7 +113,7 @@ Tabla `user_credentials` (D20) para "guardar las APIs" del usuario:
 | user_id | dueño (FK a `auth.users`) |
 | category | categoría (games, music, ...) |
 | provider | proveedor (steam, listenbrainz, ...) |
-| encrypted_token | credencial cifrada a nivel de app (Fernet/AES-GCM) |
+| encrypted_token | credencial cifrada a nivel de app (Fernet) |
 | created_at / updated_at | timestamps |
 
 Una credencial por `(user_id, provider)`. RLS owner-only (`auth.uid() = user_id`).

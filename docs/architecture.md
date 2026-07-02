@@ -100,7 +100,7 @@ exacta (D23).
 
 ## 8. Seguridad y privacidad
 
-- Tokens de terceros: cifrados a nivel de app (Fernet/AES-GCM) antes de guardarse en Postgres; la llave vive en el secret manager, nunca en el repo. Se descifran solo en memoria al llamar la API. Mejora futura opcional: envelope encryption con KMS.
+- Tokens de terceros: cifrados a nivel de app (Fernet: AES-128-CBC + HMAC) antes de guardarse en Postgres; la llave vive en el secret manager, nunca en el repo. Se descifran solo en memoria al llamar la API. Mejora futura opcional: envelope encryption con KMS.
 - Aislamiento entre usuarios: Row-Level Security en Postgres.
 - Login de la app: Supabase Auth con correo/contraseña, Google y GitHub (D26). Steam no es login de la app: su OpenID es el flujo de conexión de la fuente de Juegos (D12).
 - Borrado: "eliminar todos los datos" borra el contexto conservando la cuenta; "eliminar cuenta" es borrado diferido con correo de deshacer de 30 días.
@@ -108,9 +108,12 @@ exacta (D23).
 ### 8.1 Sesión y credenciales de terceros
 
 - Sesión: Supabase Auth autentica al usuario de la app (JWT/cookie de sesión).
+- Verificación del JWT en el backend: soporta las llaves de firma asimétricas
+  de Supabase (ES256/RS256 vía JWKS, con caché de llaves) y el secreto HS256
+  legacy como fallback; exige `exp` y `sub`, y valida `aud` e `iss`.
 - "Guardar las APIs": las credenciales de terceros que aporta el usuario (tokens
   o keys, p. ej. ListenBrainz, Trakt) se guardan en la tabla `user_credentials`
-  cifradas a nivel de app (Fernet/AES-GCM), con la llave en el secret manager
+  cifradas a nivel de app (Fernet), con la llave en el secret manager
   (D9, D20). Se descifran solo en memoria al llamar la API; nunca viajan al cliente.
 - RLS owner-only en `user_credentials` (aislamiento por usuario).
 - Para proveedores OpenID/OAuth (Steam, Trakt, Strava), el identificador o los

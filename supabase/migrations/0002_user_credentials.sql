@@ -1,5 +1,5 @@
 -- Migración 0002: credenciales de terceros por usuario
--- Token cifrado a nivel de app (Fernet/AES-GCM); la llave vive en el secret
+-- Token cifrado a nivel de app (Fernet: AES-128-CBC + HMAC); la llave vive en el secret
 -- manager, nunca en la BD. RLS owner-only. Reutiliza set_updated_at() de 0001.
 
 create table if not exists public.user_credentials (

@@ -39,7 +39,25 @@ def test_get_player_summary_parsea() -> None:
     assert data["response"]["players"][0]["steamid"] == "76561197960287930"
 
 
+def test_get_recently_played_parsea() -> None:
+    client = _client_con_respuesta(_load("steam_recently_played.json"))
+    data = client.get_recently_played("123")
+    assert data["response"]["games"][0]["appid"] == 440
+
+
 def test_error_en_no_200() -> None:
     client = _client_con_respuesta({}, status_code=403)
+    with pytest.raises(SteamApiError):
+        client.get_owned_games("123")
+
+
+def test_error_en_respuesta_no_dict() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=[1, 2, 3])
+
+    http = httpx.Client(
+        transport=httpx.MockTransport(handler), base_url="https://api.steampowered.com"
+    )
+    client = SteamApiClient(api_key="test-key", client=http)
     with pytest.raises(SteamApiError):
         client.get_owned_games("123")

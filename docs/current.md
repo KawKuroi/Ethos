@@ -35,6 +35,24 @@ ping y poblar el secret manager (llave de cifrado y Steam API key).
 
 ## Bitácora
 
+### 2026-07-02 (revisión técnica)
+
+- Revisión del backend con quick wins aplicados: verificación de JWT con
+  soporte JWKS (ES256/RS256 con caché; HS256 legacy como fallback) y claims
+  obligatorios (`exp`, `sub`, `aud`, `iss` si hay URL); `SecretStr` para los
+  secretos de config; pin `fastmcp>=3.4,<4` y `httpx<1`; ruff con reglas `S`
+  (bandit) y `RUF`; pytest-cov con umbral 85% (hoy ~95%); helpers de JWT
+  deduplicados en `tests/helpers.py` + fixtures en `conftest.py`; tests
+  nuevos (token expirado / sin exp / aud incorrecta / ES256 sin URL, roundtrip
+  real del tool `ping` in-memory, DELETE 404, recently_played, respuesta
+  no-dict de Steam); CI con cache de uv, push solo en main y `paths-ignore`
+  de docs; corregida la mención "Fernet/AES-GCM" → Fernet (AES-128-CBC+HMAC).
+  Roadmap: la generalización `Category` (9) se adelanta a Fase 1. Pendientes
+  anotados para sus tareas: CORS al llegar `/web`, repositorio Supabase con
+  Protocol async (API con JWT del usuario vía RLS; worker con service_role),
+  validación de `provider` contra el registry (D21), Polars solo cuando llegue
+  el primer import grande.
+
 ### 2026-07-02
 
 - Diseño de Claude Design revisado (app, auth y landing) y adoptado como

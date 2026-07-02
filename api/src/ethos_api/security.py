@@ -30,7 +30,7 @@ class TokenCipher:
 
 def get_cipher() -> TokenCipher:
     """Dependencia: construye el cifrador con la llave del entorno."""
-    return TokenCipher(settings.encryption_key)
+    return TokenCipher(settings.encryption_key.get_secret_value())
 
 
 CipherDep = Annotated[TokenCipher, Depends(get_cipher)]
