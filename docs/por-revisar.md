@@ -37,3 +37,7 @@ Marca `[x]` conforme lo revises.
   en desarrollo, p. ej. `/app/categoria/music`.
 - [ ] **Fuentes** — `/app/fuentes`: resumen, grupo Activas (Juegos) y grupo En
   desarrollo (las cuatro).
+- [ ] **Conectar IA** — `/app/conectar-ia`: endpoint/token (placeholder), tres
+  pasos y el playground (toca una consulta o escribe la tuya; mira el panel "Lo
+  que pasa por detrás"). Ojo: endpoint/token/estado son **simulados** hasta el
+  backend del MCP.

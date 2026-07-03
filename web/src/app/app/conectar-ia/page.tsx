@@ -1,5 +1,5 @@
-import { ScreenPlaceholder } from "@/components/app/screen-placeholder";
+import { ConnectAi } from "@/components/app/connect/connect";
 
 export default function ConnectAiPage() {
-  return <ScreenPlaceholder name="Conectar IA" />;
+  return <ConnectAi />;
 }

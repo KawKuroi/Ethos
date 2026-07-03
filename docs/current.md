@@ -42,6 +42,18 @@ producción.
 
 ## Bitácora
 
+### 2026-07-03 (Fase 1: web · Conectar IA)
+
+- Pantalla Conectar IA (`components/app/connect/`: `connect` (client), `data`,
+  css + test) en `/app/conectar-ia`: tarjeta de estado del servidor (toggle
+  simulado), tarjeta de conexión (endpoint/token placeholder con copiar
+  "copiado ✓"), tres pasos, y playground "Pruébalo" con lado natural (chat con
+  chips de consultas de Juegos + input propio con matching simple, typing
+  efímero → respuesta con items) y lado técnico "Lo que pasa por detrás" (tool
+  200 OK, barra de contexto que viaja, JSON crudo). Sin LLM (v1). 3 tests
+  nuevos; tsc, eslint, vitest (31) y build en verde. Pendiente del backend del
+  MCP: endpoint/token/estado reales por usuario y el matching real.
+
 ### 2026-07-03 (Fase 1: web · Fuentes)
 
 - Vista de Fuentes (`components/app/sources/`: `sources` + css + test) en

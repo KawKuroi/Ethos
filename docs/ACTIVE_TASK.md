@@ -1,40 +1,47 @@
-# ACTIVE_TASK — Web: Fuentes
+# ACTIVE_TASK — Web: Conectar IA
 
-Fase 1 · Web. Vista única de Fuentes del diseño (`App Ethos.dc.html`): resumen
-(4 cifras) y grupos Activas / Apagadas / En desarrollo, cada categoría con su
-salud/estado y acceso al detalle. v1: Juegos activa; Música/Cine/Anime/Libros en
-desarrollo; sin apagadas (grupo oculto).
+Fase 1 · Web. Pantalla Conectar IA del diseño (`App Ethos.dc.html`): estado del
+servidor MCP, tarjeta de conexión (endpoint + token con copiar), tres pasos, y
+el playground "Pruébalo" (lado natural con chat + lado técnico "Lo que pasa por
+detrás": tool + args, contexto que viaja, respuesta JSON).
 
 ### 1. Contexto y Archivos Afectados
 
-Reutiliza `CATEGORY_DETAIL` (nombre, proveedor, accent, salud, fresh, modo,
-soonEta). Cards enlazan al detalle (`/app/categoria/<slug>`).
+Sin backend de MCP ni sesión todavía: endpoint/token son placeholder (los reales
+llegan con el middleware de auth del MCP y el endpoint por usuario) y el
+playground es simulado con datos de ejemplo de Juegos (única activa; sin LLM en
+v1). El estado de conexión se simula localmente (toggle).
 
 Archivos (se crean salvo indicación):
-- `web/src/components/app/sources/*` — componente, estilos y test.
-- `web/src/app/app/fuentes/page.tsx` (mod) — renderiza `<Sources/>`.
+- `web/src/components/app/connect/*` — datos, estilos, componente y test.
+- `web/src/app/app/conectar-ia/page.tsx` (mod) — renderiza `<ConnectAi/>`.
 
 ### 2. Evaluación Crítica
 
-**Veredicto: directa; deriva de los datos de categoría.** Opción recomendada:
-resumen + Activas + En desarrollo (Apagadas oculto en v1). Deuda: método
-API/import no se muestra aún (no aporta sin apagadas); datos de ejemplo.
+**Veredicto: la pantalla más interactiva; simulada como pide el roadmap (sin
+LLM).** Opción recomendada: endpoint/token placeholder + tres pasos + playground
+con consultas de Juegos y panel técnico. Deuda anotada: endpoint/token/estado
+reales y matching de consultas llegan con el backend del MCP.
 
 ### 3. Plan de Acción Detallado
 
-- [x] **Paso 1: [sources/sources.module.css]** estilos: grid de resumen (4),
-  encabezados de grupo, cards activa/soon con salud y CTA.
-- [x] **Paso 2: [sources/sources.tsx]** deriva de `CATEGORY_DETAIL`: resumen
-  (activas · expuestas por MCP · apagadas · en desarrollo), grupo Activas (card
-  con inicial, salud, proveedor·modo·fresh, "Abrir →" al detalle) y grupo En
-  desarrollo (card con icono, proveedor·ETA, chip "Próximamente"); Apagadas solo
-  si las hubiera. `eth-screen`.
-- [x] **Paso 3: [app/app/fuentes/page.tsx]** renderiza `<Sources/>`.
-- [x] **Paso 4: [sources/sources.test.tsx]** resumen visible, Juegos en Activas
-  con enlace al detalle, y las cuatro categorías en desarrollo.
+- [x] **Paso 1: [connect/data.ts]** `ENDPOINT`, `TOKEN`, `STEPS` (3) y
+  `MCP_QUERIES` (consultas de ejemplo de Juegos con tool, args, ctx/full/pct,
+  answer, items y response JSON).
+- [x] **Paso 2: [connect/connect.module.css]** estilos: tarjeta de estado,
+  conexión (endpoint/token + copiar), tres pasos, playground (dos columnas: chat
+  y panel técnico), input y respuestas.
+- [x] **Paso 3: [connect/connect.tsx]** ("use client") estado del servidor
+  (toggle simulado), copiar endpoint/token ("copiado ✓"), tres pasos, y
+  playground: elegir consulta o escribir la propia (matching simple a Juegos),
+  con typing efímero → respuesta y el panel técnico (tool 200 OK, barra de
+  contexto, JSON crudo). `eth-screen`.
+- [x] **Paso 4: [app/app/conectar-ia/page.tsx]** renderiza `<ConnectAi/>`.
+- [x] **Paso 5: [connect/connect.test.tsx]** endpoint/token visibles; elegir una
+  consulta muestra la respuesta y el panel técnico (tool + JSON).
 
 ### 4. Reporte de Pruebas
 
-**[APROBADO]** — tsc, eslint sin incidencias; vitest 28/28 (3 nuevos de
-`sources`); build OK. Idioma correcto; secretos limpio; sin `any` nuevos.
-Verificación visual real: la hace el usuario en producción.
+**[APROBADO]** — tsc, eslint sin incidencias; vitest 31/31 (3 nuevos de
+`connect`); build OK. Endpoint/token son placeholder enmascarado (sin secreto
+real); playground simulado sin LLM. Sin `any` nuevos. Verificación visual: usuario.
