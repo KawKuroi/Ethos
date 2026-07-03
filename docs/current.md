@@ -42,6 +42,23 @@ producción.
 
 ## Bitácora
 
+### 2026-07-03 (Fase 1: web · Shell de la app)
+
+- Armazón de la app del diseño (`App Ethos.dc.html`): layout compartido bajo
+  `/app` (`src/app/app/layout.tsx`) con barra lateral (`components/app/`:
+  `sidebar`, `app-header`, `nav`, `nav-icons`, `screen-placeholder` +
+  `app.module.css`). Nav lateral (Inicio · Fuentes · Conectar IA · Ayuda) con
+  resaltado por `usePathname`, badge ámbar pulsante en "Conectar IA"
+  (`mcpConnected` fijo en falso hasta la tarea de Conectar IA), footer de perfil
+  + engrane → `/app/ajustes`; header sticky con título/subtítulo por pantalla.
+  Rutas por pantalla como placeholders dentro del shell (`/app`, `/app/fuentes`,
+  `/app/conectar-ia`, `/app/ayuda`, `/app/ajustes`); el `/app` de placeholder de
+  pantalla completa pasa a Inicio dentro del shell. Segmentos en español, como
+  la auth. Responsivo mínimo (aside → top bar en <820px). 3 tests nuevos
+  (Vitest, `usePathname` mockeado); tsc, eslint, vitest (18) y build en verde.
+  Diferido: contenido de cada pantalla (ítems propios del roadmap), estado real
+  del MCP y guardas de ruta por sesión.
+
 ### 2026-07-03 (Fase 1: web · Auth, D26)
 
 - Pantallas de autenticación del diseño (Claude Design, `Auth Ethos.dc.html`)

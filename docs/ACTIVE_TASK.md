@@ -1,110 +1,100 @@
-# ACTIVE_TASK — Web: Auth (login / registro / recuperación) · D26
+# ACTIVE_TASK — Web: Shell de la app (navegación lateral + header + badge)
 
-Fase 1 · Web. Implementar las pantallas de autenticación del diseño (Claude
-Design, `Auth Ethos.dc.html`) cableadas a Supabase Auth: login y registro con
-correo + contraseña, Google y GitHub, y recuperación de contraseña. (D26)
+Fase 1 · Web. Implementar el armazón de la app del diseño (Claude Design,
+`App Ethos.dc.html`): barra lateral con navegación (Inicio · Fuentes · Conectar
+IA · Ayuda + Ajustes), header con título/subtítulo por pantalla y el badge
+pulsante en "Conectar IA" mientras la IA no esté conectada. Las pantallas
+concretas (Inicio, Detalle, Fuentes, etc.) son tareas aparte del roadmap: aquí
+se dejan como placeholders dentro del shell.
 
 ### 1. Contexto y Archivos Afectados
 
-Estado: `/web` (Next.js 16, App Router, CSS Modules + tokens, next-themes) NO
-tiene ninguna integración con Supabase todavía. La landing ya está construida;
-la shell de la app es un placeholder (`app/app/page.tsx`). El diseño de auth es
-un layout partido (panel de marca + formulario) con toggle segmentado
-login/registro, social Google/GitHub, campos (Nombre solo en registro, Correo,
-Contraseña con mostrar/ocultar y mínimo 8), checkbox de Términos en registro,
-spinner de submit y toggle de tema. El prototipo es UI pura (submit hace spin,
-social y "olvidaste" son noop): la lógica real la aporta esta tarea.
+Estado: `/web` con la landing y la auth ya construidas. `app/app/page.tsx` es un
+placeholder de pantalla completa; tras el login la auth redirige a `/app`. El
+diseño (`App Ethos.dc.html`, resumen en `design.md` §2) define un `<aside>` de
+250px (logo, nav con iconos, footer de perfil + engrane) y un `<main>` con header
+sticky (título + subtítulo). El badge es un punto ámbar pulsante (`animation:
+pulse`) junto a "Conectar IA" cuando `mcpConnected` es falso. Los títulos por
+pantalla del diseño: Inicio "Tu perfil / El gusto, reunido y normalizado",
+Fuentes, Conectar IA, Ayuda y Ajustes (líneas del diseño).
 
-Fuente de verdad del diseño: `D:\Programacion\Proyectos\Ethos_claude_design\
-Auth Ethos.dc.html` (resumen en `design.md` §3).
+Rutas en español para segmentos de cara al usuario, como en la auth ya publicada
+(`/auth/recuperar`, `/auth/nueva-clave`): `/app`, `/app/fuentes`,
+`/app/conectar-ia`, `/app/ayuda`, `/app/ajustes`.
 
 Archivos directamente implicados (se crean salvo indicación):
-- `web/package.json` — deps `@supabase/supabase-js` + `@supabase/ssr`.
-- `web/src/lib/supabase/*` — clientes de Supabase (browser + server).
-- `web/src/components/auth/*` — panel de marca, formulario y estilos.
-- `web/src/app/auth/**` — rutas: pantalla principal, recuperar, nueva clave y
-  callback OAuth.
-- `web/src/components/landing/{header,hero}.tsx` (mod) — "Abrir la app" → `/auth`.
+- `web/src/components/app/*` — datos de navegación, estilos, sidebar, header y
+  placeholder de pantalla.
+- `web/src/app/app/layout.tsx` — layout con el shell.
+- `web/src/app/app/page.tsx` (mod) + `fuentes|conectar-ia|ayuda|ajustes/page.tsx`
+  — pantallas como placeholders dentro del shell.
 
 ### 2. Evaluación Crítica
 
-**Veredicto: buena tarea, alineada con PRD/diseño/roadmap.** Auth es el pórtico
-de la app y el diseño está cerrado. Dos fronteras a respetar:
+**Veredicto: buena tarea, directa y bien acotada.** El shell es un layout
+compartido de Next (App Router): un `layout.tsx` bajo `/app` que envuelve las
+rutas de pantalla. Encaja con el diseño y con la redirección post-login que
+quedó apuntando a `/app`.
 
-- **Dependencia de infra (OAuth).** Google y GitHub exigen habilitar los
-  proveedores en el panel de Supabase (client id/secret + redirect URLs) y
-  poblar `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY` en Vercel. Es trabajo de cuenta del
-  usuario, como en Fase 0; el código queda listo y funciona en cuanto se
-  configure. El correo+contraseña sí opera ya (Email auth quedó habilitado en
-  Fase 0). Se documenta como seguimiento, no bloquea el ciclo (typecheck / lint
-  / build / tests no requieren credenciales reales).
-- **Frontera con "Shell de la app".** La protección de rutas, el guardado de
-  sesión global y el redireccionamiento fino pertenecen a la tarea de Shell
-  (roadmap/design). Aquí: cliente con sesión por cookies (listo para la Shell),
-  y tras login/registro correcto se redirige a `/app`.
+Fronteras y decisiones:
+- **Contenido de pantallas fuera de alcance.** Inicio, Detalle, Fuentes, Conectar
+  IA, Ayuda y Ajustes son ítems propios del roadmap; aquí van como placeholders.
+  Las acciones del header dependientes de pantalla (p. ej. "Refrescar todo" en
+  Fuentes) llegan con cada pantalla.
+- **Estado de conexión del MCP.** No hay backend de sesión MCP todavía: el badge
+  usa `mcpConnected = false` fijo (placeholder), de modo que el badge se ve. Se
+  sustituirá por estado real en la tarea de Conectar IA.
+- **Resaltado activo** por `usePathname` (sidebar y header como client
+  components); el resto del shell es estático.
 
 Opciones de alcance:
-1. **UI + Supabase (correo + OAuth + recuperación), sesión mínima** — cumple el
-   ítem del roadmap y es verificable en CI. **[Recomendada]**
-2. Solo UI (espejo del prototipo, sin Supabase) — infra-entrega: el roadmap pide
-   los proveedores; habría que rehacerlo.
-3. Auth completo con middleware de rutas protegidas y sesión global — se solapa
-   con "Shell de la app" y no es testeable sin la config de OAuth.
+1. **Shell (layout + nav + header + badge) con placeholders por pantalla** —
+   cumple el ítem del roadmap sin invadir las pantallas. **[Recomendada]**
+2. Shell + contenido de Inicio — mezcla dos ítems del roadmap.
+3. Solo la barra lateral, sin rutas por pantalla — deja la navegación sin destino.
 
 Deuda técnica prevista (concreta):
-- OAuth Google/GitHub inoperante hasta configurar proveedores en Supabase
-  (seguimiento anotado en `current.md`).
-- Guardado/expiración de sesión y guardas de ruta diferidos a la Shell.
-- Se reutiliza `next-themes` (`ThemeToggle` existente) para el toggle de auth en
-  vez del `ethos_theme` separado del prototipo, por consistencia con la web ya
-  construida.
-- Sin `packages/` de tipos compartidos aún; el cliente lee env vía
-  `process.env.NEXT_PUBLIC_*`.
+- Badge con estado fijo hasta que exista la conexión MCP real.
+- Responsividad mínima (la barra pasa a top bar en pantallas estrechas); el
+  diseño fino móvil se pulirá en Fase 4.
+- Sin guardas de ruta aún (sesión): diferido a integrarse cuando la Shell y el
+  auth se junten; hoy `/app` es accesible directo (igual que el placeholder
+  previo).
 
 ### 3. Plan de Acción Detallado
 
-Bloque A — Dependencias y clientes de Supabase
-- [x] **Paso 1: [web/package.json]** añadir dependencias `@supabase/supabase-js`
-  y `@supabase/ssr`.
-- [x] **Paso 2: [web/.env.example]** nuevo archivo con `NEXT_PUBLIC_SUPABASE_URL`
-  y `NEXT_PUBLIC_SUPABASE_ANON_KEY` (documentados, sin valores).
-- [x] **Paso 3: [web/src/lib/supabase/client.ts]** `getBrowserClient()` con
-  `createBrowserClient` de `@supabase/ssr`, instanciado de forma perezosa (solo
-  dentro de handlers) para no romper el build sin env.
-- [x] **Paso 4: [web/src/lib/supabase/server.ts]** `getServerClient()` con
-  `createServerClient` y el store de cookies (para el callback OAuth).
+Bloque A — Datos y layout del shell
+- [x] **Paso 1: [web/src/components/app/nav.ts]** `NAV` (id, label, href, clave de
+  icono) para Inicio/Fuentes/Conectar IA/Ayuda y `SCREEN_META` (href →
+  {title, sub}) con los textos del diseño, incluida la ruta de Ajustes.
+- [x] **Paso 2: [web/src/components/app/app.module.css]** estilos del shell: aside
+  250px, logo, nav con estado activo y hover, badge pulsante, footer de perfil,
+  header sticky, contenedor de main; responsivo (aside → top bar en <820px) y
+  `prefers-reduced-motion`.
+- [x] **Paso 3: [web/src/components/app/nav-icons.tsx]** iconos SVG inline del
+  diseño (grid, nodos, estrella, ayuda, engrane) por clave.
+- [x] **Paso 4: [web/src/components/app/sidebar.tsx]** ("use client") logo +
+  wordmark, nav con resaltado por `usePathname`, badge en "Conectar IA" cuando
+  `mcpConnected` es falso, footer "Tu perfil / @tu_gusto" + engrane → `/app/ajustes`.
+- [x] **Paso 5: [web/src/components/app/app-header.tsx]** ("use client") título +
+  subtítulo según `usePathname` desde `SCREEN_META`.
+- [x] **Paso 6: [web/src/app/app/layout.tsx]** compone `Sidebar` + `main`
+  (`AppHeader` + contenedor + `children`).
 
-Bloque B — Pantallas de auth (fieles al diseño)
-- [x] **Paso 5: [web/src/components/auth/auth.module.css]** estilos del layout
-  partido, panel de marca (sparks flotantes), campos, social, divisor, checkbox,
-  submit y spinner, desde los tokens; con `prefers-reduced-motion`.
-- [x] **Paso 6: [web/src/components/auth/brand-panel.tsx]** panel de marca
-  estático (wordmark, "Tu gusto, hecho contexto.", 3 perks, nota de privacidad).
-- [x] **Paso 7: [web/src/components/auth/auth-form.tsx]** ("use client")
-  formulario segmentado login/registro: estado de modo, campos, mostrar/ocultar
-  contraseña, checkbox de Términos (obligatorio en registro), validación de
-  correo y mínimo 8, spinner, mensajes de error en español. Acciones:
-  `signInWithPassword`, `signUp`, `signInWithOAuth({provider})` con
-  `redirectTo` al callback; enlace "¿Olvidaste tu contraseña?" → `/auth/recuperar`.
-- [x] **Paso 8: [web/src/app/auth/page.tsx]** compone `BrandPanel` + `AuthForm`
-  + `ThemeToggle`.
-- [x] **Paso 9: [web/src/app/auth/recuperar/page.tsx]** solicitar restablecimiento
-  (correo → `resetPasswordForEmail` con `redirectTo` a `/auth/nueva-clave`),
-  con estado "Enviado ✓".
-- [x] **Paso 10: [web/src/app/auth/nueva-clave/page.tsx]** fijar nueva contraseña
-  (`updateUser({password})`) tras el enlace del correo.
-- [x] **Paso 11: [web/src/app/auth/callback/route.ts]** intercambia el código por
-  sesión (`exchangeCodeForSession`) y redirige a `/app`; a `/auth` con error si
-  falla.
+Bloque B — Pantallas como placeholders dentro del shell
+- [x] **Paso 7: [web/src/components/app/screen-placeholder.tsx]** placeholder
+  reutilizable ("en construcción") con `eth-screen`, que recibe el nombre.
+- [x] **Paso 8: [web/src/app/app/page.tsx]** (mod) Inicio usa el placeholder
+  dentro del shell (deja de ser pantalla completa).
+- [x] **Paso 9: [web/src/app/app/fuentes/page.tsx]** placeholder.
+- [x] **Paso 10: [web/src/app/app/conectar-ia/page.tsx]** placeholder.
+- [x] **Paso 11: [web/src/app/app/ayuda/page.tsx]** placeholder.
+- [x] **Paso 12: [web/src/app/app/ajustes/page.tsx]** placeholder.
 
-Bloque C — Entrada desde la landing
-- [x] **Paso 12: [web/src/components/landing/{header,hero}.tsx]** "Abrir la app"
-  apunta a `/auth`.
-
-Bloque D — Tests
-- [x] **Paso 13: [web/src/components/auth/auth-form.test.tsx]** con el cliente de
-  Supabase mockeado: render, alternar login/registro, validación (mínimo 8,
-  Términos), mostrar/ocultar contraseña y que el submit llama al método correcto.
+Bloque C — Tests
+- [x] **Paso 13: [web/src/components/app/sidebar.test.tsx]** con `usePathname`
+  mockeado: render de los 4 destinos, resaltado del activo y badge visible en
+  "Conectar IA".
 
 ### 4. Reporte de Pruebas
 
@@ -112,12 +102,9 @@ Bloque D — Tests
 
 - `tsc --noEmit`: sin errores.
 - `eslint`: sin warnings.
-- `vitest run`: 15/15 (6 nuevos de `auth-form`; ajustado `page.test.tsx` porque
-  los CTA de la landing pasan de `/app` a `/auth`).
-- `next build`: OK; rutas `/auth`, `/auth/recuperar`, `/auth/nueva-clave`
-  (estáticas) y `/auth/callback` (dinámica) generadas.
-- Idioma: identificadores en inglés, texto humano en español (convención D19).
-- Secretos: grep sin credenciales hardcodeadas; solo `.env.example` con claves
-  vacías. Sin tipos `any` nuevos.
-- Verificación visual real: la hace el usuario en producción (OAuth requiere
-  habilitar Google/GitHub en Supabase).
+- `vitest run`: 18/18 (3 nuevos de `sidebar`).
+- `next build`: OK; rutas `/app`, `/app/fuentes`, `/app/conectar-ia`,
+  `/app/ayuda`, `/app/ajustes` (estáticas) generadas bajo el layout del shell.
+- Idioma: identificadores en inglés, texto humano en español (D19).
+- Secretos: grep sin credenciales; sin tipos `any` nuevos.
+- Verificación visual real: la hace el usuario en producción.
