@@ -3,15 +3,6 @@
 Fases de construcción. Cada tarea se marca `[x]` al completarse; al cerrarse una
 fase entera se mueve a `## Histórico de fases completadas`.
 
-## Fase 0 — Fundación
-
-- [x] Monorepo con `/web` (TS) y `/api` (Python, incluye MCP).
-- [ ] Supabase: proyecto, Auth, esquema base, Row-Level Security.
-- [ ] Servicio en Render (backend + MCP combinados) y web en Vercel, desplegando un esqueleto.
-- [ ] Keep-alive ping configurado.
-- [ ] Secret manager con la llave de cifrado y la Steam API key.
-- [x] CI en GitHub Actions con la estructura de tests vacía pero corriendo.
-
 ## Fase 1 — Slice vertical: Juegos / Steam (la v1)
 
 Backend:
@@ -91,7 +82,17 @@ inicial; alternativas según D4/D6/D27):
 - Destino de las sugerencias (tabla + ¿aviso por correo?) y del contacto personal.
 - Objetivos concretos de cobertura de tests y umbrales de CI.
 - Estrategia de caché de catálogos globales (esquema de logros, metadatos de juegos) compartidos entre usuarios.
+- El ping de keep-alive golpea `/health`, que no toca Supabase: añadir un toque de BD (o cron) para evitar su pausa a los 7 días.
 
 ## Histórico de fases completadas
 
-_(Aún ninguna. Las fases cerradas se moverán aquí con un resumen breve.)_
+### Fase 0 — Fundación (cerrada 2026-07-02)
+
+Monorepo `/api` (FastAPI + FastMCP) + `/web` (Next.js) con CI completo
+(ruff, mypy, pytest+cobertura; eslint, tsc, vitest, build). Supabase real con
+migraciones 0001-0002 aplicadas y Email auth. Backend en Render vía blueprint
+(`render.yaml`): https://ethos-api-s10w.onrender.com — `/health` y el
+handshake MCP en `/mcp/` verificados en producción. Web en Vercel:
+https://ethos-steel.vercel.app. Keep-alive de UptimeRobot cada 5 min.
+Secretos solo en Render y `.env` local (ENCRYPTION_KEY Fernet generada,
+Steam API key cargada, JWT por JWKS sin secreto legacy).

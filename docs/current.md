@@ -5,10 +5,14 @@ estamos y lo actualiza al cerrar cada tarea (entrada con fecha `AAAA-MM-DD`).
 
 ## Estado general
 
-Proyecto en arranque. El diseño de la interfaz (Claude Design) está terminado
-y es la fuente de verdad de la UI (D25, `design.md`); los docs quedaron
-re-planteados a partir de él el 2026-07-02. El trabajo de código sigue en
-backend + infraestructura; `/web` se implementará contra el diseño.
+Fase 0 cerrada: infraestructura viva en producción (Render + Vercel +
+Supabase + keep-alive). El diseño de la interfaz (Claude Design) está
+terminado y es la fuente de verdad de la UI (D25, `design.md`). El trabajo
+activo es la Fase 1: slice Juegos/Steam en backend y las pantallas del
+diseño en `/web`.
+
+URLs de producción: API+MCP https://ethos-api-s10w.onrender.com · web
+https://ethos-steel.vercel.app
 
 ## Activo
 
@@ -24,9 +28,10 @@ estrategia RLS), persistencia indexada de juegos, wishlist y completado%
 (decisiones abiertas), generador del resumen, tools del MCP de juegos, refresco
 asíncrono, login OpenID y la web (Claude Design).
 
-Pendiente de Fase 0 (requiere cuentas/credenciales): crear el proyecto Supabase
-real y aplicar la migración, servicio en Render, proyecto en Vercel, keep-alive
-ping y poblar el secret manager (llave de cifrado y Steam API key).
+Fase 0 completa (2026-07-02): Supabase real con migraciones aplicadas,
+servicio en Render (blueprint `render.yaml`), web en Vercel, keep-alive de
+UptimeRobot y secretos poblados. `/health` y el handshake MCP verificados en
+producción.
 
 ## Decisiones de inicialización
 
@@ -36,6 +41,18 @@ ping y poblar el secret manager (llave de cifrado y Steam API key).
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-02 (Fase 0 cerrada: infraestructura en producción)
+
+- Fase 0 guiada con el usuario: proyecto Supabase creado con migraciones
+  0001-0002 y Email auth; `render.yaml` (blueprint) → servicio
+  `ethos-api-s10w.onrender.com` con secretos en el dashboard; web en Vercel
+  (`ethos-steel.vercel.app`); keep-alive de UptimeRobot a `/health`.
+  `ENCRYPTION_KEY` generada directo al `.env` (sin exponerla);
+  `SUPABASE_JWT_SECRET` vacío (JWKS). Verificado en producción: `/health`
+  200, `/mcp/` 405 con `allow: DELETE, POST` y handshake MCP `initialize`
+  correcto (un 404 inicial era el deploy propagándose). Pendiente anotado:
+  `/health` no toca Supabase (pausa a los 7 días).
 
 ### 2026-07-02 (Fase 0/1: fundación de /web)
 
