@@ -41,3 +41,8 @@ Marca `[x]` conforme lo revises.
   pasos y el playground (toca una consulta o escribe la tuya; mira el panel "Lo
   que pasa por detrás"). Ojo: endpoint/token/estado son **simulados** hasta el
   backend del MCP.
+- [ ] **Ayuda** — `/app/ayuda`: FAQ (acordeón) y el envío de sugerencias
+  (efímero; el envío real es Fase 4).
+- [ ] **Ajustes** — `/app/ajustes`: Apariencia cambia el tema de verdad
+  (claro/oscuro/sistema). Perfil y Zona de peligro son **efímeros/simulados**
+  hasta el backend (persistencia y borrado con deshacer, Fase 4).

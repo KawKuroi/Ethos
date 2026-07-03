@@ -1,5 +1,5 @@
-import { ScreenPlaceholder } from "@/components/app/screen-placeholder";
+import { Help } from "@/components/app/help/help";
 
 export default function HelpPage() {
-  return <ScreenPlaceholder name="Ayuda" />;
+  return <Help />;
 }

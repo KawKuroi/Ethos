@@ -42,6 +42,20 @@ producción.
 
 ## Bitácora
 
+### 2026-07-03 (Fase 1: web · Ayuda y Ajustes)
+
+- Ayuda (`components/app/help/`) en `/app/ayuda`: FAQ en acordeón (5 del
+  prototipo), carril de sugerencias (textarea + "Enviar →/Enviado ✓", efímero) y
+  contacto (mailto). Ajustes (`components/app/settings/`) en `/app/ajustes`:
+  Perfil (nombre, usuario, zona horaria, "Guardar ✓" efímero), Apariencia (tema
+  claro/oscuro/sistema cableado de verdad a next-themes), Datos y contexto
+  (cifras + enlaces a Fuentes/Conectar IA) y Zona de peligro (diálogo de
+  confirmación; el borrado real —correo + deshacer 30 días— es Fase 4). 4 tests
+  nuevos; tsc, eslint, vitest (35) y build en verde. Con esto queda cerrado el
+  bloque de pantallas web del diseño (auth, shell, Inicio, Detalle, Fuentes,
+  Conectar IA, Ayuda y Ajustes). Efímeros pendientes de backend: envío de
+  sugerencias, persistencia de perfil y borrado (Fase 4).
+
 ### 2026-07-03 (Fase 1: web · Conectar IA)
 
 - Pantalla Conectar IA (`components/app/connect/`: `connect` (client), `data`,

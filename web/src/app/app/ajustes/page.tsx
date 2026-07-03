@@ -1,5 +1,5 @@
-import { ScreenPlaceholder } from "@/components/app/screen-placeholder";
+import { Settings } from "@/components/app/settings/settings";
 
 export default function SettingsPage() {
-  return <ScreenPlaceholder name="Ajustes" />;
+  return <Settings />;
 }

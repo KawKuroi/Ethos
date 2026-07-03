@@ -1,47 +1,50 @@
-# ACTIVE_TASK — Web: Conectar IA
+# ACTIVE_TASK — Web: Ayuda y Ajustes
 
-Fase 1 · Web. Pantalla Conectar IA del diseño (`App Ethos.dc.html`): estado del
-servidor MCP, tarjeta de conexión (endpoint + token con copiar), tres pasos, y
-el playground "Pruébalo" (lado natural con chat + lado técnico "Lo que pasa por
-detrás": tool + args, contexto que viaja, respuesta JSON).
+Fase 1 · Web. Dos pantallas del diseño (`App Ethos.dc.html`). **Ayuda**: FAQ
+(acordeón) + carril de sugerencias ("Enviado ✓") y contacto. **Ajustes**: Perfil
+(nombre, usuario, zona horaria, guardar), Apariencia (tema claro/oscuro/sistema,
+real vía next-themes), Datos y contexto (cifras + accesos) y Zona de peligro.
 
 ### 1. Contexto y Archivos Afectados
 
-Sin backend de MCP ni sesión todavía: endpoint/token son placeholder (los reales
-llegan con el middleware de auth del MCP y el endpoint por usuario) y el
-playground es simulado con datos de ejemplo de Juegos (única activa; sin LLM en
-v1). El estado de conexión se simula localmente (toggle).
+Apariencia se cablea de verdad a `next-themes` (claro/oscuro/sistema). Perfil y
+sugerencias son efímeros (persistencia y envío reales → Fase 4). Zona de peligro:
+diálogo de confirmación; el borrado real es Fase 4 (correo + purga diferida), así
+que confirmar avisa que llegará con el backend. Datos y contexto enlaza a Fuentes
+y Conectar IA.
 
 Archivos (se crean salvo indicación):
-- `web/src/components/app/connect/*` — datos, estilos, componente y test.
-- `web/src/app/app/conectar-ia/page.tsx` (mod) — renderiza `<ConnectAi/>`.
+- `web/src/components/app/help/*` y `web/src/components/app/settings/*`.
+- `web/src/app/app/ayuda/page.tsx` y `web/src/app/app/ajustes/page.tsx` (mod).
 
 ### 2. Evaluación Crítica
 
-**Veredicto: la pantalla más interactiva; simulada como pide el roadmap (sin
-LLM).** Opción recomendada: endpoint/token placeholder + tres pasos + playground
-con consultas de Juegos y panel técnico. Deuda anotada: endpoint/token/estado
-reales y matching de consultas llegan con el backend del MCP.
+**Veredicto: directas; Apariencia aporta funcionalidad real (tema).** Deuda:
+perfil/sugerencias/borrado sin backend (efímeros; Fase 4). Opción recomendada:
+ambas pantallas fieles, con lo real cableado (tema) y lo demás como efímero
+honesto.
 
 ### 3. Plan de Acción Detallado
 
-- [x] **Paso 1: [connect/data.ts]** `ENDPOINT`, `TOKEN`, `STEPS` (3) y
-  `MCP_QUERIES` (consultas de ejemplo de Juegos con tool, args, ctx/full/pct,
-  answer, items y response JSON).
-- [x] **Paso 2: [connect/connect.module.css]** estilos: tarjeta de estado,
-  conexión (endpoint/token + copiar), tres pasos, playground (dos columnas: chat
-  y panel técnico), input y respuestas.
-- [x] **Paso 3: [connect/connect.tsx]** ("use client") estado del servidor
-  (toggle simulado), copiar endpoint/token ("copiado ✓"), tres pasos, y
-  playground: elegir consulta o escribir la propia (matching simple a Juegos),
-  con typing efímero → respuesta y el panel técnico (tool 200 OK, barra de
-  contexto, JSON crudo). `eth-screen`.
-- [x] **Paso 4: [app/app/conectar-ia/page.tsx]** renderiza `<ConnectAi/>`.
-- [x] **Paso 5: [connect/connect.test.tsx]** endpoint/token visibles; elegir una
-  consulta muestra la respuesta y el panel técnico (tool + JSON).
+- [x] **Paso 1: [help/data.ts]** `FAQS` (5 preguntas/respuestas del prototipo).
+- [x] **Paso 2: [help/help.module.css]** estilos: cabecera, FAQ acordeón, carril
+  de sugerencias y contacto.
+- [x] **Paso 3: [help/help.tsx]** ("use client") FAQ con acordeón, textarea de
+  sugerencia con "Enviar →/Enviado ✓" (efímero) y contacto (mailto). `eth-screen`.
+- [x] **Paso 4: [app/app/ayuda/page.tsx]** renderiza `<Help/>`.
+- [x] **Paso 5: [settings/settings.module.css]** estilos: tarjetas de sección,
+  formularios, selector de tema, cifras y zona de peligro + diálogo.
+- [x] **Paso 6: [settings/settings.tsx]** ("use client") Perfil (efímero,
+  "Guardado ✓"), Apariencia (next-themes: claro/oscuro/sistema), Datos y contexto
+  (cifras + enlaces a Fuentes/Conectar IA) y Zona de peligro (confirmación; aviso
+  de que el borrado llega con el backend). `eth-screen`.
+- [x] **Paso 7: [app/app/ajustes/page.tsx]** renderiza `<Settings/>`.
+- [x] **Paso 8: [help/help.test.tsx] + [settings/settings.test.tsx]** FAQ abre/
+  cierra y sugerencia confirma; Ajustes cambia el tema y abre la confirmación.
 
 ### 4. Reporte de Pruebas
 
-**[APROBADO]** — tsc, eslint sin incidencias; vitest 31/31 (3 nuevos de
-`connect`); build OK. Endpoint/token son placeholder enmascarado (sin secreto
-real); playground simulado sin LLM. Sin `any` nuevos. Verificación visual: usuario.
+**[APROBADO]** — tsc, eslint sin incidencias; vitest 35/35 (4 nuevos de `help` y
+`settings`); build OK (`/app/ayuda`, `/app/ajustes`). Apariencia cambia el tema
+de verdad (next-themes); perfil/sugerencias/borrado son efímeros (Fase 4).
+Secretos limpio; sin `any` nuevos. Verificación visual: usuario.

@@ -29,7 +29,7 @@ Web — implementación del diseño (`design.md`, D25/D29):
 - [x] Detalle de categoría (Juegos): status strip, stat band, Destacados/Reciente/Listas, refrescar, modal de descarga con preview JSON/MCP.
 - [x] Fuentes: grupos activas / apagadas / en desarrollo, salud y método.
 - [x] Conectar IA: tres pasos y playground simulado (sin LLM en v1). Nota: endpoint + token reales quedan pendientes del backend del MCP (hoy placeholder).
-- [ ] Ayuda (FAQ + sugerencias) y Ajustes (perfil, zona horaria, tema, zona de peligro).
+- [x] Ayuda (FAQ + sugerencias) y Ajustes (perfil, zona horaria, tema, zona de peligro).
 - [x] Landing pública según el diseño (hero con flujo animado, qué es un MCP, cómo se usa, walkthrough de categorías + galería, FAQ, sugerencias).
 - [ ] Tests de todas las capas pasando en CI.
 
