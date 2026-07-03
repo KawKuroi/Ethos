@@ -57,13 +57,13 @@ Catálogo (D27) — proveedor inicial y alternativas visibles en la UI:
 | Anime y manga | AniList | API | MyAnimeList, Kitsu |
 | Actividad física | Strava | API | Garmin, Fitbit |
 | Libros | Goodreads | Import | StoryGraph, Hardcover, Open Library |
-| Lugares | Swarm | API | Google Maps |
-| Comida | Beli | Import (solo) | Untappd |
-| Juegos de mesa | BoardGameGeek | Import (solo) | — |
+
+Diferidas (fuera del catálogo por D27, se reevaluarán): Lugares (Swarm),
+Comida (Beli, solo import) y Juegos de mesa (BoardGameGeek, solo import).
 
 Estados por categoría: activa, apagada (sin datos) o en desarrollo (conector
 no listo; visible pero no activable). El catálogo se habilita secuencialmente
-(D27): en la v1 solo Juegos está implementada y las otras ocho aparecen "en
+(D27): en la v1 solo Juegos está implementada y las otras cinco aparecen "en
 desarrollo"; cada nueva categoría se construye, prueba y confirma antes de
 pasar a la siguiente. Generalización del contrato: la mayoría
 son "obra + relación" (rating, estado, engagement); Lugares y Comida encajan

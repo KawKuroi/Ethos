@@ -272,11 +272,10 @@ textarea {
   }
 }
 
+/* Como el prototipo: reduced-motion apaga solo las entradas/reveals; las
+   microanimaciones de la interfaz siguen vivas. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
+  .eth-screen {
+    animation: none;
   }
 }

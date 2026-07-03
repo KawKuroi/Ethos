@@ -14,7 +14,10 @@ from pydantic import BaseModel, Field
 
 
 class Category(StrEnum):
-    """Dominio de gusto del catálogo (D27). Los valores son los ids del diseño."""
+    """Dominio de gusto del catálogo activo (D27). Valores = ids del diseño.
+
+    Diferidas (se añadirán si el catálogo crece): places, food, board.
+    """
 
     games = "games"
     music = "music"
@@ -25,10 +28,6 @@ class Category(StrEnum):
     # Actividad física
     fitness = "fitness"
     books = "books"
-    places = "places"
-    food = "food"
-    # Juegos de mesa (el namespace MCP es tabletop.*; se mapea en esa capa)
-    board = "board"
 
 
 class ItemStatus(StrEnum):

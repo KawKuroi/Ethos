@@ -25,7 +25,7 @@ describe("Landing", () => {
     expect(
       screen.getByRole("heading", { name: /una categoría, de tu app hasta tu ia/i }),
     ).toBeInTheDocument();
-    // Las 9 categorías del catálogo (D27) están en la galería.
+    // Las 6 categorías del catálogo activo (D27) están en la galería.
     for (const name of [
       "Juegos",
       "Música",
@@ -33,11 +33,12 @@ describe("Landing", () => {
       "Anime y manga",
       "Actividad física",
       "Libros",
-      "Lugares",
-      "Comida",
-      "Juegos de mesa",
     ]) {
       expect(screen.getAllByText(name).length).toBeGreaterThan(0);
+    }
+    // Las diferidas no aparecen.
+    for (const name of ["Lugares", "Comida", "Juegos de mesa"]) {
+      expect(screen.queryByText(name)).not.toBeInTheDocument();
     }
   });
 

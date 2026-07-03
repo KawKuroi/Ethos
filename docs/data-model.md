@@ -134,12 +134,12 @@ correo) antes de la purga definitiva.
 
 ## 8. Catálogo de categorías
 
-Nueve categorías (D27), cada una con un proveedor activo intercambiable
+Seis categorías activas (D27), cada una con un proveedor intercambiable
 (D4/D6) y estado activa / apagada / en desarrollo: Juegos, Música, Cine y TV,
-Anime y manga, Actividad física, Libros, Lugares, Comida (solo import) y
-Juegos de mesa (solo import). Se habilitan secuencialmente: las no
-implementadas se muestran "en desarrollo" (en la v1, todas salvo Juegos). El
-enum del contrato (`MediaCategory`) se generaliza a `Category` y se amplía a
-las nueve. Detalle del catálogo en `architecture.md` 4.1 y de la
+Anime y manga, Actividad física y Libros (diferidas: Lugares, Comida y Juegos
+de mesa). Se habilitan secuencialmente: las no implementadas se muestran "en
+desarrollo" (en la v1, todas salvo Juegos). El enum del contrato es
+`Category` con esos seis ids. Detalle del catálogo en `architecture.md` 4.1
+y de la
 generalización del contrato (p. ej. Actividad física como evento/métrica) en
 D23.

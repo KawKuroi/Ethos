@@ -102,9 +102,10 @@ autoplay de 4,2 s en bucle y barra de progreso; paneles: conexión de Steam
 (código GET + cursor), normalización crudo→esquema con escaneo, tarjeta de
 categoría (3 stats + top 3 con barras) y chat de la IA con nota de privacidad
 — más galería "La misma secuencia, para cada parte de tu gusto" (una tarjeta
-por categoría con sus fuentes); FAQ (4, dos columnas); sugerencias (nombre,
-correo, texto); footer "Ethos — tu gusto, ordenado.". Nota: el prototipo
-lista 7 categorías; el producto implementa las 9 de D27.
+por categoría con sus fuentes, sin animación de entrada por decisión del
+usuario); FAQ (4, dos columnas); sugerencias (nombre, correo, texto); footer
+"Ethos — tu gusto, ordenado.". Nota: el prototipo lista 7 categorías; el
+producto implementa las 6 activas de D27.
 
 ## 5. Interacciones y animaciones
 
@@ -125,10 +126,10 @@ lista 7 categorías; el producto implementa las 9 de D27.
 
 - Estados de categoría: activa (live) · apagada (off: existe sin datos) · en
   desarrollo (soon: conector no listo, no activable).
-- Solo import (sin API): Comida y Juegos de mesa. El estado "en desarrollo"
-  (que el prototipo ilustra con Pódcasts y YouTube, excluidas del producto por
-  D27) se reutiliza para el despliegue secuencial: toda categoría del catálogo
-  aún no implementada se muestra así.
+- El estado "en desarrollo" (que el prototipo ilustra con Pódcasts y YouTube)
+  se reutiliza para el despliegue secuencial: toda categoría del catálogo aún
+  no implementada se muestra así. Fuera del catálogo por D27: Lugares, Comida,
+  Juegos de mesa, Pódcasts y YouTube.
 - Frescura por fuente: fresh / stale / syncing, con etiqueta relativa
   ("hace 2 h", "import hace 3 sem", "sincronizando…").
 - Salud por fuente: error de sync > requiere atención (warn o stale) >

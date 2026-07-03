@@ -8,9 +8,12 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 // Tipografías fijas del diseño (design.md §1): display, texto/UI y código.
+// Bricolage necesita el eje óptico (opsz 12..96) que el prototipo carga:
+// sin él, los titulares grandes no se ven como el diseño.
 const display = Bricolage_Grotesque({
   variable: "--font-display",
   subsets: ["latin"],
+  axes: ["opsz"],
 });
 
 const body = Hanken_Grotesk({

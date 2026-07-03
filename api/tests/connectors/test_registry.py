@@ -9,8 +9,8 @@ from ethos_api.connectors.steam.connector import SteamConnector
 from ethos_api.schema import Category
 
 
-def test_catalogo_de_9_categorias() -> None:
-    # Los valores son los ids del diseño (D27).
+def test_catalogo_de_6_categorias() -> None:
+    # Los valores son los ids del diseño; catálogo activo de D27.
     assert [c.value for c in Category] == [
         "games",
         "music",
@@ -18,9 +18,6 @@ def test_catalogo_de_9_categorias() -> None:
         "anime",
         "fitness",
         "books",
-        "places",
-        "food",
-        "board",
     ]
 
 
@@ -42,4 +39,4 @@ def test_registro_duplicado_lanza_value_error() -> None:
 
 
 def test_providers_de_categoria_sin_conectores() -> None:
-    assert registry.providers(Category.food) == []
+    assert registry.providers(Category.books) == []

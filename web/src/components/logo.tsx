@@ -15,14 +15,16 @@ export function Logo({ width = 34, height = 30, withPath = true }: LogoProps) {
       style={{ display: "block" }}
     >
       {withPath && (
+        // Trazo más grueso y opaco que el prototipo: a petición del usuario,
+        // las líneas se perdían sobre algunos fondos.
         <path
           d="M8 17 L22 7.5 L26.5 21 L14.5 24.5"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1"
+          strokeWidth="1.5"
           strokeLinecap="round"
-          strokeDasharray="0.5 2.6"
-          opacity=".8"
+          strokeDasharray="0.6 2.4"
+          opacity=".95"
         />
       )}
       <path

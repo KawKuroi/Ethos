@@ -1,6 +1,7 @@
 // Datos de la landing, copiados del prototipo (Landing mockups.dc.html).
-// El catálogo se amplía a las 9 categorías de D27: Anime y manga y Juegos de
-// mesa toman sus valores del prototipo de la app (misma fuente de verdad).
+// Catálogo activo: las 6 categorías básicas de D27 (Lugares, Comida y
+// Juegos de mesa quedan diferidas). Anime y manga toma sus valores del
+// prototipo de la app (misma fuente de verdad).
 
 export type LandingCategory = {
   name: string;
@@ -52,27 +53,6 @@ export const CATS: LandingCategory[] = [
     label: "leídos · este año",
     accent: "#2f9e6b",
     providers: ["Goodreads", "StoryGraph", "Hardcover", "Open Library"],
-  },
-  {
-    name: "Lugares",
-    value: "87",
-    label: "sitios visitados",
-    accent: "#6f8f3f",
-    providers: ["Swarm", "Google Maps"],
-  },
-  {
-    name: "Comida",
-    value: "156",
-    label: "platos guardados",
-    accent: "#b07b3e",
-    providers: ["Beli", "Untappd"],
-  },
-  {
-    name: "Juegos de mesa",
-    value: "64",
-    label: "partidas · año",
-    accent: "#3f8f8f",
-    providers: ["BoardGameGeek"],
   },
 ];
 

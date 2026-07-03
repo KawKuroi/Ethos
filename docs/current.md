@@ -17,7 +17,7 @@ https://ethos-steel.vercel.app
 ## Activo
 
 **Fase 1 — Slice Juegos / Steam** (en curso, backend). Hecho: contrato de datos
-normalizado (`schema.py`) generalizado a `Category` con las 9 categorías (D27),
+normalizado (`schema.py`) generalizado a `Category` (6 categorías activas, D27),
 interfaz de conector (`connectors/base.py`), registro de conectores
 (`connectors/registry.py`, D21) y conector de Steam (cliente HTTP +
 normalización de biblioteca, jugados recientes y perfil) con tests de fixtures;
@@ -41,6 +41,18 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-03 (Fase 1: ajustes de la landing tras revisión del usuario)
+
+- Revisión visual del usuario en producción: (1) Bricolage Grotesque ahora
+  carga el eje óptico `opsz` (los titulares no se veían como el diseño);
+  (2) `prefers-reduced-motion` pasa de apagarlo todo a apagar solo
+  entradas/reveals, como el prototipo (con los efectos de Windows
+  desactivados no se veía ninguna animación); (3) catálogo reducido a 6
+  categorías — fuera Lugares, Comida y Juegos de mesa (diferidas, D27
+  revisada; enum `Category` y galería a 6) y galería sin animación de
+  entrada; (4) trazo del logo más visible (1.5/.95); (5) textarea de
+  sugerencias sin resize.
 
 ### 2026-07-03 (Fase 1: landing pública)
 
