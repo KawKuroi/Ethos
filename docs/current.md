@@ -42,6 +42,20 @@ producción.
 
 ## Bitácora
 
+### 2026-07-03 (Fase 1: web · pantalla Inicio)
+
+- Pantalla Inicio ("Tu perfil") del diseño dentro del shell
+  (`components/app/overview/`: `overview`, `data`, `overview.module.css` +
+  test): banner "Tu IA aún no está conectada" (CTA → `/app/conectar-ia`),
+  sección de alertas agregadas (dirigida por `GLOBAL_ALERTS`, hoy vacía →
+  oculta), stat band "El gusto en números" (4 cifras de Juegos), "Panorama · por
+  actividad" (Juegos activa con barra/valor; Música, Cine y TV, Anime y manga y
+  Libros como "en desarrollo") y "Actividad reciente" en timeline. Datos de
+  ejemplo del prototipo en constantes (a sustituir por el backend), como la
+  landing. `/app` deja de ser placeholder. 4 tests nuevos; tsc, eslint, vitest
+  (22) y build en verde. Diferido: navegación al Detalle de categoría (su tarea)
+  y datos reales (backend de Steam).
+
 ### 2026-07-03 (Fase 1: web · Shell de la app)
 
 - Armazón de la app del diseño (`App Ethos.dc.html`): layout compartido bajo

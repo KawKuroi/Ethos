@@ -1,110 +1,96 @@
-# ACTIVE_TASK — Web: Shell de la app (navegación lateral + header + badge)
+# ACTIVE_TASK — Web: pantalla Inicio ("Tu perfil")
 
-Fase 1 · Web. Implementar el armazón de la app del diseño (Claude Design,
-`App Ethos.dc.html`): barra lateral con navegación (Inicio · Fuentes · Conectar
-IA · Ayuda + Ajustes), header con título/subtítulo por pantalla y el badge
-pulsante en "Conectar IA" mientras la IA no esté conectada. Las pantallas
-concretas (Inicio, Detalle, Fuentes, etc.) son tareas aparte del roadmap: aquí
-se dejan como placeholders dentro del shell.
+Fase 1 · Web. Implementar el contenido de la pantalla Inicio del diseño
+(`App Ethos.dc.html`) dentro del shell: banner "Tu IA aún no está conectada",
+stat band "El gusto en números", "Panorama · por actividad" (categorías con su
+estado) y "Actividad reciente". Juegos activa; Música, Cine y TV, Anime y manga
+y Libros como "en desarrollo" (v1, D27/roadmap).
 
 ### 1. Contexto y Archivos Afectados
 
-Estado: `/web` con la landing y la auth ya construidas. `app/app/page.tsx` es un
-placeholder de pantalla completa; tras el login la auth redirige a `/app`. El
-diseño (`App Ethos.dc.html`, resumen en `design.md` §2) define un `<aside>` de
-250px (logo, nav con iconos, footer de perfil + engrane) y un `<main>` con header
-sticky (título + subtítulo). El badge es un punto ámbar pulsante (`animation:
-pulse`) junto a "Conectar IA" cuando `mcpConnected` es falso. Los títulos por
-pantalla del diseño: Inicio "Tu perfil / El gusto, reunido y normalizado",
-Fuentes, Conectar IA, Ayuda y Ajustes (líneas del diseño).
+Estado: el shell (`/app` layout + sidebar + header) ya existe; `app/app/page.tsx`
+es el placeholder de Inicio. No hay backend de datos: como en la landing, se usan
+los datos de ejemplo del prototipo (constantes, a sustituir por el backend). El
+diseño de Inicio (líneas ~104-217 de `App Ethos.dc.html`): banner de IA,
+(alertas globales), stat band de 4 cifras, panorama de filas por categoría
+(chip+inicial, nombre, proveedor·modo, barra de share, valor hero, punto de
+estado) y actividad reciente en timeline. Estados de fila: activa (barra + valor
++ punto sólido), en desarrollo (punto azul pulsante) y apagada (no aplica en v1).
 
-Rutas en español para segmentos de cara al usuario, como en la auth ya publicada
-(`/auth/recuperar`, `/auth/nueva-clave`): `/app`, `/app/fuentes`,
-`/app/conectar-ia`, `/app/ayuda`, `/app/ajustes`.
+Valores de ejemplo (del prototipo): Juegos → hero "1.840 horas jugadas", stats
+312 juegos / 1.840 horas / 47 deseados / 38% completado; actividad de Juegos
+(Balatro, Tunic, Pizza Tower). Acentos por categoría de `design.md` §1.
 
-Archivos directamente implicados (se crean salvo indicación):
-- `web/src/components/app/*` — datos de navegación, estilos, sidebar, header y
-  placeholder de pantalla.
-- `web/src/app/app/layout.tsx` — layout con el shell.
-- `web/src/app/app/page.tsx` (mod) + `fuentes|conectar-ia|ayuda|ajustes/page.tsx`
-  — pantallas como placeholders dentro del shell.
+Archivos (se crean salvo indicación):
+- `web/src/components/app/overview/*` — datos, estilos, componente y test.
+- `web/src/app/app/page.tsx` (mod) — renderiza `<Overview/>`.
 
 ### 2. Evaluación Crítica
 
-**Veredicto: buena tarea, directa y bien acotada.** El shell es un layout
-compartido de Next (App Router): un `layout.tsx` bajo `/app` que envuelve las
-rutas de pantalla. Encaja con el diseño y con la redirección post-login que
-quedó apuntando a `/app`.
+**Veredicto: buena tarea, acotada al Inicio.** Encaja con el shell y con el
+aterrizaje post-login. Es una pantalla de composición con datos de ejemplo,
+igual que la landing (el backend los sustituye luego).
 
 Fronteras y decisiones:
-- **Contenido de pantallas fuera de alcance.** Inicio, Detalle, Fuentes, Conectar
-  IA, Ayuda y Ajustes son ítems propios del roadmap; aquí van como placeholders.
-  Las acciones del header dependientes de pantalla (p. ej. "Refrescar todo" en
-  Fuentes) llegan con cada pantalla.
-- **Estado de conexión del MCP.** No hay backend de sesión MCP todavía: el badge
-  usa `mcpConnected = false` fijo (placeholder), de modo que el badge se ve. Se
-  sustituirá por estado real en la tarea de Conectar IA.
-- **Resaltado activo** por `usePathname` (sidebar y header como client
-  components); el resto del shell es estático.
+- **v1 = Juegos activa, resto en desarrollo** (D27/roadmap). El stat band y la
+  actividad se basan en Juegos (única fuente con datos); las otras cuatro salen
+  como "en desarrollo" en el panorama.
+- **Alertas globales agregadas.** El prototipo solo agrega alertas de nivel
+  warn/error; Juegos únicamente tiene una `info`, así que la sección queda vacía
+  y **oculta**. Se cablea con datos reales cuando exista el backend (se deja el
+  gancho de datos preparado). No se inventan alertas.
+- **Navegación al detalle.** La pantalla de Detalle de categoría es otra tarea;
+  las filas del panorama son informativas por ahora (sin navegación), para no
+  dejar enlaces rotos. Se conectan al llegar el Detalle.
 
 Opciones de alcance:
-1. **Shell (layout + nav + header + badge) con placeholders por pantalla** —
-   cumple el ítem del roadmap sin invadir las pantallas. **[Recomendada]**
-2. Shell + contenido de Inicio — mezcla dos ítems del roadmap.
-3. Solo la barra lateral, sin rutas por pantalla — deja la navegación sin destino.
+1. **Inicio con banner + stat band + panorama + actividad (datos de ejemplo),
+   Juegos activa** — cumple el ítem sin invadir Detalle ni el backend.
+   **[Recomendada]**
+2. Inicio + navegación al Detalle — arrastra la tarea de Detalle.
+3. Inicio con datos reales — imposible sin el backend de Steam.
 
-Deuda técnica prevista (concreta):
-- Badge con estado fijo hasta que exista la conexión MCP real.
-- Responsividad mínima (la barra pasa a top bar en pantallas estrechas); el
-  diseño fino móvil se pulirá en Fase 4.
-- Sin guardas de ruta aún (sesión): diferido a integrarse cuando la Shell y el
-  auth se junten; hoy `/app` es accesible directo (igual que el placeholder
-  previo).
+Deuda técnica prevista:
+- Datos de ejemplo en constantes (a sustituir por el backend); mismo patrón que
+  la landing.
+- Sección de alertas oculta hasta tener datos reales.
+- Filas del panorama sin navegación hasta la tarea de Detalle.
 
 ### 3. Plan de Acción Detallado
 
-Bloque A — Datos y layout del shell
-- [x] **Paso 1: [web/src/components/app/nav.ts]** `NAV` (id, label, href, clave de
-  icono) para Inicio/Fuentes/Conectar IA/Ayuda y `SCREEN_META` (href →
-  {title, sub}) con los textos del diseño, incluida la ruta de Ajustes.
-- [x] **Paso 2: [web/src/components/app/app.module.css]** estilos del shell: aside
-  250px, logo, nav con estado activo y hover, badge pulsante, footer de perfil,
-  header sticky, contenedor de main; responsivo (aside → top bar en <820px) y
-  `prefers-reduced-motion`.
-- [x] **Paso 3: [web/src/components/app/nav-icons.tsx]** iconos SVG inline del
-  diseño (grid, nodos, estrella, ayuda, engrane) por clave.
-- [x] **Paso 4: [web/src/components/app/sidebar.tsx]** ("use client") logo +
-  wordmark, nav con resaltado por `usePathname`, badge en "Conectar IA" cuando
-  `mcpConnected` es falso, footer "Tu perfil / @tu_gusto" + engrane → `/app/ajustes`.
-- [x] **Paso 5: [web/src/components/app/app-header.tsx]** ("use client") título +
-  subtítulo según `usePathname` desde `SCREEN_META`.
-- [x] **Paso 6: [web/src/app/app/layout.tsx]** compone `Sidebar` + `main`
-  (`AppHeader` + contenedor + `children`).
+Bloque A — Datos y estilos
+- [x] **Paso 1: [web/src/components/app/overview/data.ts]** `OV_STATS` (4 cifras
+  de Juegos), `OV_META`, `PANORAMA` (Juegos `live` + Música/Cine/Anime/Libros
+  `soon`, con accent, inicial, proveedor, hero y share), `ACTIVITY` (3 entradas
+  de Juegos) y `MCP_CONNECTED = false`. Tipos explícitos.
+- [x] **Paso 2: [web/src/components/app/overview/overview.module.css]** estilos:
+  banner de IA, stat band (grid de 4), panorama (fila live/soon con chip, barra,
+  valor, punto de estado y leyenda) y actividad (timeline con pin), desde tokens;
+  `prefers-reduced-motion` para el punto pulsante.
 
-Bloque B — Pantallas como placeholders dentro del shell
-- [x] **Paso 7: [web/src/components/app/screen-placeholder.tsx]** placeholder
-  reutilizable ("en construcción") con `eth-screen`, que recibe el nombre.
-- [x] **Paso 8: [web/src/app/app/page.tsx]** (mod) Inicio usa el placeholder
-  dentro del shell (deja de ser pantalla completa).
-- [x] **Paso 9: [web/src/app/app/fuentes/page.tsx]** placeholder.
-- [x] **Paso 10: [web/src/app/app/conectar-ia/page.tsx]** placeholder.
-- [x] **Paso 11: [web/src/app/app/ayuda/page.tsx]** placeholder.
-- [x] **Paso 12: [web/src/app/app/ajustes/page.tsx]** placeholder.
+Bloque B — Composición
+- [x] **Paso 3: [web/src/components/app/overview/overview.tsx]** compone las
+  secciones (sub-componentes internos): banner "Tu IA aún no está conectada" con
+  CTA → `/app/conectar-ia`; stat band "El gusto en números"; "Panorama · por
+  actividad" con leyenda (activa / en desarrollo) y filas; "Actividad reciente"
+  en timeline. Entra con `eth-screen`.
+- [x] **Paso 4: [web/src/app/app/page.tsx]** (mod) renderiza `<Overview/>` (deja
+  de usar el placeholder).
 
 Bloque C — Tests
-- [x] **Paso 13: [web/src/components/app/sidebar.test.tsx]** con `usePathname`
-  mockeado: render de los 4 destinos, resaltado del activo y badge visible en
-  "Conectar IA".
+- [x] **Paso 5: [web/src/components/app/overview/overview.test.tsx]** banner
+  visible (IA sin conectar), 4 cifras del stat band, panorama con Juegos activa y
+  al menos una categoría "en desarrollo", y actividad con entradas.
 
 ### 4. Reporte de Pruebas
 
 **[APROBADO]**
 
-- `tsc --noEmit`: sin errores.
-- `eslint`: sin warnings.
-- `vitest run`: 18/18 (3 nuevos de `sidebar`).
-- `next build`: OK; rutas `/app`, `/app/fuentes`, `/app/conectar-ia`,
-  `/app/ayuda`, `/app/ajustes` (estáticas) generadas bajo el layout del shell.
+- `tsc --noEmit`: sin errores. `eslint`: sin warnings.
+- `vitest run`: 22/22 (4 nuevos de `overview`).
+- `next build`: OK; `/app` renderiza Inicio (estática).
 - Idioma: identificadores en inglés, texto humano en español (D19).
 - Secretos: grep sin credenciales; sin tipos `any` nuevos.
+- Alertas agregadas: sección cableada por datos (`GLOBAL_ALERTS`), hoy vacía →
+  oculta (Juegos solo tiene una alerta `info`, que no se agrega).
 - Verificación visual real: la hace el usuario en producción.

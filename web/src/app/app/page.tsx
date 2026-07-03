@@ -1,5 +1,5 @@
-import { ScreenPlaceholder } from "@/components/app/screen-placeholder";
+import { Overview } from "@/components/app/overview/overview";
 
 export default function OverviewPage() {
-  return <ScreenPlaceholder name="Inicio" />;
+  return <Overview />;
 }

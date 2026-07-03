@@ -1,0 +1,445 @@
+/* Pantalla Inicio ("Tu perfil"), del prototipo App Ethos.dc.html. */
+
+/* ===== Banner: IA sin conectar ===== */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 20px 24px;
+  border-radius: var(--r);
+  background: var(--surface);
+  border: var(--bw) solid var(--line);
+  box-shadow: var(--sh);
+  margin-bottom: 22px;
+}
+.bannerDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--warn);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--warn) 22%, transparent);
+  animation: pulse 1.8s infinite;
+}
+.bannerBody {
+  flex: 1;
+  min-width: 220px;
+}
+.bannerTitle {
+  font-family: var(--fb);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.bannerSub {
+  font-family: var(--fb);
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.bannerBtn {
+  padding: 11px 18px;
+  border-radius: var(--pill);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-family: var(--fb);
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: filter 0.15s ease;
+}
+.bannerBtn:hover {
+  filter: brightness(1.06);
+}
+
+/* ===== Alertas agregadas ===== */
+.alerts {
+  margin-bottom: 22px;
+}
+.alertsHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+}
+.alertsIcon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--warn);
+  background: color-mix(in oklab, var(--warn) 13%, transparent);
+}
+.alertsTitle {
+  font-family: var(--fd);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.alertsCount {
+  font-family: var(--fb);
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.alertRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 20px;
+  border-top: 1px solid var(--hair);
+}
+.alertDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--alertColor, var(--warn));
+}
+.alertLevel {
+  font-family: var(--fm);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: var(--pill);
+  flex: 0 0 auto;
+  color: var(--alertColor, var(--warn));
+  background: color-mix(in oklab, var(--alertColor, var(--warn)) 13%, transparent);
+}
+.alertText {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--fb);
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.alertTime {
+  font-family: var(--fm);
+  font-size: 10.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.alertAction {
+  padding: 7px 13px;
+  border-radius: var(--pill);
+  border: var(--bw) solid var(--line);
+  background: transparent;
+  font-family: var(--fb);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.alertAction:hover {
+  border-color: var(--muted);
+}
+
+/* ===== Bloques comunes ===== */
+.eyebrow {
+  font-family: var(--fm);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.card {
+  border: var(--bw) solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: var(--sh);
+  overflow: hidden;
+}
+
+/* ===== Stat band ===== */
+.statBand {
+  margin-bottom: 26px;
+}
+.statHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 18px 24px 0;
+}
+.statMeta {
+  font-family: var(--fm);
+  font-size: 11px;
+  color: var(--muted);
+}
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--hair);
+  border-top: var(--bw) solid var(--hair);
+  margin-top: 16px;
+}
+.statCell {
+  background: var(--surface);
+  padding: 18px 24px 20px;
+}
+.statValue {
+  font-family: var(--fm);
+  font-weight: 600;
+  font-size: 32px;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink);
+}
+.statLabel {
+  font-family: var(--fb);
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+/* ===== Panorama ===== */
+.panoHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 2px 14px;
+  flex-wrap: wrap;
+}
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--fm);
+  font-size: 10.5px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.legendDotLive {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+.legendDotSoon {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5b6ee0;
+}
+.panorama {
+  margin-bottom: 30px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--hair);
+}
+.row:first-child {
+  border-top: none;
+}
+.rowChip {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--rs);
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fd);
+  font-weight: 700;
+  font-size: 14px;
+}
+.rowChipLive {
+  background: var(--rowAccent, var(--accent));
+  color: #fff;
+}
+.rowChipSoon {
+  background: var(--chip);
+  color: var(--muted);
+}
+.rowName {
+  width: 158px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.rowNameText {
+  font-family: var(--fb);
+  font-size: 14.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowNameLive {
+  color: var(--ink);
+}
+.rowNameSoon {
+  color: var(--muted);
+}
+.rowProvider {
+  font-family: var(--fm);
+  font-size: 9.5px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+.bar {
+  flex: 1;
+  min-width: 60px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--chip);
+  position: relative;
+  overflow: hidden;
+}
+.barFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--rowAccent, var(--accent));
+}
+.barEmpty {
+  flex: 1;
+  min-width: 60px;
+  height: 8px;
+  border-radius: 999px;
+  border: 1px dashed var(--line);
+}
+.rowValue {
+  width: 150px;
+  flex: 0 0 auto;
+  text-align: right;
+  overflow: hidden;
+}
+.rowHero {
+  font-family: var(--fm);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--rowAccent, var(--accent));
+}
+.rowHeroLabel {
+  font-family: var(--fb);
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: 5px;
+}
+.soonLabel {
+  font-family: var(--fb);
+  font-size: 11.5px;
+  color: var(--muted);
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.dotLive {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--rowAccent, var(--accent));
+}
+.dotSoon {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: #5b6ee0;
+  box-shadow: 0 0 0 3px color-mix(in oklab, #5b6ee0 22%, transparent);
+  animation: pulse 2s infinite;
+}
+
+/* ===== Actividad reciente ===== */
+.activity {
+  padding: 22px 26px 8px;
+}
+.activityTitle {
+  font-family: var(--fd);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.activitySub {
+  font-family: var(--fb);
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 3px 0 16px;
+}
+.timeline {
+  position: relative;
+}
+.timelineLine {
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  bottom: 24px;
+  width: 1.5px;
+  background: var(--hair);
+}
+.event {
+  position: relative;
+  padding: 0 0 18px 24px;
+}
+.eventPin {
+  position: absolute;
+  left: 0;
+  top: 5px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--rowAccent, var(--accent));
+  box-shadow: 0 0 0 3px var(--surface);
+}
+.eventText {
+  font-family: var(--fb);
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.eventMeta {
+  font-family: var(--fb);
+  font-size: 11.5px;
+  margin-top: 2px;
+  color: var(--muted);
+}
+.eventCat {
+  color: var(--rowAccent, var(--accent));
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .statGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .rowName {
+    width: 120px;
+  }
+  .rowValue {
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bannerDot,
+  .dotSoon {
+    animation: none;
+  }
+}

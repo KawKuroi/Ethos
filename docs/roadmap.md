@@ -25,7 +25,7 @@ Web — implementación del diseño (`design.md`, D25/D29):
 - [x] Fundación de `/web`: Next.js + tokens CSS (paleta slate, acentos por categoría), `next/font`, `next-themes`, transiciones y `prefers-reduced-motion`.
 - [x] Auth: login/registro (correo + Google + GitHub), recuperación de contraseña. (D26)
 - [x] Shell de la app: navegación lateral, header, badge de "Conectar IA".
-- [ ] Inicio: banner de IA, alertas agregadas, "El gusto en números", panorama de categorías, actividad reciente (Juegos activa; las otras cuatro como "en desarrollo").
+- [x] Inicio: banner de IA, alertas agregadas, "El gusto en números", panorama de categorías, actividad reciente (Juegos activa; las otras cuatro como "en desarrollo").
 - [ ] Detalle de categoría (Juegos): status strip, stat band, Destacados/Reciente/Listas, refrescar, modal de descarga con preview JSON/MCP.
 - [ ] Fuentes: grupos activas / apagadas / en desarrollo, salud y método.
 - [ ] Conectar IA: endpoint + token reales, tres pasos, playground simulado con datos reales del usuario (sin LLM en v1).
