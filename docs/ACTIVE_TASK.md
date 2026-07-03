@@ -1,96 +1,64 @@
-# ACTIVE_TASK — Web: pantalla Inicio ("Tu perfil")
+# ACTIVE_TASK — Web: Detalle de categoría (Juegos)
 
-Fase 1 · Web. Implementar el contenido de la pantalla Inicio del diseño
-(`App Ethos.dc.html`) dentro del shell: banner "Tu IA aún no está conectada",
-stat band "El gusto en números", "Panorama · por actividad" (categorías con su
-estado) y "Actividad reciente". Juegos activa; Música, Cine y TV, Anime y manga
-y Libros como "en desarrollo" (v1, D27/roadmap).
+Fase 1 · Web. Pantalla de Detalle de categoría del diseño (`App Ethos.dc.html`):
+para Juegos (conectada) — back, header con Refrescar y Descargar contexto,
+status strip (salud · proveedor · modo API/Import · actualizado), stat band
+(hero + sparkline + 4 stats), Destacados / Reciente / Listas, y modal "Descargar
+contexto" con preview JSON/MCP + copiar/descargar. Para las categorías en
+desarrollo (Música/Cine/Anime/Libros) — el estado "en desarrollo".
 
 ### 1. Contexto y Archivos Afectados
 
-Estado: el shell (`/app` layout + sidebar + header) ya existe; `app/app/page.tsx`
-es el placeholder de Inicio. No hay backend de datos: como en la landing, se usan
-los datos de ejemplo del prototipo (constantes, a sustituir por el backend). El
-diseño de Inicio (líneas ~104-217 de `App Ethos.dc.html`): banner de IA,
-(alertas globales), stat band de 4 cifras, panorama de filas por categoría
-(chip+inicial, nombre, proveedor·modo, barra de share, valor hero, punto de
-estado) y actividad reciente en timeline. Estados de fila: activa (barra + valor
-+ punto sólido), en desarrollo (punto azul pulsante) y apagada (no aplica en v1).
-
-Valores de ejemplo (del prototipo): Juegos → hero "1.840 horas jugadas", stats
-312 juegos / 1.840 horas / 47 deseados / 38% completado; actividad de Juegos
-(Balatro, Tunic, Pizza Tower). Acentos por categoría de `design.md` §1.
+Ruta `/app/categoria/[slug]` (slug = games/music/film/anime/books). El panorama
+de Inicio enlaza aquí. Datos de ejemplo del prototipo (constantes). El estado
+"apagada" (guía de import) no aplica en v1 (ninguna categoría está apagada) → se
+difiere. Cambiar proveedor y modo se muestran, sin diálogo (se difiere). Eliminar
+datos vive en Ajustes → no se duplica aquí.
 
 Archivos (se crean salvo indicación):
-- `web/src/components/app/overview/*` — datos, estilos, componente y test.
-- `web/src/app/app/page.tsx` (mod) — renderiza `<Overview/>`.
+- `web/src/components/app/category/*` — datos, estilos, detalle (client) y test.
+- `web/src/app/app/categoria/[slug]/page.tsx` — resuelve slug → detalle o 404.
+- `web/src/components/app/nav.ts` (mod) — `metaForPath` para la ruta de categoría.
+- `web/src/components/app/overview/overview.tsx` (mod) — filas del panorama
+  enlazan a `/app/categoria/<id>`.
 
 ### 2. Evaluación Crítica
 
-**Veredicto: buena tarea, acotada al Inicio.** Encaja con el shell y con el
-aterrizaje post-login. Es una pantalla de composición con datos de ejemplo,
-igual que la landing (el backend los sustituye luego).
-
-Fronteras y decisiones:
-- **v1 = Juegos activa, resto en desarrollo** (D27/roadmap). El stat band y la
-  actividad se basan en Juegos (única fuente con datos); las otras cuatro salen
-  como "en desarrollo" en el panorama.
-- **Alertas globales agregadas.** El prototipo solo agrega alertas de nivel
-  warn/error; Juegos únicamente tiene una `info`, así que la sección queda vacía
-  y **oculta**. Se cablea con datos reales cuando exista el backend (se deja el
-  gancho de datos preparado). No se inventan alertas.
-- **Navegación al detalle.** La pantalla de Detalle de categoría es otra tarea;
-  las filas del panorama son informativas por ahora (sin navegación), para no
-  dejar enlaces rotos. Se conectan al llegar el Detalle.
-
-Opciones de alcance:
-1. **Inicio con banner + stat band + panorama + actividad (datos de ejemplo),
-   Juegos activa** — cumple el ítem sin invadir Detalle ni el backend.
-   **[Recomendada]**
-2. Inicio + navegación al Detalle — arrastra la tarea de Detalle.
-3. Inicio con datos reales — imposible sin el backend de Steam.
-
-Deuda técnica prevista:
-- Datos de ejemplo en constantes (a sustituir por el backend); mismo patrón que
-  la landing.
-- Sección de alertas oculta hasta tener datos reales.
-- Filas del panorama sin navegación hasta la tarea de Detalle.
+**Veredicto: buena, la pantalla más rica; encaja con Inicio.** Opciones: (1)
+conectada (Juegos) + en desarrollo + modal de descarga **[recomendada]**; (2)
++ estado apagado con guía import — innecesario en v1; (3) + diálogo de cambio de
+proveedor — se difiere. Deuda: datos de ejemplo (backend luego); refresco y
+copiar/descargar como efímeros de UI; navegación de vuelta a Inicio.
 
 ### 3. Plan de Acción Detallado
 
-Bloque A — Datos y estilos
-- [x] **Paso 1: [web/src/components/app/overview/data.ts]** `OV_STATS` (4 cifras
-  de Juegos), `OV_META`, `PANORAMA` (Juegos `live` + Música/Cine/Anime/Libros
-  `soon`, con accent, inicial, proveedor, hero y share), `ACTIVITY` (3 entradas
-  de Juegos) y `MCP_CONNECTED = false`. Tipos explícitos.
-- [x] **Paso 2: [web/src/components/app/overview/overview.module.css]** estilos:
-  banner de IA, stat band (grid de 4), panorama (fila live/soon con chip, barra,
-  valor, punto de estado y leyenda) y actividad (timeline con pin), desde tokens;
-  `prefers-reduced-motion` para el punto pulsante.
-
-Bloque B — Composición
-- [x] **Paso 3: [web/src/components/app/overview/overview.tsx]** compone las
-  secciones (sub-componentes internos): banner "Tu IA aún no está conectada" con
-  CTA → `/app/conectar-ia`; stat band "El gusto en números"; "Panorama · por
-  actividad" con leyenda (activa / en desarrollo) y filas; "Actividad reciente"
-  en timeline. Entra con `eth-screen`.
-- [x] **Paso 4: [web/src/app/app/page.tsx]** (mod) renderiza `<Overview/>` (deja
-  de usar el placeholder).
-
-Bloque C — Tests
-- [x] **Paso 5: [web/src/components/app/overview/overview.test.tsx]** banner
-  visible (IA sin conectar), 4 cifras del stat band, panorama con Juegos activa y
-  al menos una categoría "en desarrollo", y actividad con entradas.
+- [x] **Paso 1: [category/data.ts]** `CATEGORY_DETAIL` por slug: Juegos completo
+  (provider, ns, blurb, hero, spark, stats, top, recent, tags, salud, fresh,
+  ctxKb) y Música/Cine/Anime/Libros como `soon` (nota + ETA).
+- [x] **Paso 2: [category/sparkline.ts]** helper que mapea la serie a puntos del
+  polyline (100×26), como `spark()` del prototipo.
+- [x] **Paso 3: [category/context.ts]** genera el preview JSON y MCP del contexto
+  desde los datos de la categoría (como `ctxJson`/`ctxMcp`).
+- [x] **Paso 4: [category/category.module.css]** estilos: header, status strip,
+  stat band (hero+sparkline+grid), secciones top/recent/tags, estado soon, modal.
+- [x] **Paso 5: [category/category-detail.tsx]** ("use client") arma la pantalla:
+  conectada (Juegos) con Refrescar (efímero), Descargar contexto (abre modal),
+  status strip, stat band, Destacados/Reciente/Listas; y estado soon. Modal con
+  pestañas JSON/MCP, copiar ("Copiado ✓") y descargar (`<slug>.context.json`).
+- [x] **Paso 6: [app/app/categoria/[slug]/page.tsx]** resuelve el slug (404 si no
+  existe) y renderiza `<CategoryDetail/>`.
+- [x] **Paso 7: [nav.ts]** `metaForPath` devuelve el nombre de la categoría +
+  "Fuente de contexto para tu IA" para `/app/categoria/<slug>`.
+- [x] **Paso 8: [overview/overview.tsx]** las filas del panorama enlazan al
+  detalle (`/app/categoria/<id>`).
+- [x] **Paso 9: [category/category-detail.test.tsx]** Juegos muestra stats/top;
+  el modal abre y alterna JSON/MCP; una categoría soon muestra "en desarrollo".
 
 ### 4. Reporte de Pruebas
 
 **[APROBADO]**
 
-- `tsc --noEmit`: sin errores. `eslint`: sin warnings.
-- `vitest run`: 22/22 (4 nuevos de `overview`).
-- `next build`: OK; `/app` renderiza Inicio (estática).
-- Idioma: identificadores en inglés, texto humano en español (D19).
-- Secretos: grep sin credenciales; sin tipos `any` nuevos.
-- Alertas agregadas: sección cableada por datos (`GLOBAL_ALERTS`), hoy vacía →
-  oculta (Juegos solo tiene una alerta `info`, que no se agrega).
+- tsc, eslint sin incidencias; `vitest run` 25/25 (3 nuevos de `category-detail`).
+- `next build`: OK; `/app/categoria/[slug]` prerenderiza games/music/film/anime/
+  books. Idioma correcto; secretos limpio; sin `any` nuevos.
 - Verificación visual real: la hace el usuario en producción.

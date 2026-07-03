@@ -31,3 +31,7 @@ Marca `[x]` conforme lo revises.
   los números y la actividad son **datos de ejemplo** del prototipo hasta que
   esté el backend de Steam; confirma que te parece bien mostrarlos así de
   momento.
+- [ ] **Detalle de categoría** — `/app/categoria/games` (Juegos): status strip,
+  stat band con sparkline, Destacados/Reciente/Listas, botón Refrescar y modal
+  "Descargar contexto" (pestañas JSON/MCP, copiar, descargar). Y una categoría
+  en desarrollo, p. ej. `/app/categoria/music`.

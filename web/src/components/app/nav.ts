@@ -1,4 +1,5 @@
 // Navegación y metadatos de pantalla del shell de la app (design.md §2).
+import { CATEGORY_DETAIL } from "./category/data";
 
 export type NavId = "overview" | "sources" | "mcp" | "help";
 
@@ -39,6 +40,17 @@ export const SCREEN_META: Record<string, { title: string; sub: string }> = {
 
 export const DEFAULT_META = { title: "Ethos", sub: "" };
 
+const CATEGORY_PREFIX = "/app/categoria/";
+
 export function metaForPath(pathname: string): { title: string; sub: string } {
-  return SCREEN_META[pathname] ?? DEFAULT_META;
+  const exact = SCREEN_META[pathname];
+  if (exact) return exact;
+  if (pathname.startsWith(CATEGORY_PREFIX)) {
+    const slug = pathname.slice(CATEGORY_PREFIX.length);
+    const category = CATEGORY_DETAIL[slug];
+    if (category) {
+      return { title: category.name, sub: "Fuente de contexto para tu IA" };
+    }
+  }
+  return DEFAULT_META;
 }

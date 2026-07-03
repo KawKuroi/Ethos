@@ -109,7 +109,11 @@ function StatBand() {
 function PanoramaRowView({ row }: { row: PanoramaRow }) {
   const live = row.state === "live";
   return (
-    <div className={styles.row} style={accentVar(row.accent)}>
+    <Link
+      href={`/app/categoria/${row.id}`}
+      className={styles.row}
+      style={accentVar(row.accent)}
+    >
       <span
         className={`${styles.rowChip} ${live ? styles.rowChipLive : styles.rowChipSoon}`}
       >
@@ -144,7 +148,7 @@ function PanoramaRowView({ row }: { row: PanoramaRow }) {
           <span className={styles.dotSoon} aria-label="en desarrollo" />
         </>
       )}
-    </div>
+    </Link>
   );
 }
 

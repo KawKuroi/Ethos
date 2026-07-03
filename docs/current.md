@@ -42,6 +42,21 @@ producción.
 
 ## Bitácora
 
+### 2026-07-03 (Fase 1: web · Detalle de categoría)
+
+- Detalle de categoría (`components/app/category/`: `category-detail` (client),
+  `data`, `context`, `sparkline`, css + test) en `/app/categoria/[slug]`. Juegos
+  (conectada): back a Inicio, header con Refrescar (efímero) y Descargar
+  contexto, status strip (salud · proveedor · modo · actualizado), stat band
+  (hero + sparkline SVG propio + 4 stats), y Destacados/Reciente/Listas. Modal
+  "Descargar contexto" con preview JSON/MCP (generado desde los datos), copiar
+  ("Copiado ✓") y descargar `<slug>.context.json`. Música/Cine/Anime/Libros:
+  estado "en desarrollo". El panorama de Inicio enlaza al detalle; `metaForPath`
+  resuelve el título del header por slug. Datos de ejemplo del prototipo. 3 tests
+  nuevos; tsc, eslint, vitest (25) y build (rutas prerenderizadas) en verde.
+  Diferido: diálogo de cambio de proveedor y estado apagado/guía de import (no
+  aplican en v1).
+
 ### 2026-07-03 (Fase 1: web · pantalla Inicio)
 
 - Pantalla Inicio ("Tu perfil") del diseño dentro del shell
