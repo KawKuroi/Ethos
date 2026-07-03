@@ -42,6 +42,17 @@ producción.
 
 ## Bitácora
 
+### 2026-07-03 (Fase 1: hardening de la API, D30)
+
+- Protección anti-abuso a petición del usuario: middlewares ASGI propios
+  (`middleware.py`) — rate limit por IP con ventana deslizante (429 +
+  Retry-After, `/health` exento), límite de tamaño de cuerpo (413) y
+  cabeceras de seguridad — más CORS restringido a la web, TrustedHost y
+  docs apagados en producción (`create_app()` factory). Cliente de Steam
+  con throttle de intervalo mínimo (reloj/sleep inyectables). `render.yaml`
+  con `--proxy-headers` y env vars ALLOWED_ORIGINS/ALLOWED_HOSTS. 10 tests
+  nuevos; ruff, mypy y pytest (41, cobertura 94.6%) en verde.
+
 ### 2026-07-02 (Fase 0 cerrada: infraestructura en producción)
 
 - Fase 0 guiada con el usuario: proyecto Supabase creado con migraciones

@@ -61,3 +61,30 @@ def test_error_en_respuesta_no_dict() -> None:
     client = SteamApiClient(api_key="test-key", client=http)
     with pytest.raises(SteamApiError):
         client.get_owned_games("123")
+
+
+def test_throttle_espera_entre_llamadas_consecutivas() -> None:
+    # Reloj falso: avanza 0,2 s por lectura; el intervalo mínimo es 1 s, así
+    # que la segunda llamada debe dormir el tiempo restante (sin dormir real).
+    ticks = iter(x * 0.2 for x in range(100))
+    esperas: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"response": {}})
+
+    http = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://api.steampowered.com",
+    )
+    client = SteamApiClient(
+        api_key="test-key",
+        client=http,
+        min_interval_seconds=1.0,
+        clock=lambda: next(ticks),
+        sleep=esperas.append,
+    )
+
+    client.get_owned_games("123")   # primera llamada: sin espera
+    client.get_owned_games("123")   # segunda: debe respetar el intervalo
+    assert len(esperas) == 1
+    assert 0 < esperas[0] <= 1.0

@@ -17,6 +17,7 @@ Backend:
 - [ ] Sesión de usuario (Supabase Auth) y almacenamiento cifrado de credenciales de terceros (tabla `user_credentials`). (D20)
 - [ ] Middleware de auth del MCP (token por usuario) antes de exponer tools de datos. (D22)
 - [x] Registro de conectores (registry) y modelo de extensión de categorías/proveedores. (D21)
+- [x] Hardening de la API: rate limit por IP, límites de cuerpo, cabeceras, CORS, TrustedHost, docs off en producción y throttle de Steam. (D30)
 - [x] Generalización del enum: `MediaCategory` → `Category` con las 9 categorías (la web enseña el catálogo completo desde el día 1). (D23/D27)
 
 Web — implementación del diseño (`design.md`, D25/D29):

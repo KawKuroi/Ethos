@@ -88,3 +88,6 @@ Las tools se nombran `<categoria>.<accion>` (`games.top_by_hours`, `music.recent
 
 ## D29 — Web fiel al diseño: tokens CSS + CSS Modules, SVG propio, sin Recharts
 El prototipo está expresado en CSS variables, estilos inline y SVG simples (sparklines, barras). La web se implementa traduciendo eso directo: tokens como CSS variables globales, CSS Modules, componentes de gráfico propios, `next/font` para Bricolage Grotesque + Hanken Grotesk y `next-themes` para claro/oscuro/sistema. Recharts (D18) queda descartado: no hay gráficos que lo necesiten y pelearía contra la fidelidad. Estado: firme.
+
+## D30 — Hardening de la API contra abuso
+Middlewares ASGI propios en memoria: rate limit por IP (ventana deslizante, 429 + Retry-After, `/health` exento), límite de tamaño de cuerpo (413) y cabeceras de seguridad; más CORS restringido al origen de la web, TrustedHost y docs interactivos apagados en producción. uvicorn corre con `--proxy-headers` para ver la IP real tras el proxy de Render. El cliente de Steam lleva throttle de intervalo mínimo para cuidar la cuota de la API key. ASGI puro (sin BaseHTTPMiddleware) para no romper el SSE del MCP; cero dependencias nuevas. Si el backend escala a varias réplicas, el limitador migra a un backend compartido (p. ej. Redis). Estado: firme.

@@ -1,83 +1,91 @@
-# ACTIVE_TASK — Fundación de /web (Next.js + tokens del diseño)
+# ACTIVE_TASK — Hardening de la API (rate limiting y anti-abuso)
 
-Tarea: crear `/web` (Next.js App Router, pnpm) con la fundación del diseño
-(D25/D29): tokens CSS de la paleta slate + acentos por categoría, tipografías
-con `next/font` (Bricolage Grotesque + Hanken Grotesk), tema
-claro/oscuro/sistema con `next-themes`, animaciones base con
-`prefers-reduced-motion`, testing con Vitest + Testing Library y job de CI.
-Cierra la mitad `/web` del item de monorepo de Fase 0.
+Tarea: proteger la API en producción contra abuso y mal uso: límite de
+peticiones por IP, CORS restringido a la web, hosts confiables, límite de
+tamaño de cuerpo, cabeceras de seguridad, docs interactivos apagados en
+producción y throttle del cliente de Steam (cuida la cuota de la API key).
 
 ## 1. Contexto y Archivos Afectados
 
-- `web/` — NUEVO: scaffold Next.js (TS, App Router, src-dir, ESLint, sin Tailwind).
-- `web/src/app/globals.css` — tokens del diseño (design.md §1) y animaciones.
-- `web/src/app/layout.tsx` — fuentes `next/font` + ThemeProvider.
-- `web/src/components/theme-provider.tsx` — next-themes (claro/oscuro/sistema).
-- `.github/workflows/ci.yml` — job `web` (lint, tipos, tests, build).
-- Apoyo: `web/vitest.config.ts`, test inicial, `README.md` raíz.
+(Se exceden los 5 archivos: el hardening es transversal por diseño — un
+middleware nuevo + config + app + cliente Steam + infra + tests.)
+
+- `api/src/ethos_api/middleware.py` — NUEVO: middlewares ASGI puros
+  (rate limit, tamaño de cuerpo, cabeceras). ASGI puro para no romper el
+  streaming SSE del MCP.
+- `api/src/ethos_api/config.py` — settings de orígenes, hosts y límites.
+- `api/src/ethos_api/main.py` — factory `create_app()` + pila de middlewares
+  + docs solo fuera de producción.
+- `api/src/ethos_api/connectors/steam/client.py` — throttle (intervalo
+  mínimo entre llamadas, reloj/sleep inyectables).
+- `render.yaml` — `--proxy-headers` (IP real tras el proxy de Render) y env
+  vars `ALLOWED_ORIGINS` / `ALLOWED_HOSTS`.
+- Tests: `api/tests/test_hardening.py` (nuevo) y ampliación de
+  `test_steam_client.py`.
 
 ## 2. Evaluación Crítica
 
-**Veredicto: bueno.** Ejecuta la fundación que Fase 1 lista primero y la parte
-de código de Fase 0; el diseño está cerrado (D25), así que no hay riesgo de
-rehacer tokens. Sin choques con PRD/arquitectura.
+**Veredicto: bueno.** Petición directa del usuario y coherente con los
+requisitos de seguridad del PRD §7. El momento es el correcto: la API acaba
+de quedar pública.
 
 Opciones:
-1. (Rec.) create-next-app sin Tailwind + tokens CSS/CSS Modules + next-themes
-   + Vitest. Traducción directa del prototipo (D29).
-2. Tailwind v4: contradice D29 (el prototipo habla CSS variables nativas).
-3. SPA Vite: contradice D18 (Next.js decidido).
+1. (Rec.) Middlewares ASGI propios en memoria + CORS/TrustedHost de
+   Starlette. Cero dependencias nuevas, tipado estricto, suficiente con una
+   instancia única (Render free).
+2. `slowapi` para el rate limit: dependencia extra y basada en
+   BaseHTTPMiddleware (riesgo con SSE del MCP).
+3. Rate limit con Redis (Upstash): necesario solo con varias réplicas; hoy
+   sería costo y latencia sin beneficio.
 
-Deuda prevista: Playwright (E2E) se difiere a cuando haya pantallas reales —
-instalarlo hoy añade peso sin nada que recorrer; queda Vitest como base. El
-ThemeProvider usa `suppressHydrationWarning` (patrón estándar de next-themes).
+Deuda prevista: el limitador en memoria se reinicia con cada deploy y no se
+comparte entre réplicas — si el backend escala horizontalmente, migrar a un
+backend compartido (anotado). El límite de cuerpo por Content-Length no
+frena streaming chunked malicioso más allá del corte por desconexión.
 
 ## 3. Plan de Acción Detallado
 
-### Bloque A — Scaffold
-- [x] **Paso 1: [web/]** `create-next-app` (TS, App Router, src-dir, ESLint,
-  sin Tailwind, alias `@/*`, pnpm).
-- [x] **Paso 2: [web/package.json]** deps `next-themes`; dev-deps Vitest +
-  Testing Library + jsdom; scripts `test` y `typecheck`.
+### Bloque A — Middlewares
+- [x] **Paso 1: [middleware.py]** `RateLimitMiddleware` (ventana deslizante
+  por IP, 429 + Retry-After, `/health` exento, poda de memoria),
+  `BodySizeLimitMiddleware` (413 por Content-Length + corte de chunked),
+  `SecurityHeadersMiddleware` (nosniff, frame-deny, referrer, HSTS).
 
-### Bloque B — Fundación del diseño
-- [x] **Paso 3: [web/src/app/globals.css]** tokens de design.md: paleta slate
-  clara/oscura (`data-theme`), acentos por categoría, salud/alerta, radios,
-  sombras, tipos; keyframes (`ethScreen`, `spin`, `pulse`) y bloque
-  `prefers-reduced-motion`.
-- [x] **Paso 4: [web/src/app/layout.tsx]** `next/font/google` (Bricolage
-  Grotesque 500-800, Hanken Grotesk 400-800) como variables CSS; metadata
-  Ethos; `lang="es"`; ThemeProvider.
-- [x] **Paso 5: [web/src/components/theme-provider.tsx]** wrapper de
-  next-themes (`attribute="data-theme"`, system por defecto, storageKey
-  `ethos_theme_mode`).
-- [x] **Paso 6: [web/src/app/page.tsx]** placeholder mínimo con tokens (se
-  sustituye por la landing real en su tarea).
+### Bloque B — Configuración y app
+- [x] **Paso 2: [config.py]** `allowed_origins`, `allowed_hosts`,
+  `rate_limit_per_minute`, `max_body_bytes`.
+- [x] **Paso 3: [main.py]** factory `create_app()`; pila (de fuera adentro):
+  SecurityHeaders → TrustedHost → CORS → BodyLimit → RateLimit; docs/redoc/
+  openapi apagados si `environment == "production"`.
 
-### Bloque C — Tests y CI
-- [x] **Paso 7: [web/vitest.config.ts + web/src/app/page.test.tsx]** Vitest +
-  jsdom + Testing Library; test de render y de variables de tema.
-- [x] **Paso 8: [.github/workflows/ci.yml]** job `web`: pnpm frozen-lockfile,
-  eslint, `tsc --noEmit`, vitest, build.
+### Bloque C — Steam y despliegue
+- [x] **Paso 4: [steam/client.py]** intervalo mínimo entre llamadas
+  (default 1 s) con `clock`/`sleep` inyectables.
+- [x] **Paso 5: [render.yaml]** startCommand con `--proxy-headers
+  --forwarded-allow-ips '*'`; env vars `ALLOWED_ORIGINS`
+  (https://ethos-steel.vercel.app) y `ALLOWED_HOSTS`
+  (ethos-api-s10w.onrender.com).
 
-### Bloque D — Docs
-- [x] **Paso 9: [README.md raíz + web/README.md]** estructura real y comandos.
+### Bloque D — Tests
+- [x] **Paso 6: [tests/test_hardening.py]** NUEVO: 429 tras superar el
+  límite con Retry-After; `/health` exento; 413 por cuerpo grande; CORS
+  permite el origen de la web y niega otros; Host no confiable → 400;
+  cabeceras de seguridad presentes; docs 404 en producción.
+- [x] **Paso 7: [tests/connectors/test_steam_client.py]** el throttle espera
+  entre llamadas consecutivas (reloj falso, sin dormir de verdad).
 
 ## 4. Reporte de Pruebas
 
 **[APROBADO]**
 
-- Funcional: `/web` con Next.js 16 (App Router, src-dir, sin Tailwind),
-  tokens del diseño en `globals.css` (paleta slate clara/oscura, acentos por
-  categoría, salud, radios, sombras, keyframes, reduced-motion), fuentes
-  `next/font` (Bricolage Grotesque + Hanken Grotesk), `next-themes`
-  (claro/oscuro/sistema, storageKey `ethos_theme_mode`), placeholder con
-  `.eth-screen`.
-- Idioma: identificadores en inglés; comentarios y textos en español.
-- Secretos: grep limpio (solo coincidencias con la palabra "tokens de diseño").
-- Stack (pnpm): eslint sin issues; `tsc --noEmit` sin issues; vitest 3
-  passed (con auto-cleanup y polyfill de matchMedia para next-themes); build
-  de producción estático OK. CI amplía con job `web` (lint, tipos, tests,
-  build) con cache de pnpm.
-- Nota: dos fallos iniciales eran del setup de tests recién escrito (cleanup
-  de Testing Library y matchMedia en jsdom), corregidos dentro del paso 7.
+- Funcional: rate limit por IP (429 + Retry-After, `/health` exento), 413
+  por cuerpo grande, cabeceras de seguridad en toda respuesta, CORS solo
+  para la web, TrustedHost, docs 404 en producción y disponibles en
+  desarrollo, throttle del cliente de Steam. 9 tests nuevos de hardening +
+  1 de throttle.
+- Idioma: identificadores en inglés; comentarios y mensajes en español.
+- Secretos: grep limpio (solo declaraciones `SecretStr` y comentarios).
+- Stack (uv): ruff sin issues; mypy sin issues (33 archivos); pytest 41
+  passed; cobertura 94.61% (umbral 85%).
+- Iteraciones dentro del ciclo: RUF012 (lista mutable de clase → tupla) y
+  la concatenación lista+tupla resultante, detectada por la suite.

@@ -18,6 +18,16 @@ class Settings(BaseSettings):
 
     environment: str = "development"
 
+    # Protección de la API (ver middleware.py y main.py).
+    # Orígenes permitidos para CORS, separados por coma.
+    allowed_origins: str = "http://localhost:3000"
+    # Hosts confiables (header Host), separados por coma; "*" solo en desarrollo.
+    allowed_hosts: str = "*"
+    # Límite de peticiones por IP por minuto (0 desactiva el límite).
+    rate_limit_per_minute: int = 120
+    # Tamaño máximo del cuerpo de una petición, en bytes.
+    max_body_bytes: int = 64_000
+
     # Credenciales de servicios externos (vacías por defecto; se inyectan
     # por entorno en cada despliegue).
     supabase_url: str = ""

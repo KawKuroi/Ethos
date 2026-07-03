@@ -1,11 +1,16 @@
 """Cliente de la Steam Web API.
 
 Acepta un `httpx.Client` inyectable para poder testear sin red. La API key es
-del servidor y nunca se expone al cliente final.
+del servidor y nunca se expone al cliente final. Un throttle de intervalo
+mínimo entre llamadas cuida la cuota de la key (100k/día) y evita que un
+abuso interno (p. ej. el cálculo de completado, una llamada por juego) la
+queme o la haga banear.
 """
 
 from __future__ import annotations
 
+import time
+from collections.abc import Callable
 from typing import Any
 
 import httpx
@@ -20,11 +25,31 @@ class SteamApiError(RuntimeError):
 class SteamApiClient:
     """Cliente mínimo de la Steam Web API."""
 
-    def __init__(self, api_key: str, *, client: httpx.Client | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        *,
+        client: httpx.Client | None = None,
+        min_interval_seconds: float = 1.0,
+        clock: Callable[[], float] = time.monotonic,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
         self._api_key = api_key
         self._client = client or httpx.Client(base_url=_BASE_URL, timeout=15.0)
+        self._min_interval = min_interval_seconds
+        self._clock = clock
+        self._sleep = sleep
+        self._last_call = float("-inf")
+
+    def _throttle(self) -> None:
+        # Espera lo que falte para respetar el intervalo mínimo entre llamadas.
+        wait = self._min_interval - (self._clock() - self._last_call)
+        if wait > 0:
+            self._sleep(wait)
+        self._last_call = self._clock()
 
     def _get(self, path: str, params: dict[str, str]) -> dict[str, Any]:
+        self._throttle()
         # El crudo de Steam es JSON sin tipar; se devuelve como dict y la capa de
         # normalización lo convierte al contrato tipado.
         respuesta = self._client.get(path, params={"key": self._api_key, **params})

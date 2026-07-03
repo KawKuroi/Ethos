@@ -101,6 +101,7 @@ exacta (D23).
 ## 8. Seguridad y privacidad
 
 - Tokens de terceros: cifrados a nivel de app (Fernet: AES-128-CBC + HMAC) antes de guardarse en Postgres; la llave vive en el secret manager, nunca en el repo. Se descifran solo en memoria al llamar la API. Mejora futura opcional: envelope encryption con KMS.
+- Anti-abuso (D30): rate limit por IP (429 + Retry-After), límite de tamaño de cuerpo (413), cabeceras de seguridad, CORS restringido al origen de la web, hosts confiables, docs interactivos apagados en producción y throttle del cliente de Steam (cuota de la API key).
 - Aislamiento entre usuarios: Row-Level Security en Postgres.
 - Login de la app: Supabase Auth con correo/contraseña, Google y GitHub (D26). Steam no es login de la app: su OpenID es el flujo de conexión de la fuente de Juegos (D12).
 - Borrado: "eliminar todos los datos" borra el contexto conservando la cuenta; "eliminar cuenta" es borrado diferido con correo de deshacer de 30 días.

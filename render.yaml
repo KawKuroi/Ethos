@@ -8,13 +8,21 @@ services:
     plan: free
     rootDir: api
     buildCommand: pip install uv && uv sync --frozen --no-dev
-    startCommand: uv run uvicorn ethos_api.main:app --host 0.0.0.0 --port $PORT
+    # --proxy-headers: sin él, la IP del cliente sería la del proxy de Render
+    # y el rate limit por IP castigaría a todos por igual.
+    startCommand: >-
+      uv run uvicorn ethos_api.main:app --host 0.0.0.0 --port $PORT
+      --proxy-headers --forwarded-allow-ips '*'
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: "3.12"
       - key: ENVIRONMENT
         value: production
+      - key: ALLOWED_ORIGINS
+        value: https://ethos-steel.vercel.app
+      - key: ALLOWED_HOSTS
+        value: ethos-api-s10w.onrender.com
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
