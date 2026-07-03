@@ -33,7 +33,8 @@ Archivos del proyecto de diseño:
   · Cine y TV `#8b5cf6` · Anime y manga `#e0883c` · Actividad física `#c64b78`
   · Libros `#2f9e6b` · Lugares `#6f8f3f` · Comida `#b07b3e` · Juegos de mesa
   `#3f8f8f`. (El prototipo trae además Pódcasts `#5b6ee0` y YouTube `#d15b5b`,
-  fuera del catálogo del producto por D27.)
+  fuera del catálogo del producto por D27; Actividad física también quedó
+  fuera por D31, aunque el prototipo la muestre.)
 - Salud/alerta: ok `#3aa06a` · warn `#d99a2b` · error `#d9483b`.
 - Radios: card 14px (10px en app), pill 999px. Sombras suaves; hover eleva.
 - Logo: constelación SVG inline (sin imágenes externas).

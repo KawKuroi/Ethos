@@ -1,7 +1,8 @@
 // Datos de la landing, copiados del prototipo (Landing mockups.dc.html).
-// Catálogo activo: las 6 categorías básicas de D27 (Lugares, Comida y
-// Juegos de mesa quedan diferidas). Anime y manga toma sus valores del
-// prototipo de la app (misma fuente de verdad).
+// Catálogo activo: las 5 categorías de D27 ajustado por D31 (Lugares, Comida y
+// Juegos de mesa quedan diferidas; Actividad física retirada por falta de
+// fuente viable). Anime y manga toma sus valores del prototipo de la app
+// (misma fuente de verdad).
 
 export type LandingCategory = {
   name: string;
@@ -17,7 +18,7 @@ export const CATS: LandingCategory[] = [
     value: "1.840",
     label: "horas jugadas",
     accent: "#3b82c4",
-    providers: ["Steam", "GOG", "PlayStation", "Xbox", "Epic"],
+    providers: ["Steam", "Xbox", "PlayStation", "GOG"],
   },
   {
     name: "Música",
@@ -41,13 +42,6 @@ export const CATS: LandingCategory[] = [
     providers: ["AniList", "MyAnimeList", "Kitsu"],
   },
   {
-    name: "Actividad física",
-    value: "412",
-    label: "km · este año",
-    accent: "#c64b78",
-    providers: ["Strava", "Garmin", "Fitbit"],
-  },
-  {
     name: "Libros",
     value: "42",
     label: "leídos · este año",
@@ -59,7 +53,7 @@ export const CATS: LandingCategory[] = [
 export const HERO_SOURCES = [
   { name: "Steam", initial: "S", accent: "#3b82c4" },
   { name: "Spotify", initial: "S", accent: "#2f9e6b" },
-  { name: "Strava", initial: "S", accent: "#c64b78" },
+  { name: "AniList", initial: "A", accent: "#e0883c" },
   { name: "Trakt", initial: "T", accent: "#8b5cf6" },
   { name: "Goodreads", initial: "G", accent: "#b07b3e" },
 ];

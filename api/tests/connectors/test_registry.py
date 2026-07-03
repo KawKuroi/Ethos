@@ -9,14 +9,13 @@ from ethos_api.connectors.steam.connector import SteamConnector
 from ethos_api.schema import Category
 
 
-def test_catalogo_de_6_categorias() -> None:
-    # Los valores son los ids del diseño; catálogo activo de D27.
+def test_catalogo_de_5_categorias() -> None:
+    # Los valores son los ids del diseño; catálogo activo de D27 (D31 retira fitness).
     assert [c.value for c in Category] == [
         "games",
         "music",
         "film",
         "anime",
-        "fitness",
         "books",
     ]
 

@@ -24,7 +24,7 @@ Las IA no conocen el gusto real de una persona, y los datos que lo describen est
 
 ## 5. Conceptos centrales
 
-- Categoría: dominio de gusto. Seis en catálogo (D27): Juegos, Música, Cine y TV, Anime y manga, Actividad física y Libros. Diferidas: Lugares, Comida y Juegos de mesa (y Pódcasts/YouTube del prototipo). Estados: activa, apagada (existe sin datos) o en desarrollo (conector no listo). El catálogo se habilita secuencialmente: cada categoría se construye, prueba y confirma antes de pasar a la siguiente; las no implementadas aparecen "en desarrollo".
+- Categoría: dominio de gusto. Cinco en catálogo (D27, ajustado por D31): Juegos, Música, Cine y TV, Anime y manga y Libros. Diferidas: Lugares, Comida y Juegos de mesa (y Pódcasts/YouTube del prototipo). Retirada: Actividad física (D31, sin fuente viable). Estados: activa, apagada (existe sin datos) o en desarrollo (conector no listo). El catálogo se habilita secuencialmente: cada categoría se construye, prueba y confirma antes de pasar a la siguiente; las no implementadas aparecen "en desarrollo".
 - Proveedor: la plataforma concreta de una categoría (ej. Steam para Juegos). Una sola activa por categoría, intercambiable entre alternativas.
 - Modo de conexión: API (donde exista) o import (subir el export, con guía por proveedor).
 - Perfil: el conjunto normalizado de la persona, base de las dos salidas.
@@ -59,7 +59,7 @@ La UI está completamente especificada en el diseño de Claude Design (ver `desi
 
 ## 8. Alcance de la v1 (slice vertical: Juegos / Steam)
 
-Incluye: conexión de Steam (OpenID) con manejo de perfil privado; extracción de biblioteca, deseados, horas de juego, porcentaje de completado agregado por juego y datos de perfil; almacenamiento indexado; tools del MCP de juegos; descarga del contexto de juegos; la web del slice con el diseño final (auth, Inicio, Detalle de Juegos, Fuentes, Conectar IA, Ayuda, Ajustes) y la landing, con Juegos como única categoría activa y las otras cinco visibles como "en desarrollo"; refresco asíncrono; estados de frescura.
+Incluye: conexión de Steam (OpenID) con manejo de perfil privado; extracción de biblioteca, deseados, horas de juego, porcentaje de completado agregado por juego y datos de perfil; almacenamiento indexado; tools del MCP de juegos; descarga del contexto de juegos; la web del slice con el diseño final (auth, Inicio, Detalle de Juegos, Fuentes, Conectar IA, Ayuda, Ajustes) y la landing, con Juegos como única categoría activa y las otras cuatro visibles como "en desarrollo"; refresco asíncrono; estados de frescura.
 
 Fuera de la v1: detalle de logros individuales, géneros (diferido), resto de categorías, OAuth 2.1 para el MCP, entradas a mano, playground con LLM real (la v1 lo simula con datos reales, como el prototipo).
 

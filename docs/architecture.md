@@ -51,26 +51,32 @@ Catálogo (D27) — proveedor inicial y alternativas visibles en la UI:
 
 | Categoría | Proveedor inicial | Modo | Alternativas |
 |-----------|------------------|------|--------------|
-| Juegos | Steam | API | GOG, PlayStation, Xbox, Epic |
-| Música | ListenBrainz | API | Last.fm, Spotify, Apple Music |
-| Cine y TV | Trakt | API | Letterboxd, TMDB, IMDb |
-| Anime y manga | AniList | API | MyAnimeList, Kitsu |
-| Actividad física | Strava | API | Garmin, Fitbit |
-| Libros | Goodreads | Import | StoryGraph, Hardcover, Open Library |
+| Juegos | Steam | API | Xbox (API no oficial), PlayStation (API no oficial), GOG (import) |
+| Música | ListenBrainz | API | Last.fm (API), Spotify (import), Apple Music (import) |
+| Cine y TV | Trakt | API | TMDB (API), Letterboxd (import), IMDb (import) |
+| Anime y manga | AniList | API | MyAnimeList (API), Kitsu (API) |
+| Libros | Goodreads | Import | Hardcover (API), StoryGraph (import), Open Library (API) |
+
+Modos según la investigación de fuentes del 2026-07-03 (bitácora en
+`current.md`): descartados de plano Epic y Backloggd (sin API ni export),
+Deezer y Tidal (API cerrada / sin historial) y TV Time (cierra 2026-07-15).
+Xbox y PlayStation dependen de APIs no oficiales (OpenXBL, psn-api):
+funcionales pero revocables.
 
 Diferidas (fuera del catálogo por D27, se reevaluarán): Lugares (Swarm),
 Comida (Beli, solo import) y Juegos de mesa (BoardGameGeek, solo import).
+Retirada (D31): Actividad física — sin fuente viable (Strava prohíbe usar
+datos de su API con IA; Garmin no admite desarrolladores personales; la Web
+API de Fitbit se apaga en septiembre de 2026).
 
 Estados por categoría: activa, apagada (sin datos) o en desarrollo (conector
 no listo; visible pero no activable). El catálogo se habilita secuencialmente
-(D27): en la v1 solo Juegos está implementada y las otras cinco aparecen "en
+(D27): en la v1 solo Juegos está implementada y las otras cuatro aparecen "en
 desarrollo"; cada nueva categoría se construye, prueba y confirma antes de
-pasar a la siguiente. Generalización del contrato: la mayoría
-son "obra + relación" (rating, estado, engagement); Lugares y Comida encajan
-tratando el sitio o el plato como obra. Actividad física (Strava) es de tipo
-evento/métrica (distancia, duración) y no es una "obra", por lo que el
-contrato normalizado debe admitir también esa forma. Por confirmar la forma
-exacta (D23).
+pasar a la siguiente. Generalización del contrato: todas encajan en
+"obra + relación" (rating, estado, engagement); Lugares y Comida encajarían
+tratando el sitio o el plato como obra. La forma evento/métrica que exigía
+Actividad física dejó de ser necesaria al retirarse la categoría (D23/D31).
 
 ## 5. Salidas del contexto (D24)
 
@@ -117,7 +123,7 @@ exacta (D23).
   cifradas a nivel de app (Fernet), con la llave en el secret manager
   (D9, D20). Se descifran solo en memoria al llamar la API; nunca viajan al cliente.
 - RLS owner-only en `user_credentials` (aislamiento por usuario).
-- Para proveedores OpenID/OAuth (Steam, Trakt, Strava), el identificador o los
+- Para proveedores OpenID/OAuth (Steam, Trakt), el identificador o los
   tokens OAuth resultantes se custodian en el mismo almacén cifrado.
 - El token del MCP por usuario es independiente y nunca se reenvía a terceros.
 

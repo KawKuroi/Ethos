@@ -17,7 +17,7 @@ https://ethos-steel.vercel.app
 ## Activo
 
 **Fase 1 — Slice Juegos / Steam** (en curso, backend). Hecho: contrato de datos
-normalizado (`schema.py`) generalizado a `Category` (6 categorías activas, D27),
+normalizado (`schema.py`) generalizado a `Category` (5 categorías activas, D27/D31),
 interfaz de conector (`connectors/base.py`), registro de conectores
 (`connectors/registry.py`, D21) y conector de Steam (cliente HTTP +
 normalización de biblioteca, jugados recientes y perfil) con tests de fixtures;
@@ -88,6 +88,21 @@ producción.
   200, `/mcp/` 405 con `allow: DELETE, POST` y handshake MCP `initialize`
   correcto (un 404 inicial era el deploy propagándose). Pendiente anotado:
   `/health` no toca Supabase (pausa a los 7 días).
+
+### 2026-07-03 (catálogo: investigación de fuentes y retiro de Actividad física)
+
+- Investigación de viabilidad de fuentes por categoría (APIs y exports, estado
+  2026). Resultado: Steam, ListenBrainz, Trakt, AniList y Goodreads (import)
+  confirmados; Spotify, Letterboxd, Garmin y Fitbit descartados como API;
+  Hardcover (libros) y Simkl (cine/TV) identificados como alternativas API
+  reales; TV Time cierra el 2026-07-15. Actividad física retirada del catálogo
+  (D31): Strava prohíbe usar datos de su API con IA y no hay alternativa
+  viable. Catálogo activo a 5: enum `Category` sin `fitness`, landing y tests
+  actualizados (api y web en verde), docs ajustados (prd, architecture,
+  data-model, design, roadmap, D23/D27/D31). Alternativas depuradas (D27):
+  fuera las inviables (Epic; Deezer/Tidal/TV Time ni entran); Juegos queda
+  Steam + Xbox/PlayStation (APIs no oficiales) + GOG (import); modos por
+  proveedor anotados en `architecture.md` 4.1.
 
 ### 2026-07-02 (Fase 0/1: fundación de /web)
 

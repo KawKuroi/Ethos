@@ -25,19 +25,18 @@ describe("Landing", () => {
     expect(
       screen.getByRole("heading", { name: /una categoría, de tu app hasta tu ia/i }),
     ).toBeInTheDocument();
-    // Las 6 categorías del catálogo activo (D27) están en la galería.
+    // Las 5 categorías del catálogo activo (D27, ajustado por D31) están en la galería.
     for (const name of [
       "Juegos",
       "Música",
       "Cine y TV",
       "Anime y manga",
-      "Actividad física",
       "Libros",
     ]) {
       expect(screen.getAllByText(name).length).toBeGreaterThan(0);
     }
-    // Las diferidas no aparecen.
-    for (const name of ["Lugares", "Comida", "Juegos de mesa"]) {
+    // Las diferidas y la retirada (Actividad física, D31) no aparecen.
+    for (const name of ["Lugares", "Comida", "Juegos de mesa", "Actividad física"]) {
       expect(screen.queryByText(name)).not.toBeInTheDocument();
     }
   });

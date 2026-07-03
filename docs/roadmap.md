@@ -25,7 +25,7 @@ Web — implementación del diseño (`design.md`, D25/D29):
 - [x] Fundación de `/web`: Next.js + tokens CSS (paleta slate, acentos por categoría), `next/font`, `next-themes`, transiciones y `prefers-reduced-motion`.
 - [ ] Auth: login/registro (correo + Google + GitHub), recuperación de contraseña. (D26)
 - [ ] Shell de la app: navegación lateral, header, badge de "Conectar IA".
-- [ ] Inicio: banner de IA, alertas agregadas, "El gusto en números", panorama de categorías, actividad reciente (Juegos activa; las otras cinco como "en desarrollo").
+- [ ] Inicio: banner de IA, alertas agregadas, "El gusto en números", panorama de categorías, actividad reciente (Juegos activa; las otras cuatro como "en desarrollo").
 - [ ] Detalle de categoría (Juegos): status strip, stat band, Destacados/Reciente/Listas, refrescar, modal de descarga con preview JSON/MCP.
 - [ ] Fuentes: grupos activas / apagadas / en desarrollo, salud y método.
 - [ ] Conectar IA: endpoint + token reales, tres pasos, playground simulado con datos reales del usuario (sin LLM en v1).
@@ -50,12 +50,11 @@ inicial; alternativas según D4/D6/D27):
 - [ ] Cine y TV: Trakt (API). Alternativa: Letterboxd (import).
 - [ ] Anime y manga: AniList (API).
 - [ ] Libros: Goodreads (import). Alternativas: StoryGraph (import), Hardcover (API).
-- [ ] Actividad física: Strava (API) — requiere el contrato generalizado (evento/métrica, D23).
 - [ ] Modo import genérico con autodetección de archivo y guías por proveedor.
-- [ ] Forma evento/métrica del contrato normalizado (para Strava; D23).
 
 Diferidas fuera del catálogo (D27, revisión 2026-07-03): Lugares (Swarm),
-Comida (Beli) y Juegos de mesa (BoardGameGeek). Se reevaluarán al cerrar las 6.
+Comida (Beli) y Juegos de mesa (BoardGameGeek). Se reevaluarán al cerrar las 5.
+Retirada (D31, 2026-07-03): Actividad física — sin fuente viable.
 
 ## Fase 4 — Pulido y robustez
 

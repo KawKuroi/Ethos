@@ -14,9 +14,10 @@ from pydantic import BaseModel, Field
 
 
 class Category(StrEnum):
-    """Dominio de gusto del catálogo activo (D27). Valores = ids del diseño.
+    """Dominio de gusto del catálogo activo (D27, ajustado por D31). Valores = ids del diseño.
 
     Diferidas (se añadirán si el catálogo crece): places, food, board.
+    Retirada (D31, sin fuente viable): fitness.
     """
 
     games = "games"
@@ -25,8 +26,6 @@ class Category(StrEnum):
     film = "film"
     # Anime y manga
     anime = "anime"
-    # Actividad física
-    fitness = "fitness"
     books = "books"
 
 
