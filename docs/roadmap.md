@@ -14,7 +14,7 @@ Backend:
 - [x] Servidor MCP: resource de resumen + tools `games.*` y `profile.search`, reportando KB servidos. (D28)
 - [x] Descarga de contexto: `GET /context/games` → `games.context.json`. (D24/D34)
 - [x] Refresco asíncrono con estados de frescura. (BackgroundTasks, D36; la cola durable llega con la infra de D35)
-- [ ] Respaldo Supabase de los repositorios en memoria: tablas `user_credentials`, `user_games` y `mcp_tokens` con RLS. (D20/D35 — único pendiente del backend; requiere infra)
+- [x] Respaldo Supabase de los repositorios en memoria: migración 0003 (`user_items`, `mcp_tokens`, `source_state` ampliada) + repos PostgREST con selección automática por entorno. (D20/D35 — código listo; falta que el usuario aplique la migración, ver `por-revisar.md`)
 - [x] Auth del MCP por token de usuario (`eth_live_…`, hash SHA-256) antes de exponer tools de datos. (D22)
 - [x] Registro de conectores (registry) y modelo de extensión de categorías/proveedores. (D21)
 - [x] Hardening de la API: rate limit por IP, límites de cuerpo, cabeceras, CORS, TrustedHost, docs off en producción y throttle de Steam. (D30)

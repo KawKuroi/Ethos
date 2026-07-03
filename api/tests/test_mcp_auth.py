@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from ethos_api.games.store import InMemoryGamesStore
 from ethos_api.main import app
-from ethos_api.mcp_auth import McpTokenStore, user_from_authorization
+from ethos_api.mcp_auth import InMemoryMcpTokenStore, user_from_authorization
 from ethos_api.mcp_server import (
     games_summary_payload,
     games_top_payload,
@@ -20,14 +20,14 @@ from tests.helpers import auth_headers
 
 
 def test_emitir_y_resolver_token() -> None:
-    store = McpTokenStore()
+    store = InMemoryMcpTokenStore()
     token = store.issue("user-1")
     assert token.startswith("eth_live_")
     assert store.resolve(token) == "user-1"
 
 
 def test_emitir_de_nuevo_rota_el_anterior() -> None:
-    store = McpTokenStore()
+    store = InMemoryMcpTokenStore()
     primero = store.issue("user-1")
     segundo = store.issue("user-1")
     assert store.resolve(primero) is None
@@ -35,14 +35,14 @@ def test_emitir_de_nuevo_rota_el_anterior() -> None:
 
 
 def test_resolver_rechaza_tokens_ajenos() -> None:
-    store = McpTokenStore()
+    store = InMemoryMcpTokenStore()
     store.issue("user-1")
     assert store.resolve("eth_live_invento") is None
     assert store.resolve("otro-esquema") is None
 
 
 def test_user_from_authorization() -> None:
-    store = McpTokenStore()
+    store = InMemoryMcpTokenStore()
     token = store.issue("user-1")
     assert user_from_authorization(f"Bearer {token}", store) == "user-1"
     assert user_from_authorization(token, store) is None

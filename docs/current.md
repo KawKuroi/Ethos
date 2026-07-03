@@ -24,10 +24,11 @@ OpenID de Steam verificado contra `check_authentication`, persistencia tras
 puerto (`GamesStore`, memoria, D35), resumen + contexto descargable
 (`GET /context/games`, D34), refresco con estados de frescura (D36) y MCP con
 auth por token `eth_live_…` (D22) y tools `games.*` + `profile.search` con KB
-servidos (D28). **Único pendiente de Fase 1**: respaldo Supabase de los
-repositorios en memoria (tablas + RLS, requiere infra del usuario); hasta
-entonces los datos del backend se pierden al redeploy y la web sigue mostrando
-datos de ejemplo (el cableado web↔API llega con ese respaldo).
+servidos (D28). Respaldo Supabase implementado (migración 0003 + repos
+PostgREST con selección automática por entorno, D35). **Para cerrar Fase 1
+falta**: que el usuario aplique la migración 0003 en Supabase (pasos en
+`por-revisar.md`) y el cableado de la web a datos reales (siguiente ciclo;
+hoy la web muestra datos de ejemplo).
 
 Fase 0 completa (2026-07-02): Supabase real con migraciones aplicadas,
 servicio en Render (blueprint `render.yaml`), web en Vercel, keep-alive de
@@ -42,6 +43,22 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-03 (Fase 1: backend · respaldo Supabase de la persistencia, D35)
+
+- Migración `0003_games_and_mcp_tokens.sql`: tabla `user_items` (genérica por
+  categoría; `payload` jsonb = `NormalizedItem`, columnas `external_id`,
+  `status`, `title`, `playtime_minutes` extraídas para indexar; RLS
+  owner-only), tabla `mcp_tokens` (hash SHA-256, PK por usuario = rotación por
+  upsert) y `source_state` ampliada (estado `private`, `detail`,
+  `provider_profile` jsonb). Cliente PostgREST mínimo (`supabase_rest.py`,
+  service_role: el backend autentica por JWT y acota por user_id; RLS bloquea
+  el acceso directo) e implementaciones `SupabaseCredentialRepository`,
+  `SupabaseGamesStore` (mapeo fresh↔synced) y `SupabaseMcpTokenStore`.
+  Selección memoria/Supabase automática por entorno en los deps. 7 tests
+  nuevos (MockTransport); ruff, mypy y pytest (84, cobertura 94.6%) en verde.
+  Pendiente del usuario: aplicar la migración en Supabase (por-revisar.md);
+  siguiente ciclo: cablear la web a datos reales.
 
 ### 2026-07-03 (Fase 1: backend · slice Juegos/Steam completo)
 

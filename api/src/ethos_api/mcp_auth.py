@@ -10,12 +10,13 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from typing import Annotated
+from typing import Annotated, Protocol
 
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 
 from ethos_api.auth import CurrentUserId
+from ethos_api.supabase_rest import SupabaseRest, get_rest
 
 _TOKEN_PREFIX = "eth_live_"  # noqa: S105 — prefijo público del token, no un secreto
 
@@ -24,8 +25,48 @@ def _hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-class McpTokenStore:
-    """Tokens del MCP: un token activo por usuario, guardado como hash."""
+class McpTokenStore(Protocol):
+    """Puerto de los tokens del MCP: un token activo por usuario, como hash."""
+
+    def issue(self, user_id: str) -> str: ...
+
+    def resolve(self, token: str) -> str | None: ...
+
+
+def _new_token() -> str:
+    return _TOKEN_PREFIX + secrets.token_urlsafe(24)
+
+
+class SupabaseMcpTokenStore:
+    """Respaldo en la tabla `mcp_tokens` (migración 0003, D35)."""
+
+    _TABLE = "mcp_tokens"
+
+    def __init__(self, rest: SupabaseRest) -> None:
+        self._rest = rest
+
+    def issue(self, user_id: str) -> str:
+        token = _new_token()
+        # PK = user_id: el upsert rota el token anterior del usuario.
+        self._rest.upsert(
+            self._TABLE,
+            [{"user_id": user_id, "token_hash": _hash(token)}],
+            on_conflict="user_id",
+        )
+        return token
+
+    def resolve(self, token: str) -> str | None:
+        if not token.startswith(_TOKEN_PREFIX):
+            return None
+        rows = self._rest.select(
+            self._TABLE,
+            {"token_hash": f"eq.{_hash(token)}", "select": "user_id", "limit": "1"},
+        )
+        return rows[0]["user_id"] if rows else None
+
+
+class InMemoryMcpTokenStore:
+    """Implementación en memoria, para tests y desarrollo."""
 
     def __init__(self) -> None:
         self._user_by_hash: dict[str, str] = {}
@@ -33,7 +74,7 @@ class McpTokenStore:
 
     def issue(self, user_id: str) -> str:
         """Emite (y rota) el token del usuario; devuelve el claro una vez."""
-        token = _TOKEN_PREFIX + secrets.token_urlsafe(24)
+        token = _new_token()
         digest = _hash(token)
         previous = self._hash_by_user.get(user_id)
         if previous:
@@ -49,10 +90,15 @@ class McpTokenStore:
         return self._user_by_hash.get(_hash(token))
 
 
-_store = McpTokenStore()
+_store: McpTokenStore | None = None
 
 
 def get_mcp_token_store() -> McpTokenStore:
+    """Supabase si está configurado; memoria en local/CI (D35)."""
+    global _store
+    if _store is None:
+        rest = get_rest()
+        _store = SupabaseMcpTokenStore(rest) if rest else InMemoryMcpTokenStore()
     return _store
 
 

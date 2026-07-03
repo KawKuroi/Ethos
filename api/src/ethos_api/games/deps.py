@@ -11,12 +11,18 @@ from ethos_api.config import settings
 from ethos_api.connectors.steam.client import SteamApiClient
 from ethos_api.connectors.steam.openid import verify_openid_response
 from ethos_api.games.service import SteamGamesApi
-from ethos_api.games.store import GamesStore, InMemoryGamesStore
+from ethos_api.games.store import GamesStore, InMemoryGamesStore, SupabaseGamesStore
+from ethos_api.supabase_rest import get_rest
 
-_store: GamesStore = InMemoryGamesStore()
+_store: GamesStore | None = None
 
 
 def get_games_store() -> GamesStore:
+    """Supabase si está configurado; memoria en local/CI (D35)."""
+    global _store
+    if _store is None:
+        rest = get_rest()
+        _store = SupabaseGamesStore(rest) if rest else InMemoryGamesStore()
     return _store
 
 

@@ -1,10 +1,11 @@
-"""Repositorio de credenciales: contrato e implementación en memoria."""
+"""Repositorio de credenciales: contrato, memoria y respaldo Supabase (D35)."""
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Any, Protocol
 
 from ethos_api.credentials.models import UserCredential
+from ethos_api.supabase_rest import SupabaseRest
 
 
 class CredentialRepository(Protocol):
@@ -19,12 +20,61 @@ class CredentialRepository(Protocol):
     def delete(self, user_id: str, provider: str) -> bool: ...
 
 
-class InMemoryCredentialRepository:
-    """Implementación en memoria (no persistente).
+class SupabaseCredentialRepository:
+    """Respaldo en la tabla `user_credentials` vía PostgREST (RLS owner-only)."""
 
-    Útil para tests y desarrollo. El repositorio respaldado por Supabase
-    (con su estrategia de RLS) llega en el siguiente ciclo.
-    """
+    _TABLE = "user_credentials"
+
+    def __init__(self, rest: SupabaseRest) -> None:
+        self._rest = rest
+
+    @staticmethod
+    def _to_model(row: dict[str, Any]) -> UserCredential:
+        return UserCredential(
+            user_id=row["user_id"],
+            provider=row["provider"],
+            category=row["category"],
+            encrypted_token=row["encrypted_token"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
+
+    def upsert(self, credential: UserCredential) -> None:
+        self._rest.upsert(
+            self._TABLE,
+            [
+                {
+                    "user_id": credential.user_id,
+                    "provider": credential.provider,
+                    "category": credential.category.value,
+                    "encrypted_token": credential.encrypted_token,
+                    "created_at": credential.created_at.isoformat(),
+                    "updated_at": credential.updated_at.isoformat(),
+                }
+            ],
+            on_conflict="user_id,provider",
+        )
+
+    def list_for_user(self, user_id: str) -> list[UserCredential]:
+        rows = self._rest.select(self._TABLE, {"user_id": f"eq.{user_id}"})
+        return [self._to_model(row) for row in rows]
+
+    def get(self, user_id: str, provider: str) -> UserCredential | None:
+        rows = self._rest.select(
+            self._TABLE,
+            {"user_id": f"eq.{user_id}", "provider": f"eq.{provider}", "limit": "1"},
+        )
+        return self._to_model(rows[0]) if rows else None
+
+    def delete(self, user_id: str, provider: str) -> bool:
+        deleted = self._rest.delete(
+            self._TABLE, {"user_id": f"eq.{user_id}", "provider": f"eq.{provider}"}
+        )
+        return deleted > 0
+
+
+class InMemoryCredentialRepository:
+    """Implementación en memoria (no persistente), para tests y desarrollo."""
 
     def __init__(self) -> None:
         self._store: dict[tuple[str, str], UserCredential] = {}
