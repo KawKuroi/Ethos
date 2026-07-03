@@ -16,17 +16,18 @@ https://ethos-steel.vercel.app
 
 ## Activo
 
-**Fase 1 — Slice Juegos / Steam** (en curso, backend). Hecho: contrato de datos
-normalizado (`schema.py`) generalizado a `Category` (5 categorías activas, D27/D31),
-interfaz de conector (`connectors/base.py`), registro de conectores
-(`connectors/registry.py`, D21) y conector de Steam (cliente HTTP +
-normalización de biblioteca, jugados recientes y perfil) con tests de fixtures;
-backend de credenciales de usuario (sesión por JWT de Supabase con JWKS,
-cifrado Fernet y endpoints `/credentials`) sobre repositorio en memoria.
-Pendiente de Fase 1: repositorio de credenciales respaldado por Supabase (con
-estrategia RLS), persistencia indexada de juegos, wishlist y completado%
-(decisiones abiertas), generador del resumen, tools del MCP de juegos, refresco
-asíncrono, login OpenID y la web (Claude Design).
+**Fase 1 — Slice Juegos / Steam** (prácticamente cerrada). Web completa: las 8
+pantallas del diseño (landing, auth, shell, Inicio, Detalle, Fuentes, Conectar
+IA, Ayuda/Ajustes) con datos de ejemplo. Backend completo del slice: conector
+de Steam (biblioteca, recientes, wishlist D32, completado top-20 D33, perfil),
+OpenID de Steam verificado contra `check_authentication`, persistencia tras
+puerto (`GamesStore`, memoria, D35), resumen + contexto descargable
+(`GET /context/games`, D34), refresco con estados de frescura (D36) y MCP con
+auth por token `eth_live_…` (D22) y tools `games.*` + `profile.search` con KB
+servidos (D28). **Único pendiente de Fase 1**: respaldo Supabase de los
+repositorios en memoria (tablas + RLS, requiere infra del usuario); hasta
+entonces los datos del backend se pierden al redeploy y la web sigue mostrando
+datos de ejemplo (el cableado web↔API llega con ese respaldo).
 
 Fase 0 completa (2026-07-02): Supabase real con migraciones aplicadas,
 servicio en Render (blueprint `render.yaml`), web en Vercel, keep-alive de
@@ -41,6 +42,27 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-03 (Fase 1: backend · slice Juegos/Steam completo)
+
+- Cierre programable del backend con decisiones delegadas por el usuario
+  (D32-D36): cliente de Steam con `get_wishlist` + `get_player_achievements`;
+  conector normaliza wishlist (`status=wishlist`, sin títulos, D32) y anota
+  `completion_pct` (presupuesto top-20 por refresco, D33); verificación OpenID
+  2.0 contra Steam (`check_authentication`, campos firmados) en
+  `connectors/steam/openid.py`; paquete `games/` (store tras puerto con
+  memoria indexada D35, resumen tipado, contexto D34, servicio de refresco con
+  estados `never/syncing/fresh/private/error` D36) y endpoints
+  `POST /sources/steam` (conecta + primer refresco), `POST
+  /sources/steam/refresh` (202), `GET /sources/games` y `GET /context/games`
+  (descarga D24). MCP: tokens `eth_live_…` (hash SHA-256, rotación,
+  `POST /mcp-token`) y tools `games.summary`, `games.top_by_hours`,
+  `games.recent`, `profile.search` + resource `ethos://games/summary`, todas
+  con auth (D22) y métrica de KB servidos (D28); `ping` sigue abierto.
+  36 tests nuevos: ruff, mypy y pytest (77, cobertura 95.5%) en verde.
+  Pendiente único de Fase 1: respaldo Supabase de los stores en memoria
+  (tablas `user_credentials`/`user_games`/`mcp_tokens` + RLS) y el cableado
+  de la web a datos reales, que dependen de infra.
 
 ### 2026-07-03 (Fase 1: web · Ayuda y Ajustes)
 

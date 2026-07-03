@@ -8,6 +8,8 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from ethos_api.config import settings
 from ethos_api.credentials.router import router as credentials_router
+from ethos_api.games.router import router as games_router
+from ethos_api.mcp_auth import router as mcp_token_router
 from ethos_api.mcp_server import mcp
 from ethos_api.middleware import (
     BodySizeLimitMiddleware,
@@ -46,6 +48,8 @@ def create_app() -> FastAPI:
 
     # Endpoints HTTP de la API (autenticados con la sesión de Supabase).
     app.include_router(credentials_router)
+    app.include_router(games_router)
+    app.include_router(mcp_token_router)
 
     @app.get("/health")
     def health() -> dict[str, str]:

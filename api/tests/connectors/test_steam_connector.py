@@ -55,3 +55,35 @@ def test_extrae_perfil() -> None:
     assert profile.steamid == "76561197960287930"
     assert profile.persona_name == "Jugador"
     assert profile.visibility == 3
+
+
+def test_normaliza_wishlist_como_deseados() -> None:
+    raw = _raw()
+    raw.wishlist = _load("steam_wishlist.json")
+    items = SteamConnector().normalize(raw)
+
+    deseados = [i for i in items if i.status is ItemStatus.wishlist]
+    assert len(deseados) == 3
+    primero = next(
+        i for i in deseados if i.work.external_ids["steam_appid"] == "1145360"
+    )
+    assert primero.work.extra["wishlist_priority"] == 1
+    assert primero.added_at is not None
+    # Sin título en v1 (D32): Steam no lo devuelve en la wishlist.
+    assert primero.work.title == ""
+
+
+def test_completado_se_anota_en_extra() -> None:
+    raw = _raw()
+    raw.completion_by_appid = {440: 75.0}
+    items = SteamConnector().normalize(raw)
+
+    por_appid = {i.work.external_ids["steam_appid"]: i for i in items}
+    assert por_appid["440"].work.extra["completion_pct"] == 75.0
+    assert "completion_pct" not in por_appid["570"].work.extra
+
+
+def test_completion_from_achievements() -> None:
+    payload = _load("steam_achievements.json")
+    assert SteamConnector.completion_from_achievements(payload) == 75.0
+    assert SteamConnector.completion_from_achievements({"playerstats": {}}) is None

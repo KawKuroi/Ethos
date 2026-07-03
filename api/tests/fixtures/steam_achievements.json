@@ -1,0 +1,13 @@
+{
+  "playerstats": {
+    "steamID": "76561197960287930",
+    "gameName": "Team Fortress 2",
+    "success": true,
+    "achievements": [
+      { "apiname": "TF_A", "achieved": 1, "unlocktime": 1600000000 },
+      { "apiname": "TF_B", "achieved": 1, "unlocktime": 1600001000 },
+      { "apiname": "TF_C", "achieved": 1, "unlocktime": 1600002000 },
+      { "apiname": "TF_D", "achieved": 0, "unlocktime": 0 }
+    ]
+  }
+}

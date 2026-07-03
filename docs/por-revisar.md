@@ -17,6 +17,19 @@ Marca `[x]` conforme lo revises.
   "Redirect URLs" tu dominio y `…/auth/callback` (incluye el flujo de
   recuperación `…/auth/callback?next=/auth/nueva-clave`). (D26)
 
+## Decisiones que tomé por delegación (2026-07-03) — revísalas
+
+- [ ] **D32** Wishlist de Steam sin títulos en v1 (solo conteo + appids por
+  prioridad); la resolución de títulos queda diferida.
+- [ ] **D33** Completado solo para el top 20 por horas en cada refresco
+  (protege la cuota de la API key).
+- [ ] **D34** Forma de `games.context.json`: resumen + top + recientes +
+  wishlist, sin histórico de eventos en v1.
+- [ ] **D35** Persistencia en memoria tras puerto: los datos del backend se
+  pierden al redeploy hasta el respaldo Supabase (único pendiente de Fase 1).
+- [ ] **D36** Refresco con BackgroundTasks y estados de frescura; cola durable
+  después. Perfil privado de Steam → estado `private`.
+
 ## Verificación visual en producción
 
 - [ ] **Auth** — `/auth`: alternar login/registro, mostrar/ocultar contraseña,

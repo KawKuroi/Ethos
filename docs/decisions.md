@@ -94,3 +94,18 @@ Middlewares ASGI propios en memoria: rate limit por IP (ventana deslizante, 429 
 
 ## D31 — Actividad física sale del catálogo
 La categoría se retira; el catálogo activo queda en 5 (Juegos, Música, Cine y TV, Anime y manga, Libros). Motivo (investigación de fuentes 2026-07-03): no existe fuente viable — el acuerdo de API de Strava (2024, vigente) prohíbe usar sus datos en modelos de IA, justo el propósito de Ethos; Garmin no acepta desarrolladores personales (exige entidad legal y el programa está en pausa); la Web API de Fitbit se apaga en septiembre de 2026 y su sucesora (Google Health API) exige verificación restringida de Google inviable para un proyecto a costo 0. Beneficio lateral: desaparece la única categoría de tipo evento/métrica, así que el contrato normalizado se queda en "obra + relación" (simplifica D23). Se reevaluará solo si aparece una fuente abierta (p. ej. import de Apple Health). Estado: firme.
+
+## D32 — Wishlist de Steam: IWishlistService, títulos diferidos
+La wishlist se lee de `IWishlistService/GetWishlist/v1` (appid, prioridad, fecha de añadido) y se normaliza como items `status=wishlist`. La respuesta no trae títulos y resolverlos exige una llamada de store por juego: en v1 la wishlist viaja como conteo + appids priorizados; la resolución de títulos queda diferida (candidata a la caché de catálogos globales compartida entre usuarios). Decisión delegada por el usuario (2026-07-03). Estado: firme.
+
+## D33 — Completado agregado con presupuesto fijo
+`GetPlayerAchievements` es una llamada por juego. Para no quemar la cuota de la API key, el completado se calcula solo para el top 20 por horas en cada refresco, protegido por el throttle del cliente (D30). Juegos sin logros o con error puntual quedan sin porcentaje; el agregado del resumen es la media de los calculados. Resuelve el pendiente de límites de tasa. Decisión delegada por el usuario. Estado: firme.
+
+## D34 — Forma del contexto de juegos (concreta D24)
+`games.context.json` = `{namespace, provider, generated_at, profile, summary{games, hours, wishlisted, avg_completion_pct, last_synced_at}, top_by_hours[10], recently_played, wishlist{count, top_priority_appids}}`. Es la misma información en origen que sirven las tools del MCP. Sin histórico de eventos en v1: el modelo de eventos con timestamp llega con Música (Fase 2) y entonces se revisará qué histórico incluye la descarga. Decisión delegada por el usuario. Estado: firme.
+
+## D35 — Persistencia del slice tras puerto; Supabase al conectar la infra
+Los datos de juegos y los tokens del MCP persisten tras puertos (`GamesStore`, `McpTokenStore`) con implementación en memoria indexada, el mismo patrón ya aceptado para credenciales (D20). Consecuencia explícita: se pierden al redeploy y se repueblan con un refresco. La migración a Supabase (tablas `user_games` y `mcp_tokens` + RLS owner-only; API con JWT del usuario, worker con service_role) sustituye solo las implementaciones; es el único ítem que deja abierta la Fase 1. Decisión delegada por el usuario. Estado: firme.
+
+## D36 — Refresco asíncrono v1 con BackgroundTasks y estados de frescura
+El refresco corre en segundo plano con `BackgroundTasks` de FastAPI y deja estado explícito por usuario: `never/syncing/fresh/private/error` + `synced_at` (stale se deriva por edad). Perfil de Steam privado → estado `private` con guía para la web. La cola durable (Supabase Queues) llega con la infra de D35; el refresco incremental (D17) sigue abierto para Fase 2. Decisión delegada por el usuario. Estado: firme.

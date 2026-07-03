@@ -80,3 +80,21 @@ class SteamApiClient:
             "/ISteamUser/GetPlayerSummaries/v2/",
             {"steamids": steamid, "format": "json"},
         )
+
+    def get_wishlist(self, steamid: str) -> dict[str, Any]:
+        """Deseados del usuario (appid, prioridad y fecha; sin títulos, D32)."""
+        return self._get(
+            "/IWishlistService/GetWishlist/v1/",
+            {"steamid": steamid, "format": "json"},
+        )
+
+    def get_player_achievements(self, steamid: str, appid: int) -> dict[str, Any]:
+        """Logros del usuario en un juego (una llamada por juego, D33).
+
+        Un perfil privado o un juego sin logros responden distinto de 200;
+        el llamador decide cómo degradar, aquí solo viaja el crudo.
+        """
+        return self._get(
+            "/ISteamUserStats/GetPlayerAchievements/v1/",
+            {"steamid": steamid, "appid": str(appid), "format": "json"},
+        )

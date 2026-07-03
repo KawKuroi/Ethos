@@ -7,15 +7,15 @@ fase entera se mueve a `## Histórico de fases completadas`.
 
 Backend:
 
-- [ ] Conexión de Steam por OpenID (fuente de Juegos, no login de la app) y manejo de perfil privado.
-- [ ] Conector de Steam: biblioteca, deseados, horas, completado agregado, perfil.
-- [ ] Normalización al esquema común y persistencia indexada.
-- [ ] Generador del resumen de juegos.
-- [ ] Servidor MCP: resource de resumen + tools `games.*` y `profile.search`, reportando KB servidos. (D28)
-- [ ] Descarga de contexto: `GET /context/games` → `games.context.json`. (D24)
-- [ ] Refresco asíncrono con cola y estados de frescura.
-- [ ] Sesión de usuario (Supabase Auth) y almacenamiento cifrado de credenciales de terceros (tabla `user_credentials`). (D20)
-- [ ] Middleware de auth del MCP (token por usuario) antes de exponer tools de datos. (D22)
+- [x] Conexión de Steam por OpenID (fuente de Juegos, no login de la app) y manejo de perfil privado. (verificación `check_authentication` + estado `private`)
+- [x] Conector de Steam: biblioteca, deseados, horas, completado agregado, perfil. (wishlist sin títulos, D32; completado top-20, D33)
+- [x] Normalización al esquema común y persistencia indexada. (tras puerto `GamesStore`, en memoria; respaldo Supabase pendiente, D35)
+- [x] Generador del resumen de juegos.
+- [x] Servidor MCP: resource de resumen + tools `games.*` y `profile.search`, reportando KB servidos. (D28)
+- [x] Descarga de contexto: `GET /context/games` → `games.context.json`. (D24/D34)
+- [x] Refresco asíncrono con estados de frescura. (BackgroundTasks, D36; la cola durable llega con la infra de D35)
+- [ ] Respaldo Supabase de los repositorios en memoria: tablas `user_credentials`, `user_games` y `mcp_tokens` con RLS. (D20/D35 — único pendiente del backend; requiere infra)
+- [x] Auth del MCP por token de usuario (`eth_live_…`, hash SHA-256) antes de exponer tools de datos. (D22)
 - [x] Registro de conectores (registry) y modelo de extensión de categorías/proveedores. (D21)
 - [x] Hardening de la API: rate limit por IP, límites de cuerpo, cabeceras, CORS, TrustedHost, docs off en producción y throttle de Steam. (D30)
 - [x] Generalización del enum: `MediaCategory` → `Category` con las 9 categorías (la web enseña el catálogo completo desde el día 1). (D23/D27)
@@ -31,7 +31,7 @@ Web — implementación del diseño (`design.md`, D25/D29):
 - [x] Conectar IA: tres pasos y playground simulado (sin LLM en v1). Nota: endpoint + token reales quedan pendientes del backend del MCP (hoy placeholder).
 - [x] Ayuda (FAQ + sugerencias) y Ajustes (perfil, zona horaria, tema, zona de peligro).
 - [x] Landing pública según el diseño (hero con flujo animado, qué es un MCP, cómo se usa, walkthrough de categorías + galería, FAQ, sugerencias).
-- [ ] Tests de todas las capas pasando en CI.
+- [x] Tests de todas las capas pasando en CI. (api: 77, cobertura 95%; web: 35)
 
 ## Fase 2 — Segunda categoría: Música / ListenBrainz
 
@@ -73,11 +73,10 @@ Retirada (D31, 2026-07-03): Actividad física — sin fuente viable.
 
 - Géneros de juegos: fuente de enriquecimiento (store API de Steam vs IGDB/RAWG). (D16)
 - Refresco incremental: llave de cambio por proveedor. (D17)
-- Forma exacta del contexto descargable completo (qué histórico incluye, tamaño). (D24)
+- Qué histórico incluye el contexto descargable cuando lleguen los eventos con timestamp (la forma v1 quedó fijada en D34; se revisa en Fase 2).
 - Esquema fino del perfil por categoría: qué va en el resumen (resource) vs en las tools, para música, cine y libros.
 - Granularidad de música (artista / álbum / track) — por defecto los tres; confirmar el corte del resumen.
-- Wishlist de Steam: campos disponibles (prioridad, fecha agregado, precio) y endpoint exacto.
-- Manejo de límites de tasa de Steam al calcular el completado (una llamada por juego).
+- Resolución de títulos de la wishlist de Steam (D32): candidata a la caché de catálogos globales.
 - Política de retención del histórico inactivo (cuánto tiempo se conserva).
 - Destino de las sugerencias (tabla + ¿aviso por correo?) y del contacto personal.
 - Objetivos concretos de cobertura de tests y umbrales de CI.

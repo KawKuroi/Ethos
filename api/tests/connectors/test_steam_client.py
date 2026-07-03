@@ -45,6 +45,18 @@ def test_get_recently_played_parsea() -> None:
     assert data["response"]["games"][0]["appid"] == 440
 
 
+def test_get_wishlist_parsea() -> None:
+    client = _client_con_respuesta(_load("steam_wishlist.json"))
+    data = client.get_wishlist("123")
+    assert data["response"]["items"][0]["appid"] == 1145360
+
+
+def test_get_player_achievements_parsea() -> None:
+    client = _client_con_respuesta(_load("steam_achievements.json"))
+    data = client.get_player_achievements("123", 440)
+    assert data["playerstats"]["gameName"] == "Team Fortress 2"
+
+
 def test_error_en_no_200() -> None:
     client = _client_con_respuesta({}, status_code=403)
     with pytest.raises(SteamApiError):
