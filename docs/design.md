@@ -6,6 +6,10 @@ https://claude.ai/design/p/c3e4858c-944b-427a-b1b7-6c327a8a1dd1). Fidelidad
 alta: colores, tipografía, espaciado, textos e interacciones son finales.
 Ante cualquier duda de implementación manda el prototipo, no este resumen.
 
+Copia local completa del proyecto de diseño:
+`D:\Programacion\Proyectos\Ethos_claude_design` (misma estructura que el
+proyecto remoto; usarla como fuente al implementar).
+
 Archivos del proyecto de diseño:
 
 | Archivo | Contenido |
@@ -84,14 +88,23 @@ Google" y "Continuar con GitHub"; divisor "o con tu correo"; campos Nombre
 contraseña?" en login); checkbox de Términos y Política de privacidad
 (registro); submit con spinner; toggle de tema.
 
-## 4. Landing (`ethos-landing.html`)
+## 4. Landing (`Landing mockups.dc.html`)
 
-Header (logo, nav Categorías / Tu IA, toggle de tema, botón GitHub al repo,
-"Abrir la app"); hero con titular y mock del panel (distribución + 4 filas con
-sparkline); "Dos salidas" (El panel / Servidor MCP); categorías unificadas en
-una sola lista (swatch, valor, destacado real, sparkline, fuente activa y nº
-de alternativas) con barra de distribución del perfil; "Cómo se usa" (3
-pasos); FAQ (4, en 2 columnas); formulario de sugerencias; footer.
+Header (logo, toggle de tema, GitHub, "Abrir la app"); hero "Reúne lo que te
+gusta y / Dáselo a tu IA" con tarjeta de flujo animada (pills de apps → hub
+"Ethos · tu perfil" con chip "servidor MCP" → burbuja de la IA; puntos que
+fluyen por conectores punteados); sección "¿Qué es un MCP?" (`#mcp`):
+explicación, diagrama Tu IA ↔ Ethos (petición `ethos.juegos`, respuesta
+"124 juegos · 2,4 kB", ambas animadas) y 3 tarjetas de beneficios; "Cómo se
+usa" (3 pasos con flechas); "Una categoría, de tu app hasta tu IA"
+(`#categorias`): walkthrough interactivo de Juegos en 4 pasos — rail con
+autoplay de 4,2 s en bucle y barra de progreso; paneles: conexión de Steam
+(código GET + cursor), normalización crudo→esquema con escaneo, tarjeta de
+categoría (3 stats + top 3 con barras) y chat de la IA con nota de privacidad
+— más galería "La misma secuencia, para cada parte de tu gusto" (una tarjeta
+por categoría con sus fuentes); FAQ (4, dos columnas); sugerencias (nombre,
+correo, texto); footer "Ethos — tu gusto, ordenado.". Nota: el prototipo
+lista 7 categorías; el producto implementa las 9 de D27.
 
 ## 5. Interacciones y animaciones
 

@@ -42,6 +42,18 @@ producción.
 
 ## Bitácora
 
+### 2026-07-03 (Fase 1: landing pública)
+
+- Landing implementada desde el prototipo real (`Landing mockups.dc.html`,
+  copia local del proyecto de diseño en
+  `D:\Programacion\Proyectos\Ethos_claude_design`): header, hero con flujo
+  animado apps→Ethos→IA, "¿Qué es un MCP?" con diagrama, "Cómo se usa",
+  walkthrough interactivo de Juegos (autoplay 4,2 s) + galería con las 9
+  categorías (D27; el prototipo traía 7), FAQ, sugerencias ("Enviado ✓",
+  envío real en Fase 4) y footer. JetBrains Mono y tokens `--code-*`
+  añadidos; `/app` con placeholder para los CTA; responsividad mínima.
+  9 tests (Vitest) y build estático en verde. `design.md` §4 actualizado.
+
 ### 2026-07-03 (Fase 1: hardening de la API, D30)
 
 - Protección anti-abuso a petición del usuario: middlewares ASGI propios

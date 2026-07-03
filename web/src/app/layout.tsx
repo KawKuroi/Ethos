@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";
+import {
+  Bricolage_Grotesque,
+  Hanken_Grotesk,
+  JetBrains_Mono,
+} from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
-// Tipografías fijas del diseño (design.md §1): display y texto/UI.
+// Tipografías fijas del diseño (design.md §1): display, texto/UI y código.
 const display = Bricolage_Grotesque({
   variable: "--font-display",
   subsets: ["latin"],
@@ -11,6 +15,11 @@ const display = Bricolage_Grotesque({
 
 const body = Hanken_Grotesk({
   variable: "--font-body",
+  subsets: ["latin"],
+});
+
+const code = JetBrains_Mono({
+  variable: "--font-code",
   subsets: ["latin"],
 });
 
@@ -29,7 +38,7 @@ export default function RootLayout({
   // de la hidratación (patrón estándar del paquete).
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={`${display.variable} ${body.variable}`}>
+      <body className={`${display.variable} ${body.variable} ${code.variable}`}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

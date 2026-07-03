@@ -4,16 +4,64 @@ import { describe, expect, it } from "vitest";
 import { ThemeProvider } from "@/components/theme-provider";
 import Home from "./page";
 
-describe("Home", () => {
-  it("muestra la marca y el subtítulo", () => {
+describe("Landing", () => {
+  it("muestra el titular del hero", () => {
     render(<Home />);
-    expect(screen.getByRole("heading", { name: "Ethos" })).toBeInTheDocument();
-    expect(screen.getByText(/tu gusto, hecho contexto/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: /reúne lo que te gusta/i }),
+    ).toBeInTheDocument();
   });
 
-  it("entra con la animación de pantalla del diseño", () => {
+  it("explica qué es un MCP", () => {
     render(<Home />);
-    expect(screen.getByRole("main")).toHaveClass("eth-screen");
+    expect(
+      screen.getByRole("heading", { name: /qué es un mcp/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/protocolo mcp/i)).toBeInTheDocument();
+  });
+
+  it("recorre una categoría y enseña el catálogo completo", () => {
+    render(<Home />);
+    expect(
+      screen.getByRole("heading", { name: /una categoría, de tu app hasta tu ia/i }),
+    ).toBeInTheDocument();
+    // Las 9 categorías del catálogo (D27) están en la galería.
+    for (const name of [
+      "Juegos",
+      "Música",
+      "Cine y TV",
+      "Anime y manga",
+      "Actividad física",
+      "Libros",
+      "Lugares",
+      "Comida",
+      "Juegos de mesa",
+    ]) {
+      expect(screen.getAllByText(name).length).toBeGreaterThan(0);
+    }
+  });
+
+  it("muestra FAQ, sugerencias y footer", () => {
+    render(<Home />);
+    expect(
+      screen.getByRole("heading", { name: /preguntas frecuentes/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /enviar sugerencia/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/tu gusto, ordenado/i)).toBeInTheDocument();
+  });
+
+  it("los CTA apuntan a /app y el GitHub al repo real", () => {
+    render(<Home />);
+    const appLinks = screen
+      .getAllByRole("link")
+      .filter((link) => link.getAttribute("href") === "/app");
+    expect(appLinks.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByTitle("Ver en GitHub")).toHaveAttribute(
+      "href",
+      "https://github.com/KawKuroi/Ethos",
+    );
   });
 });
 

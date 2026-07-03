@@ -30,7 +30,7 @@ Web — implementación del diseño (`design.md`, D25/D29):
 - [ ] Fuentes: grupos activas / apagadas / en desarrollo, salud y método.
 - [ ] Conectar IA: endpoint + token reales, tres pasos, playground simulado con datos reales del usuario (sin LLM en v1).
 - [ ] Ayuda (FAQ + sugerencias) y Ajustes (perfil, zona horaria, tema, zona de peligro).
-- [ ] Landing pública según el diseño (hero, dos salidas, categorías, cómo se usa, FAQ, sugerencias).
+- [x] Landing pública según el diseño (hero con flujo animado, qué es un MCP, cómo se usa, walkthrough de categorías + galería, FAQ, sugerencias).
 - [ ] Tests de todas las capas pasando en CI.
 
 ## Fase 2 — Segunda categoría: Música / ListenBrainz

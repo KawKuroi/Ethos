@@ -9,6 +9,10 @@
   --fd: var(--font-display), system-ui, sans-serif;
   --fb: var(--font-body), system-ui, sans-serif;
   --fm: var(--font-body), system-ui, sans-serif;
+  --code: var(--font-code), ui-monospace, Menlo, monospace;
+
+  /* Acento operativo de la landing (el de Juegos, categoría de ejemplo). */
+  --acc: #3b82c4;
   --dw: 700;
   --dls: -0.025em;
   --ls: 0.11em;
@@ -48,6 +52,9 @@
   --on-accent: #ffffff;
   --sh: 0 2px 8px rgba(20, 25, 35, 0.07);
   --shh: 0 18px 38px rgba(20, 25, 35, 0.13);
+  --code-bg: #f4f6f8;
+  --code-ink: #2a2f37;
+  --code-dim: #9aa1ab;
 }
 
 [data-theme="dark"] {
@@ -63,6 +70,9 @@
   --on-accent: #141619;
   --sh: 0 2px 10px rgba(0, 0, 0, 0.32);
   --shh: 0 20px 42px rgba(0, 0, 0, 0.48);
+  --code-bg: #16191d;
+  --code-ink: #c9ced6;
+  --code-dim: #6b727c;
 }
 
 html {
@@ -150,6 +160,116 @@ textarea {
 
 .eth-screen {
   animation: ethScreen 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Animaciones de la landing (copiadas del prototipo) */
+@keyframes ethRise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ethBlink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ethPulseDot {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, #2f9e6b 55%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+
+@keyframes ethScanX {
+  0% {
+    left: -55%;
+  }
+  100% {
+    left: 120%;
+  }
+}
+
+@keyframes ethGrowBar {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--w, 100%);
+  }
+}
+
+@keyframes ethProgFill {
+  0% {
+    transform: scaleX(0);
+  }
+  92%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes ethFlowY {
+  0% {
+    top: -6px;
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    top: calc(100% - 2px);
+    opacity: 0;
+  }
+}
+
+@keyframes ethFlowX {
+  0% {
+    left: -6px;
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    left: calc(100% - 2px);
+    opacity: 0;
+  }
+}
+
+/* Reveal de scroll: las secciones suben al entrar en el viewport.
+   En navegadores sin animation-timeline la duración es 0 y el contenido
+   queda visible (degradación progresiva, como el prototipo). */
+.eth-reveal {
+  animation: ethRise both;
+  animation-timeline: view();
+  animation-range: entry 2% cover 22%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eth-reveal {
+    animation: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
