@@ -39,9 +39,15 @@ export default function RootLayout({
 }>) {
   // suppressHydrationWarning: next-themes escribe data-theme en <html> antes
   // de la hidratación (patrón estándar del paquete).
+  // Las variables de fuente van en <html>: los alias --fd/--fb/--code de
+  // globals.css se resuelven en :root, así que --font-* debe existir ahí.
   return (
-    <html lang="es" suppressHydrationWarning>
-      <body className={`${display.variable} ${body.variable} ${code.variable}`}>
+    <html
+      lang="es"
+      suppressHydrationWarning
+      className={`${display.variable} ${body.variable} ${code.variable}`}
+    >
+      <body>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
