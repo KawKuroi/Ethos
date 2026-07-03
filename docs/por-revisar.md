@@ -35,3 +35,5 @@ Marca `[x]` conforme lo revises.
   stat band con sparkline, Destacados/Reciente/Listas, botón Refrescar y modal
   "Descargar contexto" (pestañas JSON/MCP, copiar, descargar). Y una categoría
   en desarrollo, p. ej. `/app/categoria/music`.
+- [ ] **Fuentes** — `/app/fuentes`: resumen, grupo Activas (Juegos) y grupo En
+  desarrollo (las cuatro).

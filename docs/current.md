@@ -42,6 +42,16 @@ producción.
 
 ## Bitácora
 
+### 2026-07-03 (Fase 1: web · Fuentes)
+
+- Vista de Fuentes (`components/app/sources/`: `sources` + css + test) en
+  `/app/fuentes`, derivada de `CATEGORY_DETAIL`: resumen de 4 cifras (activas ·
+  expuestas por MCP · apagadas · en desarrollo), grupo Activas (Juegos, con
+  salud/proveedor/modo/frescura y "Abrir →" al detalle) y grupo En desarrollo
+  (las cuatro, con chip "Próximamente"); el grupo Apagadas solo aparece si las
+  hubiera (ninguna en v1). 3 tests nuevos; tsc, eslint, vitest (28) y build en
+  verde.
+
 ### 2026-07-03 (Fase 1: web · Detalle de categoría)
 
 - Detalle de categoría (`components/app/category/`: `category-detail` (client),

@@ -27,7 +27,7 @@ Web — implementación del diseño (`design.md`, D25/D29):
 - [x] Shell de la app: navegación lateral, header, badge de "Conectar IA".
 - [x] Inicio: banner de IA, alertas agregadas, "El gusto en números", panorama de categorías, actividad reciente (Juegos activa; las otras cuatro como "en desarrollo").
 - [x] Detalle de categoría (Juegos): status strip, stat band, Destacados/Reciente/Listas, refrescar, modal de descarga con preview JSON/MCP.
-- [ ] Fuentes: grupos activas / apagadas / en desarrollo, salud y método.
+- [x] Fuentes: grupos activas / apagadas / en desarrollo, salud y método.
 - [ ] Conectar IA: endpoint + token reales, tres pasos, playground simulado con datos reales del usuario (sin LLM en v1).
 - [ ] Ayuda (FAQ + sugerencias) y Ajustes (perfil, zona horaria, tema, zona de peligro).
 - [x] Landing pública según el diseño (hero con flujo animado, qué es un MCP, cómo se usa, walkthrough de categorías + galería, FAQ, sugerencias).
