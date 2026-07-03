@@ -23,7 +23,7 @@ Backend:
 Web — implementación del diseño (`design.md`, D25/D29):
 
 - [x] Fundación de `/web`: Next.js + tokens CSS (paleta slate, acentos por categoría), `next/font`, `next-themes`, transiciones y `prefers-reduced-motion`.
-- [ ] Auth: login/registro (correo + Google + GitHub), recuperación de contraseña. (D26)
+- [x] Auth: login/registro (correo + Google + GitHub), recuperación de contraseña. (D26)
 - [ ] Shell de la app: navegación lateral, header, badge de "Conectar IA".
 - [ ] Inicio: banner de IA, alertas agregadas, "El gusto en números", panorama de categorías, actividad reciente (Juegos activa; las otras cuatro como "en desarrollo").
 - [ ] Detalle de categoría (Juegos): status strip, stat band, Destacados/Reciente/Listas, refrescar, modal de descarga con preview JSON/MCP.

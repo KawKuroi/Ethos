@@ -52,12 +52,12 @@ describe("Landing", () => {
     expect(screen.getByText(/tu gusto, ordenado/i)).toBeInTheDocument();
   });
 
-  it("los CTA apuntan a /app y el GitHub al repo real", () => {
+  it("los CTA apuntan a /auth y el GitHub al repo real", () => {
     render(<Home />);
-    const appLinks = screen
+    const authLinks = screen
       .getAllByRole("link")
-      .filter((link) => link.getAttribute("href") === "/app");
-    expect(appLinks.length).toBeGreaterThanOrEqual(2);
+      .filter((link) => link.getAttribute("href") === "/auth");
+    expect(authLinks.length).toBeGreaterThanOrEqual(2);
     expect(screen.getByTitle("Ver en GitHub")).toHaveAttribute(
       "href",
       "https://github.com/KawKuroi/Ethos",

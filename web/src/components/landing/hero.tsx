@@ -20,7 +20,7 @@ export function Hero() {
           deja que tu IA lo consulte como contexto.
         </p>
         <div className={styles.heroCtas}>
-          <Link href="/app" className={styles.ctaPrimary}>
+          <Link href="/auth" className={styles.ctaPrimary}>
             Abrir la app →
           </Link>
           <a href="#mcp" className={styles.ctaGhost}>

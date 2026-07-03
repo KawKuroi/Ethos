@@ -42,6 +42,24 @@ producción.
 
 ## Bitácora
 
+### 2026-07-03 (Fase 1: web · Auth, D26)
+
+- Pantallas de autenticación del diseño (Claude Design, `Auth Ethos.dc.html`)
+  cableadas a Supabase Auth: `/auth` (login/registro segmentado con correo +
+  contraseña, Google y GitHub), `/auth/recuperar` (enviar enlace),
+  `/auth/nueva-clave` (fijar contraseña) y `/auth/callback` (intercambio de
+  código por sesión en cookies vía `@supabase/ssr`). Clientes browser/server
+  perezosos (`src/lib/supabase/`), validación (correo, mínimo 8, Términos),
+  mostrar/ocultar contraseña, mensajes en español y toggle de tema reutilizando
+  `next-themes`. Los CTA "Abrir la app" de la landing apuntan a `/auth`. 6 tests
+  nuevos (Vitest, Supabase mockeado); tsc, eslint, vitest (15) y build en verde.
+  Deps `@supabase/supabase-js` + `@supabase/ssr`; `web/.env.example` con
+  `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY`. **Seguimiento (infra del usuario, como
+  Fase 0):** habilitar los proveedores Google/GitHub en Supabase (client
+  id/secret + redirect URLs) y poblar las env vars en Vercel para que el OAuth
+  opere; correo+contraseña ya funciona. Diferido a la Shell: guardas de ruta y
+  guardado/expiración de sesión global.
+
 ### 2026-07-03 (Fase 1: ajustes de la landing tras revisión del usuario)
 
 - Revisión visual del usuario en producción: (1) Bricolage Grotesque ahora
