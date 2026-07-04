@@ -1,14 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  ENDPOINT,
-  MCP_QUERIES,
-  STEPS,
-  TOKEN,
-  matchQuery,
-  type McpQuery,
-} from "./data";
+import { issueMcpToken, mcpEndpoint } from "@/lib/api";
+import { MCP_QUERIES, STEPS, matchQuery, type McpQuery } from "./data";
 import styles from "./connect.module.css";
 
 function StarAvatar() {
@@ -27,7 +21,31 @@ export function ConnectAi() {
   const [current, setCurrent] = useState<McpQuery | null>(null);
   const [running, setRunning] = useState(false);
   const [input, setInput] = useState("");
+  const [endpoint] = useState(() => {
+    try {
+      return mcpEndpoint();
+    } catch {
+      return "";
+    }
+  });
+  const [token, setToken] = useState<string | null>(null);
+  const [issuing, setIssuing] = useState(false);
+  const [tokenError, setTokenError] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  async function generateToken() {
+    if (issuing) return;
+    setTokenError(false);
+    setIssuing(true);
+    try {
+      const issued = await issueMcpToken();
+      setToken(issued.token);
+    } catch {
+      setTokenError(true);
+    } finally {
+      setIssuing(false);
+    }
+  }
 
   function ask(query: McpQuery) {
     setCurrent(query);
@@ -80,14 +98,14 @@ export function ConnectAi() {
           <div className={styles.fieldGap}>
             <div className={styles.fieldLabel}>Endpoint</div>
             <div className={styles.fieldBox}>
-              <code className={styles.fieldCode}>{ENDPOINT}</code>
+              <code className={styles.fieldCode}>{endpoint}</code>
               {copied === "endpoint" ? (
                 <span className={styles.copied}>copiado ✓</span>
               ) : (
                 <button
                   type="button"
                   className={styles.copyBtn}
-                  onClick={() => copy("endpoint", ENDPOINT)}
+                  onClick={() => copy("endpoint", endpoint)}
                 >
                   copiar
                 </button>
@@ -96,23 +114,45 @@ export function ConnectAi() {
           </div>
           <div>
             <div className={styles.fieldLabel}>Token de acceso</div>
-            <div className={styles.fieldBox}>
-              <code className={styles.fieldCode}>{TOKEN}</code>
-              {copied === "token" ? (
-                <span className={styles.copied}>copiado ✓</span>
-              ) : (
+            {token ? (
+              <>
+                <div className={styles.fieldBox}>
+                  <code className={styles.fieldCode}>{token}</code>
+                  {copied === "token" ? (
+                    <span className={styles.copied}>copiado ✓</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.copyBtn}
+                      onClick={() => copy("token", token)}
+                    >
+                      copiar
+                    </button>
+                  )}
+                </div>
+                <div className={styles.note}>
+                  Guárdalo ahora: por seguridad no se vuelve a mostrar. Cifrado en
+                  reposo; nunca se reenvía a las APIs de origen.
+                </div>
+              </>
+            ) : (
+              <>
                 <button
                   type="button"
                   className={styles.copyBtn}
-                  onClick={() => copy("token", TOKEN)}
+                  style={{ padding: "9px 14px" }}
+                  onClick={generateToken}
+                  disabled={issuing}
                 >
-                  copiar
+                  {issuing ? "Generando…" : "Generar token"}
                 </button>
-              )}
-            </div>
-            <div className={styles.note}>
-              Cifrado en reposo. Nunca se reenvía a las APIs de origen.
-            </div>
+                <div className={styles.note}>
+                  {tokenError
+                    ? "No se pudo generar el token. Inténtalo de nuevo."
+                    : "Genera un token para autenticar tu IA. Cifrado en reposo; nunca se reenvía a las APIs de origen."}
+                </div>
+              </>
+            )}
           </div>
         </div>
 

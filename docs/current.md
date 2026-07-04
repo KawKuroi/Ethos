@@ -7,28 +7,27 @@ estamos y lo actualiza al cerrar cada tarea (entrada con fecha `AAAA-MM-DD`).
 
 Fase 0 cerrada: infraestructura viva en producción (Render + Vercel +
 Supabase + keep-alive). El diseño de la interfaz (Claude Design) está
-terminado y es la fuente de verdad de la UI (D25, `design.md`). El trabajo
-activo es la Fase 1: slice Juegos/Steam en backend y las pantallas del
-diseño en `/web`.
+terminado y es la fuente de verdad de la UI (D25, `design.md`). **Fase 1
+completa a nivel de código** (slice Juegos/Steam de punta a punta: backend,
+persistencia Supabase, las 8 pantallas del diseño y el cableado web↔API);
+pendiente solo la activación en producción por el usuario (env vars +
+verificación visual, ver `por-revisar.md`). Siguiente: Fase 2 (Música /
+ListenBrainz).
 
 URLs de producción: API+MCP https://ethos-api-s10w.onrender.com · web
 https://ethos-steel.vercel.app
 
 ## Activo
 
-**Fase 1 — Slice Juegos / Steam** (prácticamente cerrada). Web completa: las 8
-pantallas del diseño (landing, auth, shell, Inicio, Detalle, Fuentes, Conectar
-IA, Ayuda/Ajustes) con datos de ejemplo. Backend completo del slice: conector
-de Steam (biblioteca, recientes, wishlist D32, completado top-20 D33, perfil),
-OpenID de Steam verificado contra `check_authentication`, persistencia tras
-puerto (`GamesStore`, memoria, D35), resumen + contexto descargable
-(`GET /context/games`, D34), refresco con estados de frescura (D36) y MCP con
-auth por token `eth_live_…` (D22) y tools `games.*` + `profile.search` con KB
-servidos (D28). Respaldo Supabase implementado (migración 0003 + repos
-PostgREST con selección automática por entorno, D35). **Para cerrar Fase 1
-falta**: que el usuario aplique la migración 0003 en Supabase (pasos en
-`por-revisar.md`) y el cableado de la web a datos reales (siguiente ciclo;
-hoy la web muestra datos de ejemplo).
+**Cierre de Fase 1 / arranque de Fase 2.** Fase 1 terminada en código: web
+completa (landing, auth, shell, Inicio, Detalle, Fuentes, Conectar IA,
+Ayuda/Ajustes) leyendo datos reales de Juegos con la sesión de Supabase;
+backend del slice (conector de Steam con wishlist D32 y completado D33, OpenID
+D12, persistencia Supabase D35, resumen + contexto D34, refresco D36, MCP con
+tokens D22 y tools `games.*`/`profile.search` D28). El usuario debe poblar
+`NEXT_PUBLIC_API_URL` en Vercel y verificar el flujo real en producción
+(conectar Steam, ver datos, generar token MCP). Fase 2 arranca con el conector
+de ListenBrainz sobre los mismos puertos.
 
 Fase 0 completa (2026-07-02): Supabase real con migraciones aplicadas,
 servicio en Render (blueprint `render.yaml`), web en Vercel, keep-alive de
@@ -43,6 +42,23 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-03 (Fase 1: cableado web ↔ API — cierre del slice)
+
+- Las pantallas dejan los datos de ejemplo y leen del backend con la sesión de
+  Supabase. API: `GET /sources/games` ahora incluye el resumen
+  (`GamesSummary | null`) y `GET /sources/steam/login` devuelve la URL de
+  OpenID. Web: cliente `lib/api.ts` (Bearer del `access_token`), hook
+  `useGamesSource`, flujo de conexión de Steam (`connect-steam.tsx` +
+  `/app/steam/return`). Inicio (stat band, panorama y actividad reales),
+  Fuentes (Juegos activa/apagada/private con CTA Conectar Steam), Detalle de
+  Juegos (status strip, stat band sin sparkline —no hay serie en v1—, top,
+  reciente, deseados, refrescar y descargar reales) y Conectar IA (endpoint
+  construido + token generado bajo demanda con `/mcp-token`; el playground
+  sigue simulado). Las categorías en desarrollo siguen con constantes. API
+  86 tests; web 38 (mockean `lib/api`); ruff, mypy, tsc, eslint y build en
+  verde. **Fase 1 queda completa a nivel de código.** Pendiente del usuario:
+  `NEXT_PUBLIC_API_URL` en Vercel y la verificación real en producción.
 
 ### 2026-07-03 (Fase 1: backend · respaldo Supabase de la persistencia, D35)
 

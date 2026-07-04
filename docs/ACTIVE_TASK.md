@@ -40,29 +40,44 @@ tests.
 ### 3. Plan de Acción Detallado
 
 Bloque A — API
-- [ ] **Paso 1: [games/router.py]** `SourceStatusOut` con `summary`; construir
+- [x] **Paso 1: [games/router.py]** `SourceStatusOut` con `summary`; construir
   el resumen en `GET /sources/games`. `GET /sources/steam/login` → URL OpenID.
-- [ ] **Paso 2: [tests/games/test_games_api.py]** ajustar a la nueva forma y
+- [x] **Paso 2: [tests/games/test_games_api.py]** ajustar a la nueva forma y
   añadir test del login.
 
 Bloque B — Web · infraestructura
-- [ ] **Paso 3: [web/.env.example]** `NEXT_PUBLIC_API_URL`.
-- [ ] **Paso 4: [web/src/lib/api.ts]** `apiFetch` con Bearer de la sesión +
+- [x] **Paso 3: [web/.env.example]** `NEXT_PUBLIC_API_URL`.
+- [x] **Paso 4: [web/src/lib/api.ts]** `apiFetch` con Bearer de la sesión +
   helpers tipados (`getGamesSource`, `getMcpToken`, `steamLoginUrl`,
   `connectSteam`, `refreshSteam`, `downloadGamesContext`).
-- [ ] **Paso 5: [web/src/components/app/connect-steam.tsx]** botón que pide la
+- [x] **Paso 5: [web/src/components/app/connect-steam.tsx]** botón que pide la
   URL y redirige; **[web/src/app/steam/return/page.tsx]** retorno que postea.
 
 Bloque C — Web · pantallas
-- [ ] **Paso 6: [sources]** Juegos desde el estado real (activa/apagada/private
+- [x] **Paso 6: [sources]** Juegos desde el estado real (activa/apagada/private
   con CTA); las demás, constantes.
-- [ ] **Paso 7: [overview]** stat band, panorama de Juegos y actividad desde el
+- [x] **Paso 7: [overview]** stat band, panorama de Juegos y actividad desde el
   resumen; estado vacío cuando no hay datos.
-- [ ] **Paso 8: [category]** Detalle de Juegos con datos reales (status strip,
+- [x] **Paso 8: [category]** Detalle de Juegos con datos reales (status strip,
   stat band, top, reciente), refrescar y descargar reales; estados apagada/
   private; las soon quedan igual.
-- [ ] **Paso 9: [connect]** endpoint y token reales de `/mcp-token`.
+- [x] **Paso 9: [connect]** endpoint y token reales de `/mcp-token`.
 
 Bloque D — Tests
-- [ ] **Paso 10: [web tests]** mockear `lib/api`; actualizar overview/sources/
+- [x] **Paso 10: [web tests]** mockear `lib/api`; actualizar overview/sources/
   category/connect y cubrir el cliente y el retorno de Steam.
+
+### 4. Reporte de Pruebas
+
+**[APROBADO]**
+
+- API: ruff, mypy, pytest 86/86. Web: tsc, eslint, vitest 38/38, next build OK
+  (rutas /app/* y /steam/return generadas).
+- Cableado: Inicio, Fuentes y Detalle de Juegos leen de `/sources/games`;
+  descarga desde `/context/games`; Conectar IA construye el endpoint y genera
+  el token desde `/mcp-token`; conexión de Steam por OpenID (login + retorno).
+- Estados reales: Juegos apagada→CTA Conectar Steam, private→guía, fresh→datos.
+  Las categorías en desarrollo siguen con constantes (sin backend).
+- Secretos: el token de sesión viaja solo en Authorization; grep limpio.
+- Pendiente del usuario: poblar `NEXT_PUBLIC_API_URL` en Vercel (por-revisar).
+  Verificación end-to-end real: la hace el usuario en producción.

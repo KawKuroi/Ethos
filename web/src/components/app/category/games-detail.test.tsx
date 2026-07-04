@@ -1,0 +1,90 @@
+import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { GamesDetail } from "./games-detail";
+import type { GamesSource } from "@/lib/api";
+
+const mocks = vi.hoisted(() => ({
+  source: null as GamesSource | null,
+  loading: false,
+}));
+
+vi.mock("@/lib/use-games-source", () => ({
+  useGamesSource: () => ({
+    loading: mocks.loading,
+    error: false,
+    reload: () => {},
+    source: mocks.source,
+  }),
+}));
+
+vi.mock("@/lib/api", () => ({
+  getGamesContextText: () => Promise.resolve("{}"),
+  downloadGamesContext: () => Promise.resolve(),
+  refreshSteam: () => Promise.resolve(),
+  getSteamLoginUrl: () => Promise.resolve("https://steamcommunity.com/openid/login"),
+}));
+
+const FRESH: GamesSource = {
+  state: "fresh",
+  synced_at: "2026-07-03T12:00:00Z",
+  detail: null,
+  persona_name: "Jugador",
+  summary: {
+    games: 312,
+    hours: 1840,
+    wishlisted: 47,
+    avg_completion_pct: 38,
+    top_by_hours: [{ title: "Stardew Valley", hours: 412, completion_pct: 91 }],
+    recently_played: [{ title: "Balatro", hours_2weeks: 6.2 }],
+    persona_name: "Jugador",
+    last_synced_at: "2026-07-03T12:00:00Z",
+  },
+};
+
+describe("GamesDetail", () => {
+  beforeEach(() => {
+    mocks.loading = false;
+    mocks.source = null;
+  });
+
+  it("muestra los datos reales cuando la fuente está conectada", () => {
+    mocks.source = FRESH;
+    render(<GamesDetail />);
+    expect(screen.getByRole("heading", { name: "Juegos" })).toBeInTheDocument();
+    expect(screen.getByText("Stardew Valley")).toBeInTheDocument();
+    expect(screen.getByText("Jugado recientemente")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /descargar contexto/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("ofrece conectar Steam cuando está apagada", () => {
+    mocks.source = {
+      state: "never",
+      synced_at: null,
+      detail: null,
+      persona_name: null,
+      summary: null,
+    };
+    render(<GamesDetail />);
+    expect(screen.getByText(/esta categoría está apagada/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /conectar steam/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("guía cuando el perfil de Steam es privado", () => {
+    mocks.source = {
+      state: "private",
+      synced_at: null,
+      detail: "El perfil de Steam es privado",
+      persona_name: "Jugador",
+      summary: null,
+    };
+    render(<GamesDetail />);
+    expect(
+      screen.getAllByText(/perfil de steam es privado/i).length,
+    ).toBeGreaterThan(0);
+  });
+});

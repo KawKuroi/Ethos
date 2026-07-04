@@ -31,7 +31,8 @@ Web — implementación del diseño (`design.md`, D25/D29):
 - [x] Conectar IA: tres pasos y playground simulado (sin LLM en v1). Nota: endpoint + token reales quedan pendientes del backend del MCP (hoy placeholder).
 - [x] Ayuda (FAQ + sugerencias) y Ajustes (perfil, zona horaria, tema, zona de peligro).
 - [x] Landing pública según el diseño (hero con flujo animado, qué es un MCP, cómo se usa, walkthrough de categorías + galería, FAQ, sugerencias).
-- [x] Tests de todas las capas pasando en CI. (api: 77, cobertura 95%; web: 35)
+- [x] Cableado web ↔ API: Inicio, Fuentes, Detalle de Juegos y Conectar IA leen datos reales con la sesión de Supabase; conexión de Steam por OpenID desde la web.
+- [x] Tests de todas las capas pasando en CI. (api: 86, cobertura 95%; web: 38)
 
 ## Fase 2 — Segunda categoría: Música / ListenBrainz
 

@@ -15,6 +15,21 @@ Marca `[x]` conforme lo revises.
 - [ ] **Verificar env vars del API en Render** — `SUPABASE_URL` y
   `SUPABASE_SERVICE_ROLE_KEY` deben estar pobladas (quedaron de Fase 0); con
   ellas el backend usa Supabase automáticamente tras el deploy del push.
+- [ ] **Poblar `NEXT_PUBLIC_API_URL` en Vercel** — apúntala a
+  `https://ethos-api-s10w.onrender.com`. Sin ella, las pantallas de la app no
+  pueden llamar al backend (verás errores al cargar Inicio/Fuentes/Detalle).
+- [ ] **Habilitar OpenID de Steam en el flujo** — necesita la Steam Web API key
+  en Render (`STEAM_API_KEY`, ya de Fase 0) y que el dominio de la web esté en
+  `ALLOWED_ORIGINS` del API (CORS). Prueba: en Fuentes → Juegos → "Conectar
+  Steam", vuelve, y comprueba que aparecen tu biblioteca y horas.
+
+## Prueba end-to-end de Fase 1 (cuando estén las env vars)
+
+- [ ] Inicia sesión, conecta Steam desde Fuentes, espera el refresco y revisa
+  Inicio y el Detalle de Juegos con tus datos reales.
+- [ ] En Conectar IA, genera el token, copia endpoint + token y prueba una
+  consulta `games.summary` desde un cliente MCP (Claude Desktop u otro).
+- [ ] Descarga `games.context.json` desde el Detalle de Juegos.
 
 - [ ] **OAuth Google y GitHub en Supabase** — habilitar ambos proveedores
   (Authentication → Providers), con client id/secret y la redirect URL

@@ -1,9 +1,6 @@
-// Datos de ejemplo de Conectar IA (playground simulado, sin LLM en v1). El
-// backend del MCP aportará endpoint/token reales por usuario y el matching real.
-
-// TODO: endpoint y token reales por usuario (backend del MCP + auth).
-export const ENDPOINT = "https://ethos.local/mcp/u/3f9a…";
-export const TOKEN = "eth_live_••••••••••2f";
+// Datos del playground de Conectar IA (simulado, sin LLM en v1). El endpoint y
+// el token reales los aporta el API (`lib/api`); aquí solo viven los pasos y las
+// consultas de ejemplo del playground.
 
 export type Step = { n: number; title: string; body: string };
 

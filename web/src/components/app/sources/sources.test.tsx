@@ -1,7 +1,31 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { Sources } from "./sources";
+
+vi.mock("@/lib/use-games-source", () => ({
+  useGamesSource: () => ({
+    loading: false,
+    error: false,
+    reload: () => {},
+    source: {
+      state: "fresh",
+      synced_at: "2026-07-03T12:00:00Z",
+      detail: null,
+      persona_name: "Jugador",
+      summary: {
+        games: 312,
+        hours: 1840,
+        wishlisted: 47,
+        avg_completion_pct: 38,
+        top_by_hours: [],
+        recently_played: [],
+        persona_name: "Jugador",
+        last_synced_at: "2026-07-03T12:00:00Z",
+      },
+    },
+  }),
+}));
 
 describe("Sources", () => {
   it("muestra el resumen y los grupos", () => {
