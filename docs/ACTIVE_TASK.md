@@ -1,50 +1,68 @@
-# ACTIVE_TASK — Backend: respaldo Supabase de la persistencia (D35)
+# ACTIVE_TASK — Cableado web ↔ API (cierre de Fase 1)
 
-Fase 1 · Backend. Sustituir los stores en memoria por el respaldo real en
-Supabase: migración de tablas + RLS, repos PostgREST y selección automática
-por entorno. Elegido por el usuario ("guiarme ahora con Supabase") tras el
-cierre del slice.
+Fase 1. Conectar las pantallas de la web al backend real con la sesión de
+Supabase, sustituyendo los datos de ejemplo de Juegos por datos del usuario.
+Las categorías "en desarrollo" siguen con constantes (no tienen backend).
 
 ### 1. Contexto y Archivos Afectados
 
-Los puertos ya existían (`CredentialRepository`, `GamesStore`,
-`McpTokenStore`); 0001 traía `source_state` y `profiles`, 0002
-`user_credentials`. Afectados: `supabase/migrations/0003_*.sql`,
-`supabase_rest.py` (nuevo), `credentials/{repository,deps}.py`,
-`games/{store,deps}.py`, `mcp_auth.py` y tests.
+La web tiene auth con sesión en cookies (`@supabase/ssr`). El API expone
+`/sources/games`, `/context/games`, `/sources/steam[/refresh]`, `/mcp-token`
+y las tools MCP, autenticados con el JWT de Supabase. Falta: un cliente de API
+en la web que adjunte el token, y que Inicio/Fuentes/Detalle/Conectar IA lean
+datos reales; más el flujo de conexión de Steam por OpenID (redirect + retorno).
 
-### 2. Evaluación Crítica
+Afectados — **API**: `games/router.py` (resumen en `/sources/games` + endpoint
+de login de Steam) y sus tests. **Web**: `lib/api.ts` (nuevo), `.env.example`,
+`overview/`, `sources/`, `category/`, `connect/`, ruta de retorno de Steam y
+tests.
 
-- Tabla de items **genérica** (`user_items` con `category`), no `user_games`:
-  Música (Fase 2) la reutiliza sin migración nueva. Payload jsonb =
-  `NormalizedItem` completo + columnas extraídas para indexar.
-- PostgREST con **service_role**: el backend ya autentica por JWT y acota por
-  `user_id` (los refrescos en background no tienen JWT de usuario); RLS
-  owner-only protege el acceso directo de cualquier otro cliente.
-- `source_state` se amplía (estado `private`, `detail`, `provider_profile`)
-  en vez de crear otra tabla de frescura: ya era su propósito (0001).
-- `McpTokenStore` pasa a `Protocol` con memoria y Supabase, como el resto.
+### 2. Evaluación Crítica — decisiones tomadas
+
+- **Fetch en cliente**: las pantallas con datos por usuario pasan a client
+  components que piden al API con el `access_token` de la sesión del navegador
+  (estados loading / vacío / error). Evita duplicar la sesión en el server de
+  Next y reutiliza el cliente ya montado.
+- **`/sources/games` devuelve el resumen** (`GamesSummary | null`) además del
+  estado: una sola llamada alimenta Fuentes, Inicio y Detalle. Se actualizan sus
+  tests (cambia la forma).
+- **Sin sparkline con datos reales**: no hay serie temporal en v1 (D34); el
+  Detalle omite el sparkline hasta que lleguen los eventos (Fase 2).
+- **Conexión de Steam**: `GET /sources/steam/login?return_to=` devuelve la URL
+  de OpenID; la web redirige, Steam vuelve a `/app/steam/return`, esa página
+  postea los `openid.*` a `/sources/steam` y encola el refresco.
+- **Estados de categoría reales**: Juegos sin conectar aparece **apagada** (con
+  CTA Conectar Steam), no "activa"; `private` guía a hacer público el perfil.
+- **Conectar IA**: endpoint y token reales de `/mcp-token`; el playground sigue
+  simulado (D-decisión previa).
+- Nuevo env `NEXT_PUBLIC_API_URL` (a poblar en Vercel; anotado en por-revisar).
 
 ### 3. Plan de Acción Detallado
 
-- [x] **Paso 1: [supabase/migrations/0003_games_and_mcp_tokens.sql]**
-  `user_items` + `mcp_tokens` + RLS + ampliación de `source_state`.
-- [x] **Paso 2: [supabase_rest.py]** cliente PostgREST mínimo
-  (select/insert/upsert/delete) + `get_rest()` según entorno.
-- [x] **Paso 3: [credentials/repository.py]** `SupabaseCredentialRepository`.
-- [x] **Paso 4: [games/store.py]** `SupabaseGamesStore` (items por payload,
-  perfil y estado en `source_state`, mapeo fresh↔synced).
-- [x] **Paso 5: [mcp_auth.py]** puerto + `SupabaseMcpTokenStore` (rotación por
-  upsert de PK) + `InMemoryMcpTokenStore`.
-- [x] **Paso 6: [deps]** selección automática memoria/Supabase en
-  credenciales, juegos y tokens.
-- [x] **Paso 7: [tests/test_supabase_repos.py]** MockTransport: upserts con
-  on_conflict, delete con conteo, payload→modelo, mapeo de estados, hash del
-  token (nunca el claro).
+Bloque A — API
+- [ ] **Paso 1: [games/router.py]** `SourceStatusOut` con `summary`; construir
+  el resumen en `GET /sources/games`. `GET /sources/steam/login` → URL OpenID.
+- [ ] **Paso 2: [tests/games/test_games_api.py]** ajustar a la nueva forma y
+  añadir test del login.
 
-### 4. Reporte de Pruebas
+Bloque B — Web · infraestructura
+- [ ] **Paso 3: [web/.env.example]** `NEXT_PUBLIC_API_URL`.
+- [ ] **Paso 4: [web/src/lib/api.ts]** `apiFetch` con Bearer de la sesión +
+  helpers tipados (`getGamesSource`, `getMcpToken`, `steamLoginUrl`,
+  `connectSteam`, `refreshSteam`, `downloadGamesContext`).
+- [ ] **Paso 5: [web/src/components/app/connect-steam.tsx]** botón que pide la
+  URL y redirige; **[web/src/app/steam/return/page.tsx]** retorno que postea.
 
-**[APROBADO]** — ruff y mypy sin incidencias; pytest 84/84 (7 nuevos),
-cobertura 94.6% (umbral 85%). Sin secretos (viaja solo el hash del token).
-Queda en manos del usuario aplicar la migración 0003 (por-revisar.md); el
-código selecciona Supabase solo cuando el entorno lo configura.
+Bloque C — Web · pantallas
+- [ ] **Paso 6: [sources]** Juegos desde el estado real (activa/apagada/private
+  con CTA); las demás, constantes.
+- [ ] **Paso 7: [overview]** stat band, panorama de Juegos y actividad desde el
+  resumen; estado vacío cuando no hay datos.
+- [ ] **Paso 8: [category]** Detalle de Juegos con datos reales (status strip,
+  stat band, top, reciente), refrescar y descargar reales; estados apagada/
+  private; las soon quedan igual.
+- [ ] **Paso 9: [connect]** endpoint y token reales de `/mcp-token`.
+
+Bloque D — Tests
+- [ ] **Paso 10: [web tests]** mockear `lib/api`; actualizar overview/sources/
+  category/connect y cubrir el cliente y el retorno de Steam.

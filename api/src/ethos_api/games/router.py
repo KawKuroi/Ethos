@@ -3,21 +3,22 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from ethos_api.auth import CurrentUserId
-from ethos_api.connectors.steam.openid import SteamOpenIdError
+from ethos_api.connectors.steam.openid import SteamOpenIdError, build_login_url
 from ethos_api.credentials.deps import RepositoryDep
 from ethos_api.credentials.models import UserCredential
 from ethos_api.games.context import build_games_context
 from ethos_api.games.deps import GamesStoreDep, OpenIdVerifierDep, SteamClientDep
 from ethos_api.games.service import refresh_user_games
 from ethos_api.games.store import SyncState
-from ethos_api.games.summary import build_games_summary
-from ethos_api.schema import Category, ItemStatus
+from ethos_api.games.summary import GamesSummary, build_games_summary
+from ethos_api.schema import Category
 from ethos_api.security import CipherDep
 
 router = APIRouter(tags=["games"])
@@ -32,14 +33,13 @@ class SteamOpenIdInput(BaseModel):
 
 
 class SourceStatusOut(BaseModel):
-    """Estado de la fuente de juegos para la web."""
+    """Estado de la fuente de juegos para la web, con el resumen si lo hay."""
 
     state: SyncState
     synced_at: datetime | None
     detail: str | None
-    games: int
-    wishlisted: int
     persona_name: str | None
+    summary: GamesSummary | None
 
 
 def _steamid_for(user_id: str, repo: RepositoryDep, cipher: CipherDep) -> str:
@@ -108,18 +108,41 @@ def refresh_steam(
 
 @router.get("/sources/games", response_model=SourceStatusOut)
 def games_status(user_id: CurrentUserId, store: GamesStoreDep) -> SourceStatusOut:
-    """Estado de frescura y conteos de la fuente de juegos."""
+    """Estado de frescura de la fuente de juegos y su resumen (si hay datos)."""
     source = store.status_for_user(user_id)
     items = store.items_for_user(user_id)
     profile = store.profile_for_user(user_id)
+    # El resumen alimenta Inicio, Fuentes y Detalle en la web; None si no hay
+    # nada sincronizado todavía.
+    summary = (
+        build_games_summary(items, profile, synced_at=source.synced_at)
+        if items or profile
+        else None
+    )
     return SourceStatusOut(
         state=source.state,
         synced_at=source.synced_at,
         detail=source.detail,
-        games=sum(1 for i in items if i.status is ItemStatus.in_library),
-        wishlisted=sum(1 for i in items if i.status is ItemStatus.wishlist),
         persona_name=profile.persona_name if profile else None,
+        summary=summary,
     )
+
+
+@router.get("/sources/steam/login")
+def steam_login(return_to: str, user_id: CurrentUserId) -> dict[str, str]:
+    """URL de OpenID de Steam a la que la web manda al navegador (D12).
+
+    `return_to` es la página de retorno de la web; el `realm` se deriva de su
+    origen (Steam exige que el realm cubra el return_to).
+    """
+    parts = urlsplit(return_to)
+    if parts.scheme not in ("http", "https") or not parts.netloc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="return_to debe ser una URL absoluta http(s)",
+        )
+    realm = f"{parts.scheme}://{parts.netloc}"
+    return {"url": build_login_url(return_to, realm)}
 
 
 @router.get("/context/games")

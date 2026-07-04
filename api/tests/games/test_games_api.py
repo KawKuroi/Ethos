@@ -58,9 +58,9 @@ def test_conectar_steam_guarda_credencial_y_refresca(
     # refresco ya corrió.
     estado = test_client.get("/sources/games", headers=auth_headers()).json()
     assert estado["state"] == "fresh"
-    assert estado["games"] == 2
-    assert estado["wishlisted"] == 3
     assert estado["persona_name"] == "Jugador"
+    assert estado["summary"]["games"] == 2
+    assert estado["summary"]["wishlisted"] == 3
 
 
 def test_refresh_sin_credencial_da_404(
@@ -115,7 +115,33 @@ def test_los_datos_no_se_cruzan_entre_usuarios(
 
     ajeno = test_client.get("/sources/games", headers=auth_headers("user-2")).json()
     assert ajeno["state"] == "never"
-    assert ajeno["games"] == 0
+    assert ajeno["summary"] is None
+
+
+def test_login_de_steam_devuelve_url_de_openid(
+    client: tuple[TestClient, InMemoryGamesStore],
+) -> None:
+    test_client, _ = client
+    return_to = "https://ethos-steel.vercel.app/app/steam/return"
+    respuesta = test_client.get(
+        "/sources/steam/login",
+        params={"return_to": return_to},
+        headers=auth_headers(),
+    )
+    assert respuesta.status_code == 200
+    url = respuesta.json()["url"]
+    assert url.startswith("https://steamcommunity.com/openid/login")
+    assert "checkid_setup" in url
+
+
+def test_login_rechaza_return_to_relativo(
+    client: tuple[TestClient, InMemoryGamesStore],
+) -> None:
+    test_client, _ = client
+    respuesta = test_client.get(
+        "/sources/steam/login", params={"return_to": "/app"}, headers=auth_headers()
+    )
+    assert respuesta.status_code == 400
 
 
 def test_openid_invalido_da_400(
