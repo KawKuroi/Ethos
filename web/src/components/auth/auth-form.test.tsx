@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.push }),
+  useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
 vi.mock("@/lib/supabase/client", () => ({
@@ -33,6 +34,7 @@ function submitForm(container: HTMLElement) {
 describe("AuthForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, "", "/auth");
     mocks.signInWithPassword.mockResolvedValue({ error: null });
     mocks.signUp.mockResolvedValue({ data: { session: null }, error: null });
     mocks.signInWithOAuth.mockResolvedValue({ error: null });
@@ -119,6 +121,22 @@ describe("AuthForm", () => {
         expect.objectContaining({ provider: "google" }),
       ),
     );
+  });
+
+  it("al volver de confirmar el correo invita a iniciar sesión", () => {
+    window.history.replaceState({}, "", "/auth?code=abc123");
+    render(<AuthForm />);
+    expect(
+      screen.getByText(/tu correo está confirmado/i),
+    ).toBeInTheDocument();
+  });
+
+  it("muestra el error cuando el callback OAuth falló", () => {
+    window.history.replaceState({}, "", "/auth?error=oauth");
+    render(<AuthForm />);
+    expect(
+      screen.getByText(/no se pudo completar el inicio de sesión con google/i),
+    ).toBeInTheDocument();
   });
 
   it("distingue la configuración ausente de un fallo de red", async () => {

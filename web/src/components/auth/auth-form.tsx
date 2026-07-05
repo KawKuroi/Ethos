@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { connectionMessage } from "./errors";
@@ -70,14 +70,26 @@ function EyeIcon({ off }: { off: boolean }) {
 
 export function AuthForm() {
   const router = useRouter();
+  const params = useSearchParams();
   const [mode, setMode] = useState<Mode>("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  // Retornos por URL: la confirmación de correo vuelve a /auth con ?code=…
+  // (no se canjea: el usuario inicia sesión él mismo) y el callback OAuth
+  // rebota aquí con ?error=oauth si el intercambio falló.
+  const [error, setError] = useState<string | null>(() =>
+    params.get("error") === "oauth"
+      ? "No se pudo completar el inicio de sesión con Google. Inténtalo de nuevo."
+      : null,
+  );
+  const [notice, setNotice] = useState<string | null>(() =>
+    params.has("code")
+      ? "Tu correo está confirmado. Inicia sesión para entrar."
+      : null,
+  );
 
   const isLogin = mode === "login";
   const isRegister = !isLogin;
@@ -149,7 +161,9 @@ export function AuthForm() {
           password,
           options: {
             data: { full_name: name.trim() },
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            // La confirmación vuelve al login (no a /auth/callback): el
+            // usuario entra con su contraseña tras confirmar.
+            emailRedirectTo: `${window.location.origin}/auth`,
           },
         });
         if (authError) {

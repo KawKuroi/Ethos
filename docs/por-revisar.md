@@ -66,9 +66,19 @@ Marca `[x]` conforme lo revises.
 - [ ] **Variables de entorno de la web** — poblar `NEXT_PUBLIC_SUPABASE_URL` y
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` en Vercel (y en `web/.env.local` para
   desarrollo). Sin ellas, `/auth` lanza el error de configuración. (D26)
-- [ ] **Redirects permitidos en Supabase Auth** — añadir a la allowlist de
-  "Redirect URLs" tu dominio y `…/auth/callback` (incluye el flujo de
-  recuperación `…/auth/callback?next=/auth/nueva-clave`). (D26)
+- [ ] **Redirects permitidos en Supabase Auth** — en URL Configuration: Site
+  URL = `https://<tu-web>` (hoy está en localhost: por eso la confirmación
+  te llevó a `http://localhost:3000/?code=…`) y añade a "Redirect URLs"
+  `https://<tu-web>/auth` (retorno de la confirmación de correo, va al login)
+  y `https://<tu-web>/auth/callback` (OAuth y recuperación); en desarrollo,
+  las mismas con `http://localhost:3000`. (D26)
+- [ ] **Plantillas de correo con el estilo de Ethos** — en Supabase →
+  Authentication → Emails, pega el HTML de
+  `supabase/templates/confirm-signup.html` en "Confirm signup" (asunto
+  sugerido: "Confirma tu correo · Ethos") y el de
+  `supabase/templates/reset-password.html` en "Reset password" (asunto:
+  "Elige una nueva contraseña · Ethos"). Envía uno de prueba y revisa cómo
+  se ve.
 
 ## Decisiones que tomé por delegación (2026-07-03) — revísalas
 

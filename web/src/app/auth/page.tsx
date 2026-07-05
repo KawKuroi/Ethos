@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { AuthForm } from "@/components/auth/auth-form";
 import { BrandPanel } from "@/components/auth/brand-panel";
@@ -15,7 +16,11 @@ export default function AuthPage() {
       <BrandPanel />
       <div className={styles.panel}>
         <ThemeToggle className={styles.themeToggle} />
-        <AuthForm />
+        {/* useSearchParams (retornos de confirmación/OAuth) exige Suspense
+            para poder prerenderizar la página. */}
+        <Suspense fallback={null}>
+          <AuthForm />
+        </Suspense>
       </div>
     </main>
   );
