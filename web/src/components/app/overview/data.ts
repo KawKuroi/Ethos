@@ -51,10 +51,10 @@ export const PANORAMA: PanoramaRow[] = [
     accent: "#d8543f",
     provider: "ListenBrainz",
     modeLabel: "API",
-    state: "soon",
+    state: "live",
     heroValue: "—",
-    heroLabel: "",
-    barPct: 0,
+    heroLabel: "escuchas",
+    barPct: 100,
   },
   {
     id: "film",

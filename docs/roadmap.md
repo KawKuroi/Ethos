@@ -34,14 +34,6 @@ Web — implementación del diseño (`design.md`, D25/D29):
 - [x] Cableado web ↔ API: Inicio, Fuentes, Detalle de Juegos y Conectar IA leen datos reales con la sesión de Supabase; conexión de Steam por OpenID desde la web.
 - [x] Tests de todas las capas pasando en CI. (api: 86, cobertura 95%; web: 38)
 
-## Fase 2 — Segunda categoría: Música / ListenBrainz
-
-- [x] Conector de ListenBrainz por API (listens con timestamp). (D37)
-- [x] Estrena la consulta temporal real ("más escuchadas en los últimos 30 días"). (D39)
-- [x] Modelo de eventos con timestamp y sus índices. (`NormalizedEvent` + `user_events`, migración 0004, D38)
-- [x] Tools del MCP para música (`music.summary`, `music.top_artists`, `music.recent` + resource). (D39)
-- [ ] Música sale de "en desarrollo" y queda activa en la web (el detalle por categoría ya es genérico). — falta el cableado web (siguiente chunk)
-
 ## Fase 3 — Categorías restantes (secuencial, D27)
 
 Una categoría a la vez: construir, probar y confirmar antes de empezar la
@@ -85,6 +77,20 @@ Retirada (D31, 2026-07-03): Actividad física — sin fuente viable.
 - El ping de keep-alive golpea `/health`, que no toca Supabase: añadir un toque de BD (o cron) para evitar su pausa a los 7 días.
 
 ## Histórico de fases completadas
+
+### Fase 2 — Música / ListenBrainz (cerrada 2026-07-04)
+
+Segunda categoría de punta a punta. Backend: conector de ListenBrainz por
+username público (D37), modelo de eventos con timestamp (`NormalizedEvent` +
+tabla `user_events`, migración 0004, D38), `Connector[RawT, OutT]` generalizado,
+resumen con ventana temporal real —"más escuchadas en los últimos 30 días"—
+(D39), refresco incremental por `min_ts` (D40, cierra D17) y tools MCP
+`music.summary`/`music.top_artists`/`music.recent` + resource. Web: slice
+espejo del de Juegos (hook `useSource` genérico, `MusicDetail` con alta por
+username, resumen de escuchas/top artistas/top canciones, refresco y descarga
+reales), Música activa en el panorama de Inicio y en Fuentes, y consultas de
+música en el playground de Conectar IA. Pendiente del usuario: aplicar la
+migración 0004 en Supabase.
 
 ### Fase 0 — Fundación (cerrada 2026-07-02)
 

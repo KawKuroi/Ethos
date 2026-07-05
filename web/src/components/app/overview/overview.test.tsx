@@ -27,6 +27,27 @@ vi.mock("@/lib/use-games-source", () => ({
   }),
 }));
 
+vi.mock("@/lib/use-music-source", () => ({
+  useMusicSource: () => ({
+    loading: false,
+    error: false,
+    reload: () => {},
+    source: {
+      state: "fresh",
+      synced_at: "2026-07-04T12:00:00Z",
+      detail: null,
+      summary: {
+        scrobbles_total: 5210,
+        scrobbles_window: 480,
+        window_days: 30,
+        top_artists: [{ name: "Radiohead", count: 88 }],
+        top_tracks: [{ name: "Idioteque — Radiohead", count: 12 }],
+        last_listened_at: "2026-07-04T12:00:00Z",
+      },
+    },
+  }),
+}));
+
 describe("Overview", () => {
   it("muestra el banner de IA sin conectar", () => {
     render(<Overview />);
@@ -41,10 +62,12 @@ describe("Overview", () => {
     expect(screen.getByText("38%")).toBeInTheDocument();
   });
 
-  it("muestra Juegos activa y categorías en desarrollo en el panorama", () => {
+  it("muestra Juegos y Música activas y categorías en desarrollo en el panorama", () => {
     render(<Overview />);
     expect(screen.getByText("Panorama · por actividad")).toBeInTheDocument();
     expect(screen.getAllByText("horas jugadas").length).toBeGreaterThan(0);
+    expect(screen.getByText("Música")).toBeInTheDocument();
+    expect(screen.getAllByText("escuchas").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/en desarrollo · próximamente/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Anime y manga")).toBeInTheDocument();
   });

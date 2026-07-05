@@ -31,10 +31,10 @@ describe("CategoryDetail", () => {
   });
 
   it("muestra el estado en desarrollo para una categoría soon", () => {
-    render(<CategoryDetail category={CATEGORY_DETAIL.music} />);
+    render(<CategoryDetail category={CATEGORY_DETAIL.film} />);
     expect(
       screen.getByText(/esta categoría está en desarrollo/i),
     ).toBeInTheDocument();
-    expect(screen.getAllByText(/listenbrainz/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/trakt/i).length).toBeGreaterThan(0);
   });
 });

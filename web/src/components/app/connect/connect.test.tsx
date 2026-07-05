@@ -54,11 +54,23 @@ describe("ConnectAi", () => {
     expect(screen.getByText("200 OK")).toBeInTheDocument();
   });
 
+  it("enruta una consulta de música a music.top_artists", () => {
+    vi.useFakeTimers();
+    render(<ConnectAi />);
+    const input = screen.getByLabelText(/escribe tu pregunta/i);
+    fireEvent.change(input, { target: { value: "¿mis artistas más escuchados?" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+    expect(screen.getByText("music.top_artists")).toBeInTheDocument();
+  });
+
   it("una consulta sin categoría activa cae en profile.search", () => {
     vi.useFakeTimers();
     render(<ConnectAi />);
     const input = screen.getByLabelText(/escribe tu pregunta/i);
-    fireEvent.change(input, { target: { value: "¿qué escuché?" } });
+    fireEvent.change(input, { target: { value: "¿qué series vi?" } });
     fireEvent.keyDown(input, { key: "Enter" });
     act(() => {
       vi.advanceTimersByTime(800);

@@ -114,7 +114,33 @@ export const MCP_QUERIES: McpQuery[] = [
       "}",
     ].join("\n"),
   },
+  {
+    id: "music-top",
+    q: "¿Mis artistas más escuchados?",
+    tool: "music.top_artists",
+    args: "limit: 3",
+    ctx: "0,3 KB",
+    full: "56 KB",
+    pct: 4,
+    answer:
+      "En los últimos 30 días has escuchado sobre todo a King Gizzard, Radiohead y Khruangbin, con King Gizzard bien por delante.",
+    items: [
+      { label: "King Gizzard & the Lizard Wizard", sub: "142 escuchas", value: "142", bar: 100 },
+      { label: "Radiohead", sub: "88 escuchas", value: "88", bar: 62 },
+      { label: "Khruangbin", sub: "51 escuchas", value: "51", bar: 36 },
+    ],
+    response: [
+      "[",
+      '  { "name": "King Gizzard & the Lizard Wizard", "count": 142 },',
+      '  { "name": "Radiohead",  "count": 88 },',
+      '  { "name": "Khruangbin", "count": 51 }',
+      "]",
+    ].join("\n"),
+  },
 ];
+
+const GAMES_QUERY = MCP_QUERIES.find((q) => q.id === "top") as McpQuery;
+const MUSIC_QUERY = MCP_QUERIES.find((q) => q.id === "music-top") as McpQuery;
 
 // Respuesta simulada cuando la consulta no encaja con una categoría activa.
 export function missQuery(text: string): McpQuery {
@@ -127,17 +153,29 @@ export function missQuery(text: string): McpQuery {
     full: "84 KB",
     pct: 3,
     answer:
-      "Consulté tu perfil con una tool acotada, pero por ahora solo Juegos está activa. Prueba a preguntar por tus juegos: horas, recientes o biblioteca.",
+      "Consulté tu perfil con una tool acotada, pero por ahora solo Juegos y Música están activas. Prueba a preguntar por tus juegos o tu música.",
     items: [],
-    response: '{\n  "matched": false,\n  "hint": "solo Juegos está activa en la v1"\n}',
+    response:
+      '{\n  "matched": false,\n  "hint": "activas en la v1: Juegos y Música"\n}',
   };
 }
 
-// Matching sencillo (sin LLM): consultas sobre juegos → resumen de Juegos.
+// Matching sencillo (sin LLM): enruta la consulta a la categoría activa.
 export function matchQuery(text: string): McpQuery {
   const t = text.toLowerCase();
-  if (t.includes("juego") || t.includes("games") || t.includes("steam")) {
-    return { ...MCP_QUERIES[0], q: text };
+  if (t.includes("juego") || t.includes("games") || t.includes("steam") || t.includes("hora")) {
+    return { ...GAMES_QUERY, q: text };
+  }
+  if (
+    t.includes("músic") ||
+    t.includes("music") ||
+    t.includes("artista") ||
+    t.includes("escuch") ||
+    t.includes("canci") ||
+    t.includes("scrobble") ||
+    t.includes("listenbrainz")
+  ) {
+    return { ...MUSIC_QUERY, q: text };
   }
   return missQuery(text);
 }

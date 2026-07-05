@@ -100,17 +100,19 @@ function soon(
   };
 }
 
+const MUSIC: CategoryDetailData = {
+  slug: "music",
+  name: "Música",
+  accent: "#d8543f",
+  provider: "ListenBrainz",
+  ns: "music.*",
+  state: "live",
+  blurb: "Scrobbles, artistas y canciones más escuchadas por periodo.",
+};
+
 export const CATEGORY_DETAIL: Record<string, CategoryDetailData> = {
   games: GAMES,
-  music: soon(
-    "music",
-    "Música",
-    "#d8543f",
-    "ListenBrainz",
-    "music.*",
-    "Scrobbles, artistas y canciones más escuchadas por periodo.",
-    "Estamos afinando el conector de ListenBrainz.",
-  ),
+  music: MUSIC,
   film: soon(
     "film",
     "Cine y TV",

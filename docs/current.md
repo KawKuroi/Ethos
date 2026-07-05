@@ -7,27 +7,28 @@ estamos y lo actualiza al cerrar cada tarea (entrada con fecha `AAAA-MM-DD`).
 
 Fase 0 cerrada: infraestructura viva en producción (Render + Vercel +
 Supabase + keep-alive). El diseño de la interfaz (Claude Design) está
-terminado y es la fuente de verdad de la UI (D25, `design.md`). **Fase 1
-completa a nivel de código** (slice Juegos/Steam de punta a punta: backend,
-persistencia Supabase, las 8 pantallas del diseño y el cableado web↔API);
-pendiente solo la activación en producción por el usuario (env vars +
-verificación visual, ver `por-revisar.md`). Siguiente: Fase 2 (Música /
-ListenBrainz).
+terminado y es la fuente de verdad de la UI (D25, `design.md`). **Fases 1 y 2
+completas a nivel de código**: Juegos/Steam y Música/ListenBrainz de punta a
+punta (backend, persistencia Supabase, pantallas del diseño y cableado web↔API,
+tools MCP por categoría). Pendiente de la activación en producción por el
+usuario (env vars, migraciones 0003/0004 y verificación visual, ver
+`por-revisar.md`). Siguiente: Fase 3 (Cine y TV / Trakt, primera de las
+categorías restantes).
 
 URLs de producción: API+MCP https://ethos-api-s10w.onrender.com · web
 https://ethos-steel.vercel.app
 
 ## Activo
 
-**Cierre de Fase 1 / arranque de Fase 2.** Fase 1 terminada en código: web
-completa (landing, auth, shell, Inicio, Detalle, Fuentes, Conectar IA,
-Ayuda/Ajustes) leyendo datos reales de Juegos con la sesión de Supabase;
-backend del slice (conector de Steam con wishlist D32 y completado D33, OpenID
-D12, persistencia Supabase D35, resumen + contexto D34, refresco D36, MCP con
-tokens D22 y tools `games.*`/`profile.search` D28). El usuario debe poblar
-`NEXT_PUBLIC_API_URL` en Vercel y verificar el flujo real en producción
-(conectar Steam, ver datos, generar token MCP). Fase 2 arranca con el conector
-de ListenBrainz sobre los mismos puertos.
+**Fase 2 cerrada / arranque de Fase 3.** Música/ListenBrainz completa en código:
+backend (conector por username D37, eventos con timestamp D38, resumen por
+ventana D39, refresco incremental D40, tools MCP `music.*`) y web (detalle
+propio con alta por username, panorama e Inicio, Fuentes y playground de
+Conectar IA). Fase 1 (Juegos/Steam) sigue completa en código. Pendiente del
+usuario antes de dar por vivas ambas fases: poblar env vars en Vercel, aplicar
+las migraciones 0003 y 0004 en Supabase, y verificar los flujos reales
+(conectar Steam/ListenBrainz, ver datos, generar token MCP) — ver
+`por-revisar.md`. Fase 3 arranca con Cine y TV (Trakt) sobre los mismos puertos.
 
 Fase 0 completa (2026-07-02): Supabase real con migraciones aplicadas,
 servicio en Render (blueprint `render.yaml`), web en Vercel, keep-alive de
@@ -42,6 +43,26 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-04 (Fase 2: cableado web de Música — cierre de la fase)
+
+- Música sale de "en desarrollo" y queda activa en la web, consumiendo el
+  backend ya construido. `lib/api.ts` gana los tipos y operaciones de música
+  (`getMusicSource`, `connectListenBrainz`, `refreshListenBrainz`,
+  descarga/preview de `/context/music`). Se extrae un hook genérico
+  `useSource<T>`; `useGamesSource` pasa a envolverlo (misma forma de retorno) y
+  se añade `useMusicSource`. `MusicDetail` (espejo de `GamesDetail`, mismo
+  `category.module.css`) maneja loading/error, alta por username público
+  (`connect-listenbrainz.tsx`, sin OpenID, D37), estado sincronizando y vista
+  conectada (hero de escuchas, top artistas y top canciones de la ventana,
+  refrescar y modal de descarga reales). Inicio muestra a Música como fila
+  activa del panorama (con escuchas) y su meta cuenta las fuentes activas;
+  Fuentes lista Juegos y Música en Activas con recuentos por grupo; Conectar IA
+  añade la consulta `music.top_artists` al playground y enruta texto de música.
+  4 tests nuevos (music-detail + enrutado); tsc, eslint, vitest (42) y build en
+  verde (`/app/categoria/music` prerenderizada). Con esto **Fase 2 queda
+  completa a nivel de código**. Pendiente del usuario: migración 0004 y
+  verificación en producción.
 
 ### 2026-07-04 (Fase 2: backend de Música / ListenBrainz)
 

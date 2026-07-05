@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import type { GamesSource, GamesSummary } from "@/lib/api";
+import type { GamesSource, GamesSummary, MusicSource } from "@/lib/api";
 import { useGamesSource } from "@/lib/use-games-source";
+import { useMusicSource } from "@/lib/use-music-source";
 import {
   GLOBAL_ALERTS,
   type GlobalAlert,
@@ -19,7 +20,12 @@ const ALERT_COLOR: Record<GlobalAlert["level"], string> = {
 };
 
 const GAMES = PANORAMA.find((r) => r.id === "games") as PanoramaRow;
+const MUSIC = PANORAMA.find((r) => r.id === "music") as PanoramaRow;
 const SOON = PANORAMA.filter((r) => r.state === "soon");
+
+function isLive(state: string | undefined): boolean {
+  return state === "fresh" || state === "syncing";
+}
 
 function accentVar(accent: string): CSSProperties {
   return { "--rowAccent": accent } as CSSProperties;
@@ -93,7 +99,7 @@ function GlobalAlerts() {
   );
 }
 
-function StatBand({ summary }: { summary: GamesSummary | null }) {
+function StatBand({ summary, meta }: { summary: GamesSummary | null; meta: string }) {
   const stats = [
     { value: summary ? fmt(summary.games) : "—", label: "juegos" },
     { value: summary ? fmt(summary.hours) : "—", label: "horas" },
@@ -106,7 +112,6 @@ function StatBand({ summary }: { summary: GamesSummary | null }) {
       label: "completado",
     },
   ];
-  const meta = summary ? "1 fuente activa · Steam" : "Sin fuentes activas";
 
   return (
     <div className={`${styles.card} ${styles.statBand}`}>
@@ -181,6 +186,58 @@ function GamesRow({ source }: { source: GamesSource | null }) {
   );
 }
 
+function MusicRow({ source }: { source: MusicSource | null }) {
+  const live = isLive(source?.state);
+  const variant: RowVariant = live ? "live" : "off";
+  const scrobbles = source?.summary?.scrobbles_total ?? 0;
+  const syncing = source?.state === "syncing";
+
+  return (
+    <Link
+      href={`/app/categoria/${MUSIC.id}`}
+      className={styles.row}
+      style={accentVar(MUSIC.accent)}
+    >
+      <span className={`${styles.rowChip} ${variant === "live" ? styles.rowChipLive : styles.rowChipSoon}`}>
+        {MUSIC.initial}
+      </span>
+      <div className={styles.rowName}>
+        <div className={`${styles.rowNameText} ${variant === "live" ? styles.rowNameLive : styles.rowNameSoon}`}>
+          {MUSIC.name}
+        </div>
+        <div className={styles.rowProvider}>
+          {MUSIC.provider} · {MUSIC.modeLabel}
+        </div>
+      </div>
+
+      {variant === "live" ? (
+        <>
+          <div className={styles.bar}>
+            <div className={styles.barFill} style={{ width: "100%" }} />
+          </div>
+          <div className={styles.rowValue}>
+            {syncing ? (
+              <span className={styles.rowHeroLabel}>sincronizando…</span>
+            ) : (
+              <>
+                <span className={styles.rowHero}>{fmt(scrobbles)}</span>
+                <span className={styles.rowHeroLabel}>escuchas</span>
+              </>
+            )}
+          </div>
+          <span className={styles.dotLive} aria-label="activa" />
+        </>
+      ) : (
+        <>
+          <div className={styles.barEmpty} />
+          <span className={styles.offLabel}>conéctala →</span>
+          <span className={styles.dotOff} aria-label="apagada" />
+        </>
+      )}
+    </Link>
+  );
+}
+
 function SoonRow({ row }: { row: PanoramaRow }) {
   return (
     <Link href={`/app/categoria/${row.id}`} className={styles.row} style={accentVar(row.accent)}>
@@ -198,7 +255,13 @@ function SoonRow({ row }: { row: PanoramaRow }) {
   );
 }
 
-function Panorama({ source }: { source: GamesSource | null }) {
+function Panorama({
+  gamesSource,
+  musicSource,
+}: {
+  gamesSource: GamesSource | null;
+  musicSource: MusicSource | null;
+}) {
   return (
     <>
       <div className={styles.panoHead}>
@@ -215,7 +278,8 @@ function Panorama({ source }: { source: GamesSource | null }) {
         </div>
       </div>
       <div className={`${styles.card} ${styles.panorama}`}>
-        <GamesRow source={source} />
+        <GamesRow source={gamesSource} />
+        <MusicRow source={musicSource} />
         {SOON.map((row) => (
           <SoonRow key={row.id} row={row} />
         ))}
@@ -255,9 +319,21 @@ function Activity({ summary }: { summary: GamesSummary | null }) {
   );
 }
 
+function activeMeta(gamesLive: boolean, musicLive: boolean): string {
+  const providers: string[] = [];
+  if (gamesLive) providers.push("Steam");
+  if (musicLive) providers.push("ListenBrainz");
+  if (providers.length === 0) return "Sin fuentes activas";
+  const label = providers.length === 1 ? "fuente activa" : "fuentes activas";
+  return `${providers.length} ${label} · ${providers.join(" · ")}`;
+}
+
 export function Overview() {
-  const { loading, source } = useGamesSource();
-  const summary = source?.summary ?? null;
+  const games = useGamesSource();
+  const music = useMusicSource();
+  const loading = games.loading || music.loading;
+  const summary = games.source?.summary ?? null;
+  const meta = activeMeta(isLive(games.source?.state), isLive(music.source?.state));
 
   return (
     <div className="eth-screen">
@@ -267,8 +343,8 @@ export function Overview() {
         <div className={styles.loading}>Cargando tu perfil…</div>
       ) : (
         <>
-          <StatBand summary={summary} />
-          <Panorama source={source} />
+          <StatBand summary={summary} meta={meta} />
+          <Panorama gamesSource={games.source} musicSource={music.source} />
           <Activity summary={summary} />
         </>
       )}

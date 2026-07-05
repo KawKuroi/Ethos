@@ -21,6 +21,20 @@ Marca `[x]` conforme lo revises.
   consulta `games.summary` desde un cliente MCP (Claude Desktop u otro).
 - [ ] Descarga `games.context.json` desde el Detalle de Juegos.
 
+## Prueba end-to-end de Fase 2 · Música (tras aplicar la migración 0004)
+
+- [ ] En Fuentes → Música (o Inicio → fila Música → "conéctala"), escribe tu
+  usuario público de ListenBrainz, conéctalo y espera el refresco: el Detalle de
+  Música debe mostrar escuchas, top artistas y top canciones de los últimos 30
+  días.
+- [ ] Comprueba que en Inicio la fila de Música aparece **activa** (con su número
+  de escuchas) y que Fuentes la lista en "Activas" junto a Juegos.
+- [ ] Prueba una consulta `music.top_artists` desde tu cliente MCP y descarga
+  `music.context.json` desde el Detalle de Música.
+- [ ] Nota de diseño a confirmar: la banda "El gusto en números" de Inicio
+  sigue mostrando cifras de Juegos (su meta ya cuenta las fuentes activas); si
+  quieres que mezcle métricas de música, dilo y lo ajustamos.
+
 - [ ] **OAuth Google y GitHub en Supabase** — habilitar ambos proveedores
   (Authentication → Providers), con client id/secret y la redirect URL
   apuntando a `https://<tu-web>/auth/callback`. Hasta hacerlo, los botones

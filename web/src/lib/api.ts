@@ -57,12 +57,10 @@ async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
 
 // ===== Tipos del contrato con el backend =====
 
-export type GamesSyncState =
-  | "never"
-  | "syncing"
-  | "fresh"
-  | "private"
-  | "error";
+export type SyncState = "never" | "syncing" | "fresh" | "private" | "error";
+
+// Alias histórico; la fuente de juegos usa el mismo conjunto de estados.
+export type GamesSyncState = SyncState;
 
 export type TopGame = {
   title: string;
@@ -97,6 +95,27 @@ export type GamesSource = {
 export type McpToken = {
   token: string;
   endpoint: string;
+};
+
+export type MusicTopEntry = {
+  name: string;
+  count: number;
+};
+
+export type MusicSummary = {
+  scrobbles_total: number;
+  scrobbles_window: number;
+  window_days: number;
+  top_artists: MusicTopEntry[];
+  top_tracks: MusicTopEntry[];
+  last_listened_at: string | null;
+};
+
+export type MusicSource = {
+  state: SyncState;
+  synced_at: string | null;
+  detail: string | null;
+  summary: MusicSummary | null;
 };
 
 // ===== Operaciones =====
@@ -148,5 +167,43 @@ export async function downloadGamesContext(): Promise<void> {
 
 export async function getGamesContextText(): Promise<string> {
   const response = await apiFetch("/context/games");
+  return JSON.stringify(await response.json(), null, 2);
+}
+
+// ===== Música / ListenBrainz =====
+
+export function getMusicSource(): Promise<MusicSource> {
+  return apiJson<MusicSource>("/sources/music");
+}
+
+// Conecta ListenBrainz por username público (D37) y encola el primer refresco.
+export function connectListenBrainz(userName: string): Promise<void> {
+  return apiFetch("/sources/listenbrainz", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_name: userName }),
+  }).then(() => undefined);
+}
+
+export function refreshListenBrainz(): Promise<void> {
+  return apiFetch("/sources/listenbrainz/refresh", { method: "POST" }).then(
+    () => undefined,
+  );
+}
+
+// Descarga `music.context.json` disparando el guardado en el navegador.
+export async function downloadMusicContext(): Promise<void> {
+  const response = await apiFetch("/context/music");
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "music.context.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function getMusicContextText(): Promise<string> {
+  const response = await apiFetch("/context/music");
   return JSON.stringify(await response.json(), null, 2);
 }

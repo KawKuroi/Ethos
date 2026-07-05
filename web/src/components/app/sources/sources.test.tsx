@@ -27,6 +27,27 @@ vi.mock("@/lib/use-games-source", () => ({
   }),
 }));
 
+vi.mock("@/lib/use-music-source", () => ({
+  useMusicSource: () => ({
+    loading: false,
+    error: false,
+    reload: () => {},
+    source: {
+      state: "fresh",
+      synced_at: "2026-07-04T12:00:00Z",
+      detail: null,
+      summary: {
+        scrobbles_total: 5210,
+        scrobbles_window: 480,
+        window_days: 30,
+        top_artists: [],
+        top_tracks: [],
+        last_listened_at: "2026-07-04T12:00:00Z",
+      },
+    },
+  }),
+}));
+
 describe("Sources", () => {
   it("muestra el resumen y los grupos", () => {
     render(<Sources />);
@@ -35,15 +56,21 @@ describe("Sources", () => {
     expect(screen.getByText("Activas")).toBeInTheDocument();
   });
 
-  it("lista Juegos en Activas con enlace al detalle", () => {
+  it("lista Juegos y Música en Activas con enlace al detalle", () => {
     render(<Sources />);
-    const link = screen.getByRole("link", { name: /juegos/i });
-    expect(link).toHaveAttribute("href", "/app/categoria/games");
+    expect(screen.getByRole("link", { name: /juegos/i })).toHaveAttribute(
+      "href",
+      "/app/categoria/games",
+    );
+    expect(screen.getByRole("link", { name: /música/i })).toHaveAttribute(
+      "href",
+      "/app/categoria/music",
+    );
   });
 
-  it("lista las cuatro categorías en desarrollo", () => {
+  it("lista las tres categorías en desarrollo", () => {
     render(<Sources />);
-    for (const name of ["Música", "Cine y TV", "Anime y manga", "Libros"]) {
+    for (const name of ["Cine y TV", "Anime y manga", "Libros"]) {
       expect(
         screen.getByRole("link", { name: new RegExp(name, "i") }),
       ).toBeInTheDocument();
