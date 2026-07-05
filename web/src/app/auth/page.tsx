@@ -6,7 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import styles from "@/components/auth/auth.module.css";
 
 export const metadata: Metadata = {
-  title: "Entrar · Ethos",
+  title: "Entrar",
   description: "Inicia sesión o crea tu cuenta de Ethos.",
 };
 

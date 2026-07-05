@@ -5,7 +5,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import styles from "@/components/auth/auth.module.css";
 
 export const metadata: Metadata = {
-  title: "Nueva contraseña · Ethos",
+  title: "Nueva contraseña",
   description: "Elige una contraseña nueva para tu cuenta.",
 };
 

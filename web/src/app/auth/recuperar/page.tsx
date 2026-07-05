@@ -5,7 +5,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import styles from "@/components/auth/auth.module.css";
 
 export const metadata: Metadata = {
-  title: "Recuperar contraseña · Ethos",
+  title: "Recuperar contraseña",
   description: "Te enviamos un enlace para restablecer tu contraseña.",
 };
 

@@ -26,8 +26,10 @@ const code = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+// Título corto por pestaña: la landing es "Ethos" y cada pantalla pone el
+// suyo ("Inicio", "Fuentes", …) con su propio metadata.
 export const metadata: Metadata = {
-  title: "Ethos — Tu gusto, hecho contexto",
+  title: "Ethos",
   description:
     "Reúne tu gusto de las apps donde ya vive, lo normaliza y lo entrega dos veces: como panel para ti y como contexto para tu IA (archivos o servidor MCP).",
 };

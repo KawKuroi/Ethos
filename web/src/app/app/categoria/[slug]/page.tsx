@@ -11,6 +11,17 @@ export function generateStaticParams() {
   return Object.keys(CATEGORY_DETAIL).map((slug) => ({ slug }));
 }
 
+// Título de pestaña = nombre de la categoría ("Juegos", "Música", …).
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const category = categoryBySlug(slug);
+  return { title: category?.name ?? "Categoría" };
+}
+
 // Cada categoría activa tiene su detalle con datos reales del backend; el
 // componente genérico queda para categorías futuras "en desarrollo".
 const DETAILS: Record<string, () => React.ReactElement> = {
