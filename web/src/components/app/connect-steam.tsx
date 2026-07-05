@@ -4,7 +4,8 @@ import { useState } from "react";
 import { getSteamLoginUrl } from "@/lib/api";
 
 // Botón que arranca la conexión de Steam por OpenID: pide la URL al API y
-// manda el navegador a Steam. Steam vuelve a /app/steam/return.
+// manda el navegador a Steam. Steam vuelve a /steam/return (página fuera de
+// la shell de /app: se muestra a pantalla completa mientras verifica).
 export function ConnectSteamButton({
   className,
   label = "Conectar Steam →",
@@ -20,7 +21,7 @@ export function ConnectSteamButton({
     setError(null);
     setLoading(true);
     try {
-      const returnTo = `${window.location.origin}/app/steam/return`;
+      const returnTo = `${window.location.origin}/steam/return`;
       const url = await getSteamLoginUrl(returnTo);
       window.location.href = url;
     } catch {
