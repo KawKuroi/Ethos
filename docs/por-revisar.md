@@ -4,15 +4,6 @@ Cosas que quedan en tus manos: configuración de infraestructura y verificación
 visual en producción. efesto va añadiendo aquí lo que no puede hacer por ti.
 Marca `[x]` conforme lo revises.
 
-## Infraestructura / configuración (desbloquea funcionalidad)
-- [ ] **Habilitar OpenID de Steam en el flujo** — necesita la Steam Web API key
-  en Render (`STEAM_API_KEY`, ya de Fase 0) y que el dominio de la web esté en
-  `ALLOWED_ORIGINS` del API (CORS). Prueba: en Fuentes → Juegos → "Conectar
-  Steam", vuelve, y comprueba que aparecen tu biblioteca y horas.
-- [ ] **Aplicar la migración 0004 en Supabase** (Fase 2: tabla `user_events`
-  para los listens de música). SQL Editor → pega
-  `supabase/migrations/0004_user_events.sql` → Run.
-
 ## Prueba end-to-end de Fase 1 (cuando estén las env vars)
 
 - [ ] Inicia sesión, conecta Steam desde Fuentes, espera el refresco y revisa
@@ -34,6 +25,16 @@ Marca `[x]` conforme lo revises.
 - [ ] Nota de diseño a confirmar: la banda "El gusto en números" de Inicio
   sigue mostrando cifras de Juegos (su meta ya cuenta las fuentes activas); si
   quieres que mezcle métricas de música, dilo y lo ajustamos.
+
+## Fase 3 · Cine y TV / Trakt (backend listo; falta cableado web)
+
+- [ ] **Registrar la app de Trakt y poblar `TRAKT_CLIENT_ID`** — crea una API
+  app en Trakt (Settings → Your API Apps), copia su **Client ID** y ponlo en
+  Render como `TRAKT_CLIENT_ID`. Sin esa key el conector no puede leer datos.
+  El perfil de Trakt que conectes debe ser **público** (si no, el estado sale
+  `private`). La web de Cine y TV (activarla en Fuentes/Inicio) llega en el
+  siguiente chunk; por ahora se prueba por API/MCP (`film.summary`,
+  `GET /context/film`).
 
 - [ ] **OAuth Google y GitHub en Supabase** — habilitar ambos proveedores
   (Authentication → Providers), con client id/secret y la redirect URL

@@ -12,6 +12,7 @@ from typing import Any
 from ethos_api.connectors.base import Connector
 from ethos_api.connectors.listenbrainz.connector import ListenBrainzConnector
 from ethos_api.connectors.steam.connector import SteamConnector
+from ethos_api.connectors.trakt.connector import TraktConnector
 from ethos_api.schema import Category
 
 # El registro guarda clases (los conectores declaran su identidad como
@@ -52,3 +53,4 @@ class ConnectorRegistry:
 registry = ConnectorRegistry()
 registry.register(SteamConnector)
 registry.register(ListenBrainzConnector)
+registry.register(TraktConnector)

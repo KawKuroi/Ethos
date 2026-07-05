@@ -40,7 +40,9 @@ Una categoría a la vez: construir, probar y confirmar antes de empezar la
 siguiente; al activarse sale de "en desarrollo". Orden tentativo (proveedor
 inicial; alternativas según D4/D6/D27):
 
-- [ ] Cine y TV: Trakt (API). Alternativa: Letterboxd (import).
+- [~] Cine y TV: Trakt (API). Alternativa: Letterboxd (import). — backend
+  completo (conector, resumen, contexto, tools `film.*`, D41-D44); falta el
+  cableado web (siguiente chunk).
 - [ ] Anime y manga: AniList (API).
 - [ ] Libros: Goodreads (import). Alternativas: StoryGraph (import), Hardcover (API).
 - [ ] Modo import genérico con autodetección de archivo y guías por proveedor.

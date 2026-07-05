@@ -8,6 +8,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from ethos_api.config import settings
 from ethos_api.credentials.router import router as credentials_router
+from ethos_api.film.router import router as film_router
 from ethos_api.games.router import router as games_router
 from ethos_api.mcp_auth import router as mcp_token_router
 from ethos_api.mcp_server import mcp
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(credentials_router)
     app.include_router(games_router)
     app.include_router(music_router)
+    app.include_router(film_router)
     app.include_router(mcp_token_router)
 
     @app.get("/health")

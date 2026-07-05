@@ -7,6 +7,7 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
+from ethos_api.film.store import InMemoryFilmStore
 from ethos_api.games.store import InMemoryGamesStore
 from ethos_api.main import app
 from ethos_api.mcp_auth import InMemoryMcpTokenStore, user_from_authorization
@@ -174,3 +175,51 @@ async def test_music_summary_tool_exige_token() -> None:
     async with Client(mcp) as client:
         with pytest.raises(ToolError, match="No autenticado"):
             await client.call_tool("music.summary", {})
+
+
+def _film_store_poblado(user: str = "user-1") -> InMemoryFilmStore:
+    from ethos_api.film.service import refresh_user_film
+    from tests.film.helpers import FakeTraktApi
+
+    store = InMemoryFilmStore()
+    refresh_user_film(user, "cinefilo", FakeTraktApi(), store)
+    return store
+
+
+def test_payload_de_cine_reporta_kb_y_tops() -> None:
+    from ethos_api.mcp_server import film_summary_payload, film_top_movies_payload
+
+    store = _film_store_poblado()
+    resumen = film_summary_payload("user-1", store)
+    assert resumen["movies_watched"] == 2
+    kb_served, kb_total = resumen["kb_served"], resumen["kb_total"]
+    assert isinstance(kb_served, float) and kb_served > 0
+    assert isinstance(kb_total, float) and kb_total > 0
+
+    top = film_top_movies_payload("user-1", store, limit=1)
+    peliculas = top["top_movies"]
+    assert isinstance(peliculas, list)
+    assert len(peliculas) == 1
+    assert peliculas[0]["title"] == "Inception"
+
+
+def test_film_recent_respeta_limit() -> None:
+    from ethos_api.mcp_server import film_recent_payload
+
+    store = _film_store_poblado()
+    payload = film_recent_payload("user-1", store, limit=1)
+    recent = payload["recently_watched"]
+    assert isinstance(recent, list)
+    assert len(recent) == 1
+
+
+@pytest.mark.anyio
+async def test_film_summary_tool_exige_token() -> None:
+    from fastmcp import Client
+    from fastmcp.exceptions import ToolError
+
+    from ethos_api.mcp_server import mcp
+
+    async with Client(mcp) as client:
+        with pytest.raises(ToolError, match="No autenticado"):
+            await client.call_tool("film.summary", {})

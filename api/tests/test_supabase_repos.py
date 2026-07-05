@@ -200,6 +200,42 @@ def test_event_store_append_y_lectura() -> None:
     assert store.latest_occurred_at("user-1") == occurred
 
 
+def test_film_store_stats_roundtrip() -> None:
+    from ethos_api.connectors.trakt.connector import TraktStats
+    from ethos_api.film.store import SupabaseFilmStore
+
+    fake = FakePostgrest(
+        {
+            "source_state": [
+                {
+                    "provider_profile": {
+                        "movies_watched": 2,
+                        "movies_minutes": 260,
+                        "shows_watched": 1,
+                        "episodes_watched": 5,
+                        "episodes_minutes": 2790,
+                    }
+                }
+            ]
+        }
+    )
+    store = SupabaseFilmStore(_rest(fake))
+    store.set_stats(
+        "user-1",
+        TraktStats(
+            movies_watched=2,
+            movies_minutes=260,
+            shows_watched=1,
+            episodes_watched=5,
+            episodes_minutes=2790,
+        ),
+    )
+    stats = store.stats_for_user("user-1")
+    assert stats is not None
+    assert stats.movies_minutes == 260
+    assert stats.episodes_watched == 5
+
+
 def test_mcp_tokens_emision_y_resolucion() -> None:
     fake = FakePostgrest({"mcp_tokens": [{"user_id": "user-1"}]})
     store = SupabaseMcpTokenStore(_rest(fake))

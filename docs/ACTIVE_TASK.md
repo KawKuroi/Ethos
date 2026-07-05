@@ -1,102 +1,100 @@
-# ACTIVE_TASK — Fase 2: cablear la web para Música
+# ACTIVE_TASK — Fase 3: Cine y TV / Trakt (backend)
 
-Último ítem de Fase 2: sacar Música de "en desarrollo" y dejarla activa en la
-web, consumiendo el backend ya construido (`/sources/listenbrainz`,
-`/sources/music`, `/context/music`). Cierra el slice de Música de punta a punta.
+Tercera categoría sobre los puertos existentes. Cine y TV encaja en el modelo
+"obra + relación" (películas y series vistas, con plays y última vez visto), así
+que reutiliza el `NormalizedItem` y las tablas de Juegos, pero conectando por
+username público como Música. El cableado web queda para un chunk siguiente.
 
 ### 1. Contexto y Archivos Afectados
 
-El backend de música está completo (conector, event store, resumen por ventana,
-refresco incremental, endpoints y tools MCP). La web tiene el slice de Juegos
-como plantilla: `lib/api.ts` (Bearer + operaciones), hook `useGamesSource`,
-`GamesDetail` (vista conectada/apagada/privada con datos reales), y las
-pantallas Inicio (`overview`), Fuentes (`sources`) y Conectar IA (`connect`) que
-hoy tratan Juegos como única fuente activa y el resto como "en desarrollo".
-`CategoryDetail` es el detalle genérico (datos estáticos) que sirve a las
-categorías aún en desarrollo.
+Patrones ya establecidos: modelo item con puerto + memoria + Supabase
+(`games/store.py`, `user_items`/`source_state`), conexión por username público
+cifrado (`music/router.py` + credenciales, D37), refresco con
+`BackgroundTasks` y estados de frescura (`sources_status.py`, D36), tools MCP
+por namespace con métrica de KB (`mcp_server.py`, D28) y registro de conectores
+(D21). Trakt lee datos públicos de un usuario con el `client_id` de la app en el
+header `trakt-api-key` (sin OAuth), igual de barato que ListenBrainz.
 
-Afectados: `lib/api.ts` (tipos + operaciones de música), `lib/use-source.ts`
-(nuevo, hook genérico), `lib/use-games-source.ts` (envuelve el genérico),
-`lib/use-music-source.ts` (nuevo), `components/app/category/data.ts` (Música
-pasa de soon a live), `components/app/category/music-detail.tsx` (nuevo),
-`components/app/connect-listenbrainz.tsx` (nuevo, alta por username),
-`app/app/categoria/[slug]/page.tsx` (ruta music → MusicDetail),
-`components/app/overview/{overview.tsx,data.ts}` (Música activa en el panorama),
-`components/app/sources/sources.tsx` (tarjetas de Música),
-`components/app/connect/data.ts` (consultas de música en el playground) y sus
-tests.
+Nuevos: `connectors/trakt/{client,connector}.py`, `film/{store,summary,context,
+service,router,deps}.py`. Editados: `config.py` (`trakt_client_id`),
+`connectors/registry.py` (registrar Trakt), `main.py` (montar router),
+`mcp_server.py` (tools `film.*`). No hace falta migración: `user_items` y
+`source_state` son genéricos por categoría (D35). Tests nuevos y actualización
+de `test_registry.py`.
 
 ### 2. Evaluación Crítica — decisiones tomadas
 
-Veredicto: **bueno**. Es el cierre natural del slice; el backend ya expone todo
-lo necesario y la web solo necesita una segunda fuente. Riesgo principal: la
-tentación de un detalle "totalmente genérico" que fusione dos resúmenes muy
-distintos (Juegos: horas/completado/deseados; Música: scrobbles/artistas/tracks)
-en una sola forma, lo que sería una abstracción prematura que degrada ambas UIs.
+Veredicto: **bueno**. La categoría encaja limpio en la infraestructura sin
+tocar el esquema de datos; el único servicio externo (client_id de Trakt) es
+gratis y se custodia en el servidor. Riesgo: los datos "vistos" de Trakt vienen
+**agregados** (no como historial de eventos), así que el refresco reemplaza el
+conjunto completo (como Juegos), no incrementa (como Música) — hay que dejarlo
+explícito para no confundir el modelo con el de eventos.
 
-Decisiones:
+Decisiones (delegadas):
 
-- **Slice de Música espejo del de Juegos (no fusión prematura)**: `MusicDetail`
-  bespoke, fiel a la forma real del resumen musical (hero de escuchas, top
-  artistas, top canciones), reutilizando el mismo `category.module.css` y el
-  patrón de estados de `GamesDetail`. El `CategoryDetail` genérico se queda para
-  las categorías aún en desarrollo (Cine, Anime, Libros).
-- **Hook genérico `useSource<T>`**: se extrae la lógica común (loading/data/
-  error/reload) a un hook parametrizado; `useGamesSource` pasa a envolverlo (sin
-  cambiar su forma de retorno, para no tocar a sus consumidores) y `useMusicSource`
-  lo reutiliza. Elimina duplicación sin churn en las pantallas existentes.
-- **Alta de ListenBrainz por formulario de username (D37)**, no por redirección
-  como Steam: `connect-listenbrainz.tsx` con un input y `POST /sources/listenbrainz`.
-  Tras conectar, la vista muestra "sincronizando" con un botón para actualizar
-  (el refresco corre en segundo plano en el backend).
-- **Agregación de dos fuentes en Inicio y Fuentes**: el panorama y las tarjetas
-  dejan de asumir a Juegos como única activa; se añade una fila/tarjeta de Música
-  con su propia unidad (escuchas). La banda "El gusto en números" mantiene las
-  cifras de Juegos (las más ricas) pero su meta cuenta las fuentes activas de
-  forma dinámica; blindar un band mixto queda fuera de alcance (no está en el
-  diseño) — se anota para verificación visual.
+- **D41 · Conexión de Cine/TV**: Trakt por **username público** + `client_id`
+  del servidor en el header `trakt-api-key` (sin OAuth). El username se guarda
+  como credencial cifrada del proveedor `trakt` (categoría film), como el de
+  ListenBrainz (D37).
+- **D42 · Modelo item (no evento)**: películas y series son `NormalizedItem`
+  (obra + relación: `status=consumed`, `plays`, `last_watched_at`,
+  `episodes_watched`). Reutiliza `user_items`/`source_state` con `category=film`
+  — **sin migración**. Los agregados de `/users/{u}/stats` (minutos y conteos)
+  se guardan en `provider_profile` (como el perfil de Steam) y alimentan los
+  totales del resumen.
+- **D43 · Resumen y contexto de Cine/TV**: `FilmSummary` = películas / series /
+  episodios vistos, **horas totales** (de `/stats`), top películas por plays,
+  top series por episodios y vistos recientes por `last_watched_at`. Contexto
+  `film.context.json` con la misma información. Tools MCP `film.summary`,
+  `film.top_movies`, `film.recent` (+ resource `ethos://film/summary`).
+- **D44 · Refresco de Cine/TV**: refresco **completo por pasada** (watched
+  movies + watched shows + stats); Trakt ya entrega lo visto agregado, así que
+  `replace_items` es idempotente (como Juegos). El incremental por `/history`
+  se difiere. Perfil privado o usuario inexistente (401/403/404) → estado
+  `private` con guía para la web.
 
-Deuda: la actividad reciente de Inicio sigue siendo solo de Juegos (el resumen
-de música no expone una lista de listens recientes, solo tops); se revisará si
-se añade un feed de eventos. El band de Inicio no mezcla métricas de música.
+Deuda: sin runtime por ítem (los minutos totales salen de `/stats`, no por
+película); el desglose fino de series (temporadas/episodios individuales) se
+difiere. `profile.search` del MCP sigue mirando solo Juegos (se generalizará
+cuando haya más categorías con la web cableada).
 
 ### 3. Plan de Acción Detallado
 
-- [x] **Paso 1: [lib/api.ts]** `SyncState` compartido (alias de `GamesSyncState`),
-  tipos `MusicTopEntry`/`MusicSummary`/`MusicSource` y operaciones
-  `getMusicSource`, `connectListenBrainz`, `refreshListenBrainz`,
-  `downloadMusicContext`, `getMusicContextText`.
-- [x] **Paso 2: [lib/use-source.ts]** hook genérico `useSource<T>(load)` →
-  `{loading, data, error, reload}`.
-- [x] **Paso 3: [lib/use-games-source.ts + lib/use-music-source.ts]**
-  `useGamesSource` envuelve `useSource(getGamesSource)` manteniendo su forma;
-  `useMusicSource` envuelve `useSource(getMusicSource)`.
-- [x] **Paso 4: [components/app/connect-listenbrainz.tsx]** formulario de alta
-  por username público (input + submit → `connectListenBrainz`, con estados).
-- [x] **Paso 5: [components/app/category/music-detail.tsx]** detalle de Música:
-  loading/error, conectar (formulario), sincronizando (con actualizar), y vista
-  conectada (hero de escuchas, top artistas, top canciones, refrescar y modal de
-  descarga reales contra `/context/music`).
-- [x] **Paso 6: [components/app/category/data.ts]** `CATEGORY_DETAIL.music` pasa
-  de `soon` a `live` (accent/name/provider/blurb/ns/slug).
-- [x] **Paso 7: [app/app/categoria/[slug]/page.tsx]** ruta `music` → `MusicDetail`.
-- [x] **Paso 8: [components/app/overview/{data.ts,overview.tsx}]** Música `live`
-  en el panorama (fila propia con escuchas); meta de la banda cuenta las fuentes
-  activas.
-- [x] **Paso 9: [components/app/sources/sources.tsx]** tarjetas de Música
-  (activa/apagada) y recuento de grupos con dos fuentes.
-- [x] **Paso 10: [components/app/connect/data.ts]** consultas de música en el
-  playground (`music.top_artists`), enrutado y textos actualizados.
-- [x] **Paso 11: [tests]** `music-detail.test.tsx` nuevo; actualizar
-  `category-detail`, `overview`, `sources` y `connect` para la presencia de
-  Música.
+- [x] **Paso 1: [config.py]** `trakt_client_id: SecretStr` (secreto del servidor).
+- [x] **Paso 2: [connectors/trakt/client.py]** `TraktApiClient` (headers
+  `trakt-api-key`/`trakt-api-version`, throttle, `httpx` inyectable):
+  `get_user_stats`, `get_watched_movies`, `get_watched_shows`; `TraktApiError`
+  con `status_code`.
+- [x] **Paso 3: [connectors/trakt/connector.py]** `TraktConnector`
+  (id=trakt, category=film), `TraktRawData`, `TraktStats`; `normalize` de
+  películas y series a `NormalizedItem` y `stats` desde `/stats`.
+- [x] **Paso 4: [film/store.py]** `FilmStore` puerto + `InMemoryFilmStore` +
+  `SupabaseFilmStore` (`user_items`/`source_state`, `category=film`, stats en
+  `provider_profile`).
+- [x] **Paso 5: [film/summary.py]** `FilmSummary` + `build_film_summary`
+  (totales de stats, top películas/series, vistos recientes).
+- [x] **Paso 6: [film/context.py]** `build_film_context` (`film.context.json`).
+- [x] **Paso 7: [film/service.py]** `TraktApi` Protocol + `refresh_user_film`
+  (fetch → normalizar → persistir; 401/403/404 → `private`, D44).
+- [x] **Paso 8: [film/deps.py + film/router.py]** deps (store memoria/Supabase,
+  cliente Trakt) y endpoints `POST /sources/trakt[/refresh]`, `GET /sources/film`,
+  `GET /context/film`.
+- [x] **Paso 9: [mcp_server.py]** tools `film.summary`, `film.top_movies`,
+  `film.recent` + resource, con auth y KB servidos.
+- [x] **Paso 10: [registry.py + main.py]** registrar `TraktConnector` y montar
+  el router.
+- [x] **Paso 11: [tests]** cliente (MockTransport), connector (golden), store
+  (memoria + PostgREST simulado), summary, service (fake), router (JWT), tools
+  MCP; actualizar `test_registry.py`.
 
 ### 4. Reporte de Pruebas
 
-**[APROBADO]** — tsc, eslint y build sin incidencias; vitest 42/42 (4 nuevos:
-3 de `MusicDetail` + 1 de enrutado de música en el playground). Build genera
-`/app/categoria/music` prerenderizada. Secretos: ListenBrainz se lee por
-username público, sin tokens; grep limpio. Idioma D19 correcto. Con esto Música
-queda activa de punta a punta en la web (detalle propio, alta por username,
-panorama e Inicio, Fuentes y consultas de música en Conectar IA). Pendiente del
-usuario: aplicar la migración 0004 y verificar el flujo real (por-revisar.md).
+**[APROBADO]** — ruff y mypy sin incidencias (82 archivos); pytest 127/127 (21
+nuevos: cliente Trakt, conector golden, store memoria + PostgREST simulado,
+resumen, servicio con perfil privado, endpoints con JWT y tools MCP), cobertura
+93.3%. Secretos: Trakt se lee por username público + `client_id` del servidor
+(config cifrada, sin literales); grep limpio. Idioma D19 correcto. Sin migración
+(reutiliza `user_items`/`source_state`). Pendiente del usuario: registrar la app
+de Trakt y poblar `TRAKT_CLIENT_ID` en Render; el cableado web es el siguiente
+chunk (por-revisar.md).

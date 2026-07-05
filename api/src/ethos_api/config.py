@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     supabase_jwt_secret: SecretStr = SecretStr("")
     encryption_key: SecretStr = SecretStr("")
     steam_api_key: SecretStr = SecretStr("")
+    # client_id de la app de Trakt (categoría Cine y TV); lee datos públicos
+    # de un usuario sin OAuth (header trakt-api-key), D41.
+    trakt_client_id: SecretStr = SecretStr("")
 
 
 settings = Settings()

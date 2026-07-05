@@ -18,6 +18,10 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 from fastmcp.server.dependencies import get_http_headers
 
+from ethos_api.film.context import build_film_context
+from ethos_api.film.deps import get_film_store
+from ethos_api.film.store import FilmStore
+from ethos_api.film.summary import build_film_summary
 from ethos_api.games.context import build_games_context
 from ethos_api.games.deps import get_games_store
 from ethos_api.games.store import GamesStore
@@ -158,6 +162,47 @@ def music_recent_payload(
     return _served(payload, _music_context_kb(user_id, store))
 
 
+def _film_context_kb(user_id: str, store: FilmStore) -> float:
+    """Tamaño del contexto completo de Cine y TV, referencia de la métrica D28."""
+    summary = build_film_summary(
+        store.items_for_user(user_id), store.stats_for_user(user_id)
+    )
+    return _kb(build_film_context(summary))
+
+
+def film_summary_payload(user_id: str, store: FilmStore) -> dict[str, object]:
+    summary = build_film_summary(
+        store.items_for_user(user_id),
+        store.stats_for_user(user_id),
+        synced_at=store.status_for_user(user_id).synced_at,
+    )
+    return _served(summary.model_dump(mode="json"), _film_context_kb(user_id, store))
+
+
+def film_top_movies_payload(
+    user_id: str, store: FilmStore, limit: int
+) -> dict[str, object]:
+    summary = build_film_summary(
+        store.items_for_user(user_id), store.stats_for_user(user_id), top_limit=limit
+    )
+    payload: dict[str, object] = {
+        "top_movies": [m.model_dump(mode="json") for m in summary.top_movies]
+    }
+    return _served(payload, _film_context_kb(user_id, store))
+
+
+def film_recent_payload(user_id: str, store: FilmStore, limit: int) -> dict[str, object]:
+    summary = build_film_summary(
+        store.items_for_user(user_id), store.stats_for_user(user_id), top_limit=limit
+    )
+    payload: dict[str, object] = {
+        "recently_watched": [
+            r.model_dump(mode="json") for r in summary.recently_watched
+        ]
+    }
+    return _served(payload, _film_context_kb(user_id, store))
+
+
 @mcp.tool
 def ping() -> str:
     """Tool de prueba para verificar la conexión con el servidor MCP."""
@@ -206,6 +251,24 @@ def music_recent(limit: int = 20) -> dict[str, object]:
     return music_recent_payload(_require_user(), get_event_store(), limit)
 
 
+@mcp.tool(name="film.summary")
+def film_summary() -> dict[str, object]:
+    """Resumen de Cine y TV: películas, series, episodios y horas vistas."""
+    return film_summary_payload(_require_user(), get_film_store())
+
+
+@mcp.tool(name="film.top_movies")
+def film_top_movies(limit: int = 10) -> dict[str, object]:
+    """Películas más vistas por número de reproducciones."""
+    return film_top_movies_payload(_require_user(), get_film_store(), limit)
+
+
+@mcp.tool(name="film.recent")
+def film_recent(limit: int = 10) -> dict[str, object]:
+    """Películas y series vistas más recientemente."""
+    return film_recent_payload(_require_user(), get_film_store(), limit)
+
+
 @mcp.resource("ethos://games/summary")
 def games_summary_resource() -> dict[str, object]:
     """Resource con el resumen de Juegos (misma información que la tool)."""
@@ -216,3 +279,9 @@ def games_summary_resource() -> dict[str, object]:
 def music_summary_resource() -> dict[str, object]:
     """Resource con el resumen de Música (misma información que la tool)."""
     return music_summary_payload(_require_user(), get_event_store())
+
+
+@mcp.resource("ethos://film/summary")
+def film_summary_resource() -> dict[str, object]:
+    """Resource con el resumen de Cine y TV (misma información que la tool)."""
+    return film_summary_payload(_require_user(), get_film_store())

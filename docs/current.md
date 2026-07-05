@@ -20,15 +20,16 @@ https://ethos-steel.vercel.app
 
 ## Activo
 
-**Fase 2 cerrada / arranque de Fase 3.** Música/ListenBrainz completa en código:
-backend (conector por username D37, eventos con timestamp D38, resumen por
-ventana D39, refresco incremental D40, tools MCP `music.*`) y web (detalle
-propio con alta por username, panorama e Inicio, Fuentes y playground de
-Conectar IA). Fase 1 (Juegos/Steam) sigue completa en código. Pendiente del
-usuario antes de dar por vivas ambas fases: poblar env vars en Vercel, aplicar
-las migraciones 0003 y 0004 en Supabase, y verificar los flujos reales
-(conectar Steam/ListenBrainz, ver datos, generar token MCP) — ver
-`por-revisar.md`. Fase 3 arranca con Cine y TV (Trakt) sobre los mismos puertos.
+**Fase 3 en curso · Cine y TV (Trakt), backend completo.** Tercera categoría
+sobre los puertos existentes: conector de Trakt por username público + client_id
+del servidor (D41), modelo item reutilizando `user_items`/`source_state` sin
+migración (D42), resumen (películas/series/episodios/horas, tops y recientes),
+contexto `film.context.json` y tools MCP `film.*` (D43), refresco completo con
+perfil privado → `private` (D44). Falta el cableado web (Cine y TV activa),
+siguiente chunk. Fases 1 (Juegos) y 2 (Música) completas en código. Pendiente
+del usuario: registrar la app de Trakt y poblar `TRAKT_CLIENT_ID` en Render,
+además de lo ya anotado (env vars de Vercel, migraciones 0003/0004,
+verificación en producción) — ver `por-revisar.md`.
 
 Fase 0 completa (2026-07-02): Supabase real con migraciones aplicadas,
 servicio en Render (blueprint `render.yaml`), web en Vercel, keep-alive de
@@ -43,6 +44,25 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-05 (Fase 3: backend de Cine y TV / Trakt)
+
+- Tercera categoría sobre los puertos existentes (D41-D44). Cliente de Trakt
+  (`connectors/trakt/client.py`: `client_id` en header `trakt-api-key`, sin
+  OAuth, throttle, httpx inyectable; `TraktApiError` con `status_code`) y
+  conector que normaliza películas y series vistas a `NormalizedItem`
+  (status=consumed, plays, last_watched_at, episodes_watched) y extrae los
+  agregados de `/stats` (`TraktStats`). Slice `film/`: store item tras puerto
+  (memoria + `SupabaseFilmStore` sobre `user_items`/`source_state`,
+  `category=film`, stats en `provider_profile`, **sin migración**), resumen
+  (películas/series/episodios vistos, horas totales, top películas por plays,
+  top series por episodios, vistos recientes) y refresco completo por pasada
+  (perfil privado/usuario inexistente → `private`). Endpoints `POST
+  /sources/trakt[/refresh]`, `GET /sources/film`, `GET /context/film`. MCP:
+  tools `film.summary`, `film.top_movies`, `film.recent` + resource. Trakt
+  registrado en el registry; `trakt_client_id` en config. 21 tests nuevos;
+  ruff, mypy y pytest (127, cobertura 93%) en verde. Falta el cableado web
+  (Cine y TV activa) y registrar la app de Trakt con `TRAKT_CLIENT_ID`.
 
 ### 2026-07-04 (Fase 2: cableado web de Música — cierre de la fase)
 

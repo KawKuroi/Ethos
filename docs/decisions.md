@@ -121,3 +121,15 @@ Cada listen guarda artista + track (+ release cuando exista). El resumen (`build
 
 ## D40 — Refresco incremental de Música (cierra D17)
 El refresco trae solo los listens posteriores al último `occurred_at` guardado (`min_ts` de ListenBrainz) y los añade; la llave de cambio es el timestamp del último listen. Una pasada por refresco en v1 (el histórico profundo se rellena en refrescos sucesivos). Resuelve el pendiente D17 para fuentes de evento. Decisión delegada. Estado: firme.
+
+## D41 — Conexión de Cine y TV: Trakt por username público
+La fuente de Cine y TV se lee de Trakt por el username público del usuario (`GET /users/{u}/watched/movies|shows` y `/stats`); solo requiere el `client_id` de la app en el header `trakt-api-key` (sin OAuth). El username se guarda como credencial cifrada del proveedor `trakt` (categoría film), como el de ListenBrainz (D37). Decisión delegada por el usuario (2026-07-05). Estado: firme.
+
+## D42 — Cine y TV con modelo item (reutiliza el esquema de Juegos)
+Películas y series se normalizan como `NormalizedItem` ("obra + relación": `status=consumed`, `plays`, `last_watched_at`, `episodes_watched`), no como eventos. Reutiliza `user_items` y `source_state` con `category=film` — sin migración nueva. Los agregados de `/users/{u}/stats` (minutos y conteos totales) se guardan en `provider_profile` (como el perfil de Steam, D35) y alimentan los totales del resumen. Decisión delegada. Estado: firme.
+
+## D43 — Resumen, contexto y tools de Cine y TV
+`FilmSummary` = películas / series / episodios vistos, horas totales (de `/stats`), top películas por reproducciones, top series por episodios y vistos recientes por `last_watched_at`. Contexto `film.context.json` con la misma información. Tools del MCP: `film.summary`, `film.top_movies`, `film.recent` (+ resource `ethos://film/summary`). Decisión delegada. Estado: firme.
+
+## D44 — Refresco completo de Cine y TV
+Trakt entrega lo visto ya agregado (no como historial de eventos), así que el refresco reemplaza el conjunto completo por pasada (`replace_items` idempotente, como Juegos), no incremental. El detalle fino por `/history` se difiere. Un perfil privado o usuario inexistente (401/403/404) deja estado `private` con guía para la web; otros errores, `error`. Decisión delegada. Estado: firme.
