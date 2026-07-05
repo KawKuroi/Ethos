@@ -133,3 +133,18 @@ Películas y series se normalizan como `NormalizedItem` ("obra + relación": `st
 
 ## D44 — Refresco completo de Cine y TV
 Trakt entrega lo visto ya agregado (no como historial de eventos), así que el refresco reemplaza el conjunto completo por pasada (`replace_items` idempotente, como Juegos), no incremental. El detalle fino por `/history` se difiere. Un perfil privado o usuario inexistente (401/403/404) deja estado `private` con guía para la web; otros errores, `error`. Decisión delegada. Estado: firme.
+
+## D45 — Conexión de Anime y manga: AniList por username público
+La fuente de Anime y manga se lee de AniList por el username del usuario vía GraphQL (`graphql.anilist.co`, `MediaListCollection` de ANIME y MANGA en una sola consulta), sin key ni OAuth. El username se guarda como credencial cifrada del proveedor `anilist` (categoría anime), como D37/D41. Usuario inexistente o listas privadas (404, incluso embebido en errores GraphQL con HTTP 200) → estado `private` con guía. Decisión delegada por el usuario (2026-07-05). Estado: firme.
+
+## D46 — Modelo y resumen de Anime y manga
+Animes y mangas son `NormalizedItem` con `media_type` en `extra` y dedupe por id de AniList (las listas personalizadas repiten obras). Status de AniList → vocabulario común: COMPLETED→consumed; CURRENT/REPEATING/PAUSED→in_progress; PLANNING→wishlist; DROPPED→abandoned. Score pedido en formato POINT_100 (0 = sin puntuar → None). `engagement` = progreso (episodios o capítulos) + repeticiones. Reutiliza `user_items`/`source_state` con `category=anime` — sin migración. Resumen: animes vistos, mangas leídos, episodios, capítulos, nota media, top por nota y "en curso" por última actualización. Tools `anime.summary`, `anime.top_rated`, `anime.current` + resource. Refresco completo por pasada (como D44). Decisión delegada. Estado: firme.
+
+## D47 — Libros por import de Goodreads (primer modo import)
+Goodreads no tiene API pública: el usuario sube su export CSV (My Books → Import and export). El archivo viaja como texto (`text/csv`) a `POST /sources/goodreads/import`; el conector (`ingest_mode=import`) parsea con la stdlib (csv) — Polars queda para el primer import realmente grande — y normaliza: shelf exclusivo → status (read→consumed, currently-reading→in_progress, to-read→wishlist, otro→in_library), rating 0-5 → 0-100 (0 = sin puntuar), páginas/fechas/autor/review, ISBN limpiado del formato fórmula. Cada subida reemplaza el conjunto (el "refresco" de un import es re-subir). Las rutas de import (`/imports`, `/sources/*/import`) tienen límite de cuerpo propio (`max_import_bytes`, 5 MB) sin aflojar el límite general de 64 KB. Decisión delegada. Estado: firme.
+
+## D48 — Resumen, contexto y tools de Libros
+`BooksSummary` = libros leídos, páginas leídas (de los leídos), en curso (títulos y autor), por leer, top autores por libros leídos y lecturas recientes por fecha de término con nota. Contexto `books.context.json` con la misma información. Tools del MCP: `books.summary`, `books.currently_reading`, `books.top_authors` (+ resource `ethos://books/summary`). Decisión delegada. Estado: firme.
+
+## D49 — Import genérico con autodetección de archivo
+`POST /imports` detecta el proveedor por la firma del archivo (cabeceras del CSV; registro de firmas en `imports/detection.py`, v1: Goodreads) y delega en el flujo del proveedor; archivo no reconocido → 422 con guía. La web sube los exports por este endpoint (panel de import compartido con guía por proveedor). Añadir un proveedor de import = registrar su firma + su flujo + su guía. Con la Fase 3, `profile.search` del MCP se generaliza a las categorías de obra (games, film, anime, books). Decisión delegada. Estado: firme.

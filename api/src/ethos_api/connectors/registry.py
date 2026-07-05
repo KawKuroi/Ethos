@@ -9,7 +9,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from ethos_api.connectors.anilist.connector import AniListConnector
 from ethos_api.connectors.base import Connector
+from ethos_api.connectors.goodreads.connector import GoodreadsConnector
 from ethos_api.connectors.listenbrainz.connector import ListenBrainzConnector
 from ethos_api.connectors.steam.connector import SteamConnector
 from ethos_api.connectors.trakt.connector import TraktConnector
@@ -54,3 +56,5 @@ registry = ConnectorRegistry()
 registry.register(SteamConnector)
 registry.register(ListenBrainzConnector)
 registry.register(TraktConnector)
+registry.register(AniListConnector)
+registry.register(GoodreadsConnector)

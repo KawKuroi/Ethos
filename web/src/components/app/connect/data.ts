@@ -137,10 +137,78 @@ export const MCP_QUERIES: McpQuery[] = [
       "]",
     ].join("\n"),
   },
+  {
+    id: "film-top",
+    q: "¿Mis películas más vistas?",
+    tool: "film.top_movies",
+    args: "limit: 3",
+    ctx: "0,3 KB",
+    full: "41 KB",
+    pct: 4,
+    answer:
+      "Tus películas más repetidas son Inception, Interstellar y Arrival. Inception la has visto tres veces.",
+    items: [
+      { label: "Inception", sub: "2010", value: "3 veces", bar: 100 },
+      { label: "Interstellar", sub: "2014", value: "2 veces", bar: 66 },
+      { label: "Arrival", sub: "2016", value: "1 vez", bar: 33 },
+    ],
+    response: [
+      "[",
+      '  { "title": "Inception",    "year": 2010, "plays": 3 },',
+      '  { "title": "Interstellar", "year": 2014, "plays": 2 },',
+      '  { "title": "Arrival",      "year": 2016, "plays": 1 }',
+      "]",
+    ].join("\n"),
+  },
+  {
+    id: "anime-top",
+    q: "¿Mis animes mejor puntuados?",
+    tool: "anime.top_rated",
+    args: "limit: 3",
+    ctx: "0,3 KB",
+    full: "38 KB",
+    pct: 4,
+    answer:
+      "Tus mejor puntuados son Berserk (100), Fullmetal Alchemist: Brotherhood (95) y Shingeki no Kyojin (90).",
+    items: [
+      { label: "Berserk", sub: "manga", value: "100", bar: 100 },
+      { label: "Fullmetal Alchemist: Brotherhood", sub: "anime", value: "95", bar: 95 },
+      { label: "Shingeki no Kyojin", sub: "anime", value: "90", bar: 90 },
+    ],
+    response: [
+      "[",
+      '  { "title": "Berserk",                          "score": 100 },',
+      '  { "title": "Fullmetal Alchemist: Brotherhood", "score": 95 },',
+      '  { "title": "Shingeki no Kyojin",               "score": 90 }',
+      "]",
+    ].join("\n"),
+  },
+  {
+    id: "books-current",
+    q: "¿Qué estoy leyendo?",
+    tool: "books.currently_reading",
+    args: "",
+    ctx: "0,2 KB",
+    full: "33 KB",
+    pct: 3,
+    answer:
+      "Ahora mismo estás con Project Hail Mary, de Andy Weir. Es tu única lectura en curso.",
+    items: [
+      { label: "Project Hail Mary", sub: "Andy Weir", value: "en curso", bar: null },
+    ],
+    response: [
+      "[",
+      '  { "title": "Project Hail Mary", "author": "Andy Weir" }',
+      "]",
+    ].join("\n"),
+  },
 ];
 
 const GAMES_QUERY = MCP_QUERIES.find((q) => q.id === "top") as McpQuery;
 const MUSIC_QUERY = MCP_QUERIES.find((q) => q.id === "music-top") as McpQuery;
+const FILM_QUERY = MCP_QUERIES.find((q) => q.id === "film-top") as McpQuery;
+const ANIME_QUERY = MCP_QUERIES.find((q) => q.id === "anime-top") as McpQuery;
+const BOOKS_QUERY = MCP_QUERIES.find((q) => q.id === "books-current") as McpQuery;
 
 // Respuesta simulada cuando la consulta no encaja con una categoría activa.
 export function missQuery(text: string): McpQuery {
@@ -153,29 +221,32 @@ export function missQuery(text: string): McpQuery {
     full: "84 KB",
     pct: 3,
     answer:
-      "Consulté tu perfil con una tool acotada, pero por ahora solo Juegos y Música están activas. Prueba a preguntar por tus juegos o tu música.",
+      "Consulté tu perfil con una tool acotada, pero no reconocí la consulta. Prueba a preguntar por tus juegos, tu música, tu cine, tu anime o tus libros.",
     items: [],
     response:
-      '{\n  "matched": false,\n  "hint": "activas en la v1: Juegos y Música"\n}',
+      '{\n  "matched": false,\n  "hint": "categorías: games, music, film, anime, books"\n}',
   };
 }
+
+// Palabras clave por categoría para el matching sencillo (sin LLM).
+const KEYWORDS: [McpQuery, string[]][] = [
+  [GAMES_QUERY, ["juego", "games", "steam", "hora"]],
+  [
+    MUSIC_QUERY,
+    ["músic", "music", "artista", "escuch", "canci", "scrobble", "listenbrainz"],
+  ],
+  [FILM_QUERY, ["pel", "serie", "cine", "film", "episodio", "trakt", "vist"]],
+  [ANIME_QUERY, ["anime", "manga", "anilist", "capítulo", "capitulo", "otaku"]],
+  [BOOKS_QUERY, ["libro", "leyendo", "leído", "leido", "autor", "goodreads", "págin", "pagin"]],
+];
 
 // Matching sencillo (sin LLM): enruta la consulta a la categoría activa.
 export function matchQuery(text: string): McpQuery {
   const t = text.toLowerCase();
-  if (t.includes("juego") || t.includes("games") || t.includes("steam") || t.includes("hora")) {
-    return { ...GAMES_QUERY, q: text };
-  }
-  if (
-    t.includes("músic") ||
-    t.includes("music") ||
-    t.includes("artista") ||
-    t.includes("escuch") ||
-    t.includes("canci") ||
-    t.includes("scrobble") ||
-    t.includes("listenbrainz")
-  ) {
-    return { ...MUSIC_QUERY, q: text };
+  for (const [query, keywords] of KEYWORDS) {
+    if (keywords.some((k) => t.includes(k))) {
+      return { ...query, q: text };
+    }
   }
   return missQuery(text);
 }

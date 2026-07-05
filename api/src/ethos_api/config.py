@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 120
     # Tamaño máximo del cuerpo de una petición, en bytes.
     max_body_bytes: int = 64_000
+    # Tamaño máximo para las rutas de import de archivos (`/imports` y
+    # `/sources/*/import`); un export de Goodreads puede superar los 64 KB.
+    max_import_bytes: int = 5_000_000
 
     # Credenciales de servicios externos (vacías por defecto; se inyectan
     # por entorno en cada despliegue).

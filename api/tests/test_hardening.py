@@ -42,6 +42,21 @@ def test_cuerpo_grande_devuelve_413(monkeypatch: pytest.MonkeyPatch) -> None:
     assert respuesta.status_code == 413
 
 
+def test_ruta_de_import_admite_cuerpos_mayores(monkeypatch: pytest.MonkeyPatch) -> None:
+    app = _app(monkeypatch, max_body_bytes=100, max_import_bytes=1000)
+    with TestClient(app) as client:
+        # 401 (sin sesión) demuestra que el cuerpo pasó el límite propio (D49).
+        respuesta = client.post("/imports", content=b"x" * 500)
+    assert respuesta.status_code == 401
+
+
+def test_ruta_de_import_tambien_tiene_tope(monkeypatch: pytest.MonkeyPatch) -> None:
+    app = _app(monkeypatch, max_body_bytes=100, max_import_bytes=1000)
+    with TestClient(app) as client:
+        respuesta = client.post("/imports", content=b"x" * 2000)
+    assert respuesta.status_code == 413
+
+
 def test_cors_permite_el_origen_de_la_web(monkeypatch: pytest.MonkeyPatch) -> None:
     app = _app(monkeypatch, allowed_origins="https://ethos-steel.vercel.app")
     with TestClient(app) as client:

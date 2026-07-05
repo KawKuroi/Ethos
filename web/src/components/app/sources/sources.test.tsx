@@ -48,12 +48,40 @@ vi.mock("@/lib/use-music-source", () => ({
   }),
 }));
 
+vi.mock("@/lib/use-film-source", () => ({
+  useFilmSource: () => ({
+    loading: false,
+    error: false,
+    reload: () => {},
+    source: { state: "never", synced_at: null, detail: null, summary: null },
+  }),
+}));
+
+vi.mock("@/lib/use-anime-source", () => ({
+  useAnimeSource: () => ({
+    loading: false,
+    error: false,
+    reload: () => {},
+    source: { state: "never", synced_at: null, detail: null, summary: null },
+  }),
+}));
+
+vi.mock("@/lib/use-books-source", () => ({
+  useBooksSource: () => ({
+    loading: false,
+    error: false,
+    reload: () => {},
+    source: { state: "never", synced_at: null, detail: null, summary: null },
+  }),
+}));
+
 describe("Sources", () => {
   it("muestra el resumen y los grupos", () => {
     render(<Sources />);
     expect(screen.getByText("activas")).toBeInTheDocument();
-    expect(screen.getByText("en desarrollo")).toBeInTheDocument();
+    expect(screen.getByText("apagadas")).toBeInTheDocument();
     expect(screen.getByText("Activas")).toBeInTheDocument();
+    expect(screen.getByText(/apagadas · sin empezar/i)).toBeInTheDocument();
   });
 
   it("lista Juegos y Música en Activas con enlace al detalle", () => {
@@ -68,12 +96,22 @@ describe("Sources", () => {
     );
   });
 
-  it("lista las tres categorías en desarrollo", () => {
+  it("lista las categorías sin datos como apagadas, con CTA de empezar", () => {
     render(<Sources />);
-    for (const name of ["Cine y TV", "Anime y manga", "Libros"]) {
+    for (const [name, slug] of [
+      ["Cine y TV", "film"],
+      ["Anime y manga", "anime"],
+      ["Libros", "books"],
+    ]) {
       expect(
         screen.getByRole("link", { name: new RegExp(name, "i") }),
-      ).toBeInTheDocument();
+      ).toHaveAttribute("href", `/app/categoria/${slug}`);
     }
+    expect(screen.getAllByText("Empezar →")).toHaveLength(3);
+  });
+
+  it("cuenta el import de Goodreads como método de Libros", () => {
+    render(<Sources />);
+    expect(screen.getByText(/goodreads · import/i)).toBeInTheDocument();
   });
 });

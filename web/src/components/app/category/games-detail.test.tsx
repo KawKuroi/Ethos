@@ -19,8 +19,8 @@ vi.mock("@/lib/use-games-source", () => ({
 }));
 
 vi.mock("@/lib/api", () => ({
-  getGamesContextText: () => Promise.resolve("{}"),
-  downloadGamesContext: () => Promise.resolve(),
+  getContextText: () => Promise.resolve("{}"),
+  downloadContext: () => Promise.resolve(),
   refreshSteam: () => Promise.resolve(),
   getSteamLoginUrl: () => Promise.resolve("https://steamcommunity.com/openid/login"),
 }));

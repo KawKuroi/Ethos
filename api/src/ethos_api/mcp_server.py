@@ -18,6 +18,14 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 from fastmcp.server.dependencies import get_http_headers
 
+from ethos_api.anime.context import build_anime_context
+from ethos_api.anime.deps import get_anime_store
+from ethos_api.anime.store import AnimeStore
+from ethos_api.anime.summary import build_anime_summary
+from ethos_api.books.context import build_books_context
+from ethos_api.books.deps import get_books_store
+from ethos_api.books.store import BooksStore
+from ethos_api.books.summary import build_books_summary
 from ethos_api.film.context import build_film_context
 from ethos_api.film.deps import get_film_store
 from ethos_api.film.store import FilmStore
@@ -30,7 +38,7 @@ from ethos_api.mcp_auth import get_mcp_token_store, user_from_authorization
 from ethos_api.music.deps import get_event_store
 from ethos_api.music.store import EventStore
 from ethos_api.music.summary import build_music_summary
-from ethos_api.schema import ItemStatus
+from ethos_api.schema import NormalizedItem
 
 mcp: FastMCP = FastMCP(name="Ethos")
 
@@ -104,25 +112,48 @@ def games_recent_payload(user_id: str, store: GamesStore) -> dict[str, object]:
     return _served(payload, _games_context_kb(user_id, store))
 
 
-def profile_search_payload(user_id: str, store: GamesStore, query: str) -> dict[str, object]:
-    """Búsqueda global sobre el perfil (v1: solo Juegos está activa)."""
+def _search_result(item: NormalizedItem) -> dict[str, object]:
+    result: dict[str, object] = {
+        "category": item.category.value,
+        "title": item.work.title,
+        "status": item.status.value,
+    }
+    minutes = item.engagement.get("playtime_minutes", 0)
+    if minutes:
+        result["hours"] = round(minutes / 60, 1)
+    return result
+
+
+def profile_search_payload(
+    user_id: str,
+    games: GamesStore,
+    film: FilmStore,
+    anime: AnimeStore,
+    books: BooksStore,
+    query: str,
+) -> dict[str, object]:
+    """Búsqueda por título sobre las categorías de obra del perfil."""
     needle = query.strip().lower()
-    matches = [
-        {
-            "category": item.category.value,
-            "title": item.work.title,
-            "status": item.status.value,
-            "hours": round(item.engagement.get("playtime_minutes", 0) / 60, 1),
-        }
-        for item in store.items_for_user(user_id)
-        if item.status is ItemStatus.in_library
-        and needle
-        and needle in item.work.title.lower()
-    ]
+    matches: list[dict[str, object]] = []
+    stores = (games, film, anime, books)
+    for store in stores:
+        for item in store.items_for_user(user_id):
+            if needle and needle in item.work.title.lower():
+                matches.append(_search_result(item))
     payload: dict[str, object] = {"matched": bool(matches), "results": matches[:10]}
     if not matches:
-        payload["hint"] = "solo Juegos está activa en la v1"
-    return _served(payload, _games_context_kb(user_id, store))
+        payload["hint"] = (
+            "busca por título entre Juegos, Cine y TV, Anime y manga y Libros; "
+            "Música se consulta con music.*"
+        )
+    kb_total = round(
+        _games_context_kb(user_id, games)
+        + _film_context_kb(user_id, film)
+        + _anime_context_kb(user_id, anime)
+        + _books_context_kb(user_id, books),
+        1,
+    )
+    return _served(payload, kb_total)
 
 
 def _music_context_kb(user_id: str, store: EventStore) -> float:
@@ -203,6 +234,76 @@ def film_recent_payload(user_id: str, store: FilmStore, limit: int) -> dict[str,
     return _served(payload, _film_context_kb(user_id, store))
 
 
+def _anime_context_kb(user_id: str, store: AnimeStore) -> float:
+    """Tamaño del contexto completo de Anime, referencia de la métrica D28."""
+    summary = build_anime_summary(store.items_for_user(user_id))
+    return _kb(build_anime_context(summary))
+
+
+def anime_summary_payload(user_id: str, store: AnimeStore) -> dict[str, object]:
+    summary = build_anime_summary(
+        store.items_for_user(user_id),
+        synced_at=store.status_for_user(user_id).synced_at,
+    )
+    return _served(summary.model_dump(mode="json"), _anime_context_kb(user_id, store))
+
+
+def anime_top_rated_payload(
+    user_id: str, store: AnimeStore, limit: int
+) -> dict[str, object]:
+    summary = build_anime_summary(store.items_for_user(user_id), top_limit=limit)
+    payload: dict[str, object] = {
+        "top_rated": [t.model_dump(mode="json") for t in summary.top_rated]
+    }
+    return _served(payload, _anime_context_kb(user_id, store))
+
+
+def anime_current_payload(
+    user_id: str, store: AnimeStore, limit: int
+) -> dict[str, object]:
+    summary = build_anime_summary(store.items_for_user(user_id), top_limit=limit)
+    payload: dict[str, object] = {
+        "current": [c.model_dump(mode="json") for c in summary.current]
+    }
+    return _served(payload, _anime_context_kb(user_id, store))
+
+
+def _books_context_kb(user_id: str, store: BooksStore) -> float:
+    """Tamaño del contexto completo de Libros, referencia de la métrica D28."""
+    summary = build_books_summary(store.items_for_user(user_id))
+    return _kb(build_books_context(summary))
+
+
+def books_summary_payload(user_id: str, store: BooksStore) -> dict[str, object]:
+    summary = build_books_summary(
+        store.items_for_user(user_id),
+        synced_at=store.status_for_user(user_id).synced_at,
+    )
+    return _served(summary.model_dump(mode="json"), _books_context_kb(user_id, store))
+
+
+def books_currently_reading_payload(
+    user_id: str, store: BooksStore
+) -> dict[str, object]:
+    summary = build_books_summary(store.items_for_user(user_id))
+    payload: dict[str, object] = {
+        "currently_reading": [
+            c.model_dump(mode="json") for c in summary.currently_reading
+        ]
+    }
+    return _served(payload, _books_context_kb(user_id, store))
+
+
+def books_top_authors_payload(
+    user_id: str, store: BooksStore, limit: int
+) -> dict[str, object]:
+    summary = build_books_summary(store.items_for_user(user_id), top_limit=limit)
+    payload: dict[str, object] = {
+        "top_authors": [a.model_dump(mode="json") for a in summary.top_authors]
+    }
+    return _served(payload, _books_context_kb(user_id, store))
+
+
 @mcp.tool
 def ping() -> str:
     """Tool de prueba para verificar la conexión con el servidor MCP."""
@@ -229,8 +330,15 @@ def games_recent() -> dict[str, object]:
 
 @mcp.tool(name="profile.search")
 def profile_search(query: str) -> dict[str, object]:
-    """Busca una obra en el perfil completo (v1: categoría Juegos)."""
-    return profile_search_payload(_require_user(), get_games_store(), query)
+    """Busca una obra por título en el perfil (Juegos, Cine y TV, Anime, Libros)."""
+    return profile_search_payload(
+        _require_user(),
+        get_games_store(),
+        get_film_store(),
+        get_anime_store(),
+        get_books_store(),
+        query,
+    )
 
 
 @mcp.tool(name="music.summary")
@@ -269,6 +377,42 @@ def film_recent(limit: int = 10) -> dict[str, object]:
     return film_recent_payload(_require_user(), get_film_store(), limit)
 
 
+@mcp.tool(name="anime.summary")
+def anime_summary() -> dict[str, object]:
+    """Resumen de Anime y manga: vistos, leídos, episodios, capítulos y nota media."""
+    return anime_summary_payload(_require_user(), get_anime_store())
+
+
+@mcp.tool(name="anime.top_rated")
+def anime_top_rated(limit: int = 10) -> dict[str, object]:
+    """Animes y mangas mejor puntuados por el usuario (nota 0-100)."""
+    return anime_top_rated_payload(_require_user(), get_anime_store(), limit)
+
+
+@mcp.tool(name="anime.current")
+def anime_current(limit: int = 10) -> dict[str, object]:
+    """Animes y mangas en curso (viéndose o leyéndose), con su progreso."""
+    return anime_current_payload(_require_user(), get_anime_store(), limit)
+
+
+@mcp.tool(name="books.summary")
+def books_summary() -> dict[str, object]:
+    """Resumen de Libros: leídos, páginas, en curso, por leer y top autores."""
+    return books_summary_payload(_require_user(), get_books_store())
+
+
+@mcp.tool(name="books.currently_reading")
+def books_currently_reading() -> dict[str, object]:
+    """Libros en curso de lectura."""
+    return books_currently_reading_payload(_require_user(), get_books_store())
+
+
+@mcp.tool(name="books.top_authors")
+def books_top_authors(limit: int = 10) -> dict[str, object]:
+    """Autores con más libros leídos."""
+    return books_top_authors_payload(_require_user(), get_books_store(), limit)
+
+
 @mcp.resource("ethos://games/summary")
 def games_summary_resource() -> dict[str, object]:
     """Resource con el resumen de Juegos (misma información que la tool)."""
@@ -285,3 +429,15 @@ def music_summary_resource() -> dict[str, object]:
 def film_summary_resource() -> dict[str, object]:
     """Resource con el resumen de Cine y TV (misma información que la tool)."""
     return film_summary_payload(_require_user(), get_film_store())
+
+
+@mcp.resource("ethos://anime/summary")
+def anime_summary_resource() -> dict[str, object]:
+    """Resource con el resumen de Anime y manga (misma información que la tool)."""
+    return anime_summary_payload(_require_user(), get_anime_store())
+
+
+@mcp.resource("ethos://books/summary")
+def books_summary_resource() -> dict[str, object]:
+    """Resource con el resumen de Libros (misma información que la tool)."""
+    return books_summary_payload(_require_user(), get_books_store())

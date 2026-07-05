@@ -48,6 +48,47 @@ vi.mock("@/lib/use-music-source", () => ({
   }),
 }));
 
+vi.mock("@/lib/use-film-source", () => ({
+  useFilmSource: () => ({
+    loading: false,
+    error: false,
+    reload: () => {},
+    source: {
+      state: "fresh",
+      synced_at: "2026-07-05T09:00:00Z",
+      detail: null,
+      summary: {
+        movies_watched: 84,
+        shows_watched: 12,
+        episodes_watched: 410,
+        hours: 512,
+        top_movies: [],
+        top_shows: [],
+        recently_watched: [],
+        last_synced_at: "2026-07-05T09:00:00Z",
+      },
+    },
+  }),
+}));
+
+vi.mock("@/lib/use-anime-source", () => ({
+  useAnimeSource: () => ({
+    loading: false,
+    error: false,
+    reload: () => {},
+    source: { state: "never", synced_at: null, detail: null, summary: null },
+  }),
+}));
+
+vi.mock("@/lib/use-books-source", () => ({
+  useBooksSource: () => ({
+    loading: false,
+    error: false,
+    reload: () => {},
+    source: { state: "never", synced_at: null, detail: null, summary: null },
+  }),
+}));
+
 describe("Overview", () => {
   it("muestra el banner de IA sin conectar", () => {
     render(<Overview />);
@@ -62,14 +103,23 @@ describe("Overview", () => {
     expect(screen.getByText("38%")).toBeInTheDocument();
   });
 
-  it("muestra Juegos y Música activas y categorías en desarrollo en el panorama", () => {
+  it("muestra las fuentes activas y las apagadas en el panorama", () => {
     render(<Overview />);
     expect(screen.getByText("Panorama · por actividad")).toBeInTheDocument();
     expect(screen.getAllByText("horas jugadas").length).toBeGreaterThan(0);
-    expect(screen.getByText("Música")).toBeInTheDocument();
     expect(screen.getAllByText("escuchas").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/en desarrollo · próximamente/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("horas vistas").length).toBeGreaterThan(0);
+    // Anime y Libros aún sin conectar: fila apagada con CTA.
     expect(screen.getByText("Anime y manga")).toBeInTheDocument();
+    expect(screen.getByText("Libros")).toBeInTheDocument();
+    expect(screen.getAllByText(/conéctala →/i)).toHaveLength(2);
+  });
+
+  it("cuenta las fuentes activas en la meta del stat band", () => {
+    render(<Overview />);
+    expect(
+      screen.getByText("3 fuentes activas · Steam · ListenBrainz · Trakt"),
+    ).toBeInTheDocument();
   });
 
   it("muestra la actividad reciente real", () => {

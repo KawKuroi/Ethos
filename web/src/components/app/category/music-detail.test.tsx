@@ -19,8 +19,8 @@ vi.mock("@/lib/use-music-source", () => ({
 }));
 
 vi.mock("@/lib/api", () => ({
-  getMusicContextText: () => Promise.resolve("{}"),
-  downloadMusicContext: () => Promise.resolve(),
+  getContextText: () => Promise.resolve("{}"),
+  downloadContext: () => Promise.resolve(),
   refreshListenBrainz: () => Promise.resolve(),
   connectListenBrainz: () => Promise.resolve(),
 }));

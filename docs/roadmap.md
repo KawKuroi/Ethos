@@ -34,19 +34,6 @@ Web — implementación del diseño (`design.md`, D25/D29):
 - [x] Cableado web ↔ API: Inicio, Fuentes, Detalle de Juegos y Conectar IA leen datos reales con la sesión de Supabase; conexión de Steam por OpenID desde la web.
 - [x] Tests de todas las capas pasando en CI. (api: 86, cobertura 95%; web: 38)
 
-## Fase 3 — Categorías restantes (secuencial, D27)
-
-Una categoría a la vez: construir, probar y confirmar antes de empezar la
-siguiente; al activarse sale de "en desarrollo". Orden tentativo (proveedor
-inicial; alternativas según D4/D6/D27):
-
-- [~] Cine y TV: Trakt (API). Alternativa: Letterboxd (import). — backend
-  completo (conector, resumen, contexto, tools `film.*`, D41-D44); falta el
-  cableado web (siguiente chunk).
-- [ ] Anime y manga: AniList (API).
-- [ ] Libros: Goodreads (import). Alternativas: StoryGraph (import), Hardcover (API).
-- [ ] Modo import genérico con autodetección de archivo y guías por proveedor.
-
 Diferidas fuera del catálogo (D27, revisión 2026-07-03): Lugares (Swarm),
 Comida (Beli) y Juegos de mesa (BoardGameGeek). Se reevaluarán al cerrar las 5.
 Retirada (D31, 2026-07-03): Actividad física — sin fuente viable.
@@ -79,6 +66,26 @@ Retirada (D31, 2026-07-03): Actividad física — sin fuente viable.
 - El ping de keep-alive golpea `/health`, que no toca Supabase: añadir un toque de BD (o cron) para evitar su pausa a los 7 días.
 
 ## Histórico de fases completadas
+
+### Fase 3 — Categorías restantes (cerrada 2026-07-05)
+
+Las cinco categorías del catálogo (D27) quedan activas; ninguna sigue "en
+desarrollo". Secuencial sobre los puertos existentes, sin migraciones:
+
+- [x] Cine y TV: Trakt (API) — backend D41-D44 + cableado web (`FilmDetail`,
+  alta por username, activa en Inicio/Fuentes/playground).
+- [x] Anime y manga: AniList (API, GraphQL público sin key, D45-D46) —
+  conector con dedupe de listas personalizadas, slice `anime/`, tools
+  `anime.*` y web completa.
+- [x] Libros: Goodreads (import CSV, D47-D48) — conector de parseo, slice
+  `books/`, tools `books.*` y web con panel de import + guía.
+- [x] Modo import genérico con autodetección de archivo (D49): `POST /imports`
+  detecta el proveedor por firma de cabeceras y delega; límite de cuerpo
+  propio para rutas de import; guías por proveedor en la web.
+
+Además: `profile.search` generalizado a las categorías de obra, y
+generalización web (tarjetas/filas por descriptor, modal de contexto y form
+de username compartidos). api 168 tests (93.2%), web 55 tests, build verde.
 
 ### Fase 2 — Música / ListenBrainz (cerrada 2026-07-04)
 

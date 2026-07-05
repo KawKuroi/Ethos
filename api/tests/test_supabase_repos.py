@@ -236,6 +236,41 @@ def test_film_store_stats_roundtrip() -> None:
     assert stats.episodes_watched == 5
 
 
+def test_anime_store_reemplaza_y_lee_items() -> None:
+    from ethos_api.anime.store import SupabaseAnimeStore
+
+    item = NormalizedItem(
+        work=Work(title="Berserk", external_ids={"anilist": "30013"}),
+        category=Category.anime,
+        status=ItemStatus.consumed,
+        engagement={"chapters_read": 205},
+        source="anilist",
+    )
+    fake = FakePostgrest({"user_items": [{"payload": item.model_dump(mode="json")}]})
+    store = SupabaseAnimeStore(_rest(fake))
+
+    store.replace_items("user-1", [item])
+    assert fake.requests[0].method == "DELETE"
+    assert "category=eq.anime" in str(fake.requests[0].url)
+    insert = fake.requests[1].read().decode()
+    assert '"external_id": "30013"' in insert or '"external_id":"30013"' in insert
+
+    items = store.items_for_user("user-1")
+    assert items[0].work.title == "Berserk"
+
+
+def test_books_store_estado_con_modo_import() -> None:
+    from ethos_api.books.store import SupabaseBooksStore
+
+    fake = FakePostgrest()
+    store = SupabaseBooksStore(_rest(fake))
+    store.set_status("user-1", SourceStatus(state=SyncState.fresh))
+    cuerpo = fake.requests[0].read().decode()
+    assert '"goodreads"' in cuerpo
+    assert '"import"' in cuerpo
+    assert "category=eq.books" not in str(fake.requests[0].url)  # upsert, no select
+
+
 def test_mcp_tokens_emision_y_resolucion() -> None:
     fake = FakePostgrest({"mcp_tokens": [{"user_id": "user-1"}]})
     store = SupabaseMcpTokenStore(_rest(fake))

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+from ethos_api.connectors.anilist.connector import AniListConnector
+from ethos_api.connectors.goodreads.connector import GoodreadsConnector
 from ethos_api.connectors.listenbrainz.connector import ListenBrainzConnector
 from ethos_api.connectors.registry import ConnectorRegistry, registry
 from ethos_api.connectors.steam.connector import SteamConnector
@@ -26,14 +28,18 @@ def test_registro_por_defecto_resuelve_conectores() -> None:
     assert registry.get(Category.games, "steam") is SteamConnector
     assert registry.get(Category.music, "listenbrainz") is ListenBrainzConnector
     assert registry.get(Category.film, "trakt") is TraktConnector
+    assert registry.get(Category.anime, "anilist") is AniListConnector
+    assert registry.get(Category.books, "goodreads") is GoodreadsConnector
     assert registry.providers(Category.games) == ["steam"]
     assert registry.providers(Category.music) == ["listenbrainz"]
     assert registry.providers(Category.film) == ["trakt"]
+    assert registry.providers(Category.anime) == ["anilist"]
+    assert registry.providers(Category.books) == ["goodreads"]
 
 
 def test_get_inexistente_lanza_lookup_error() -> None:
     with pytest.raises(LookupError):
-        registry.get(Category.anime, "anilist")
+        registry.get(Category.anime, "kitsu")
 
 
 def test_registro_duplicado_lanza_value_error() -> None:
@@ -43,5 +49,7 @@ def test_registro_duplicado_lanza_value_error() -> None:
         limpio.register(SteamConnector)
 
 
-def test_providers_de_categoria_sin_conectores() -> None:
-    assert registry.providers(Category.books) == []
+def test_todas_las_categorias_tienen_conector() -> None:
+    # Con la Fase 3 completa, ninguna categoría del catálogo queda sin proveedor.
+    for category in Category:
+        assert registry.providers(category), category.value

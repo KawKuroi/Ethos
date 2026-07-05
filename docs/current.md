@@ -7,29 +7,25 @@ estamos y lo actualiza al cerrar cada tarea (entrada con fecha `AAAA-MM-DD`).
 
 Fase 0 cerrada: infraestructura viva en producción (Render + Vercel +
 Supabase + keep-alive). El diseño de la interfaz (Claude Design) está
-terminado y es la fuente de verdad de la UI (D25, `design.md`). **Fases 1 y 2
-completas a nivel de código**: Juegos/Steam y Música/ListenBrainz de punta a
-punta (backend, persistencia Supabase, pantallas del diseño y cableado web↔API,
-tools MCP por categoría). Pendiente de la activación en producción por el
-usuario (env vars, migraciones 0003/0004 y verificación visual, ver
-`por-revisar.md`). Siguiente: Fase 3 (Cine y TV / Trakt, primera de las
-categorías restantes).
+terminado y es la fuente de verdad de la UI (D25, `design.md`). **Fases 1, 2
+y 3 completas a nivel de código**: las cinco categorías del catálogo (Juegos,
+Música, Cine y TV, Anime y manga y Libros) de punta a punta — backend,
+persistencia Supabase sin migraciones nuevas, pantallas del diseño, cableado
+web↔API, tools MCP por namespace y modo import genérico con autodetección
+(D49). Pendiente de la activación en producción por el usuario (env vars,
+migraciones 0003/0004, `TRAKT_CLIENT_ID` y verificación visual, ver
+`por-revisar.md`). Siguiente: Fase 4 (pulido y robustez).
 
 URLs de producción: API+MCP https://ethos-api-s10w.onrender.com · web
 https://ethos-steel.vercel.app
 
 ## Activo
 
-**Fase 3 en curso · Cine y TV (Trakt), backend completo.** Tercera categoría
-sobre los puertos existentes: conector de Trakt por username público + client_id
-del servidor (D41), modelo item reutilizando `user_items`/`source_state` sin
-migración (D42), resumen (películas/series/episodios/horas, tops y recientes),
-contexto `film.context.json` y tools MCP `film.*` (D43), refresco completo con
-perfil privado → `private` (D44). Falta el cableado web (Cine y TV activa),
-siguiente chunk. Fases 1 (Juegos) y 2 (Música) completas en código. Pendiente
-del usuario: registrar la app de Trakt y poblar `TRAKT_CLIENT_ID` en Render,
-además de lo ya anotado (env vars de Vercel, migraciones 0003/0004,
-verificación en producción) — ver `por-revisar.md`.
+**Fase 3 cerrada (2026-07-05); siguiente: Fase 4 — pulido y robustez.** El
+catálogo completo está activo; no queda ninguna categoría "en desarrollo".
+Pendiente del usuario para producción: `TRAKT_CLIENT_ID` en Render (AniList y
+Goodreads no requieren keys), migraciones 0003/0004, env vars de Vercel y la
+verificación e2e de las cinco categorías — ver `por-revisar.md`.
 
 Fase 0 completa (2026-07-02): Supabase real con migraciones aplicadas,
 servicio en Render (blueprint `render.yaml`), web en Vercel, keep-alive de
@@ -44,6 +40,31 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-05 (Fase 3 cerrada: Cine/TV web + AniList + Goodreads + import genérico)
+
+- Cierre de la Fase 3 en una sola tarea, con revisión previa del código de
+  Fases 0-3 (sin bugs activos; hallazgos = duplicación web y `profile.search`
+  desactualizado, corregidos aquí). Backend: conector de AniList (GraphQL
+  público por username, sin key, D45; dedupe de listas personalizadas, score
+  POINT_100, status→vocabulario común, D46) con slice `anime/` completo;
+  conector de Goodreads (parseo del export CSV con stdlib, shelf→status,
+  ISBN limpio, D47) con slice `books/` e import síncrono que reemplaza por
+  subida; import genérico `POST /imports` con autodetección por firma de
+  cabeceras y 422 con guía (D49); límite de cuerpo propio para rutas de
+  import (`max_import_bytes`, 5 MB) sin aflojar el general; tools MCP
+  `anime.*` y `books.*` + resources; `profile.search` generalizado a las
+  categorías de obra con métrica de KB agregada. Web: `FilmDetail`,
+  `AnimeDetail` y `BooksDetail` con datos reales; form de username y modal
+  de contexto compartidos (`connect-username.tsx`, `context-modal.tsx`);
+  `lib/api.ts` con operaciones de las tres categorías, contexto genérico por
+  slug y errores con `detail` legible; Inicio y Fuentes generalizados por
+  descriptor (`use-active-sources.ts`: una fila/tarjeta única por estado, 5
+  fuentes); panel de import con guía de Goodreads; playground con consultas
+  de las cinco categorías y enrutado actualizado. api: ruff/mypy/pytest 168
+  (cobertura 93.2%); web: tsc/eslint/vitest 55 y build (5 rutas de categoría
+  prerenderizadas) en verde. **Fase 3 cerrada**; pendiente del usuario:
+  `TRAKT_CLIENT_ID` y verificación e2e en producción.
 
 ### 2026-07-05 (Fase 3: backend de Cine y TV / Trakt)
 

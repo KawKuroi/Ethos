@@ -26,15 +26,35 @@ Marca `[x]` conforme lo revises.
   sigue mostrando cifras de Juegos (su meta ya cuenta las fuentes activas); si
   quieres que mezcle métricas de música, dilo y lo ajustamos.
 
-## Fase 3 · Cine y TV / Trakt (backend listo; falta cableado web)
+## Fase 3 · Cine y TV / Trakt
 
 - [ ] **Registrar la app de Trakt y poblar `TRAKT_CLIENT_ID`** — crea una API
   app en Trakt (Settings → Your API Apps), copia su **Client ID** y ponlo en
   Render como `TRAKT_CLIENT_ID`. Sin esa key el conector no puede leer datos.
   El perfil de Trakt que conectes debe ser **público** (si no, el estado sale
-  `private`). La web de Cine y TV (activarla en Fuentes/Inicio) llega en el
-  siguiente chunk; por ahora se prueba por API/MCP (`film.summary`,
-  `GET /context/film`).
+  `private`).
+- [ ] **Prueba end-to-end de Cine y TV** — en Fuentes o el Detalle de Cine y
+  TV, conecta tu usuario de Trakt, espera el refresco y revisa horas, tops y
+  vistos recientes; prueba `film.top_movies` por MCP y descarga
+  `film.context.json`.
+
+## Fase 3 · Anime y manga / AniList (sin keys que configurar)
+
+- [ ] **Prueba end-to-end de Anime** — AniList no requiere key ni OAuth: en el
+  Detalle de Anime y manga escribe tu usuario de AniList (listas públicas),
+  espera el refresco y revisa episodios, nota media, mejor puntuados y en
+  curso; prueba `anime.top_rated` por MCP y descarga `anime.context.json`.
+
+## Fase 3 · Libros / Goodreads (import)
+
+- [ ] **Prueba end-to-end de Libros** — exporta tu biblioteca de Goodreads
+  (My Books → Import and export → Export Library), súbela en el Detalle de
+  Libros y revisa leídos, páginas, leyendo ahora y autores; prueba
+  `books.currently_reading` por MCP y descarga `books.context.json`. Un
+  archivo que no sea el export debe rechazarse con guía (422).
+- [ ] Nota: con las cinco categorías activas, Fuentes ya no muestra el grupo
+  "En desarrollo" y el panorama de Inicio enseña las cinco filas (activas o
+  apagadas). Confirma que te cuadra visualmente en producción.
 
 - [ ] **OAuth Google y GitHub en Supabase** — habilitar ambos proveedores
   (Authentication → Providers), con client id/secret y la redirect URL

@@ -6,10 +6,13 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from ethos_api.anime.router import router as anime_router
+from ethos_api.books.router import router as books_router
 from ethos_api.config import settings
 from ethos_api.credentials.router import router as credentials_router
 from ethos_api.film.router import router as film_router
 from ethos_api.games.router import router as games_router
+from ethos_api.imports.router import router as imports_router
 from ethos_api.mcp_auth import router as mcp_token_router
 from ethos_api.mcp_server import mcp
 from ethos_api.middleware import (
@@ -53,6 +56,9 @@ def create_app() -> FastAPI:
     app.include_router(games_router)
     app.include_router(music_router)
     app.include_router(film_router)
+    app.include_router(anime_router)
+    app.include_router(books_router)
+    app.include_router(imports_router)
     app.include_router(mcp_token_router)
 
     @app.get("/health")
@@ -66,7 +72,11 @@ def create_app() -> FastAPI:
     app.add_middleware(
         RateLimitMiddleware, limit_per_minute=settings.rate_limit_per_minute
     )
-    app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)
+    app.add_middleware(
+        BodySizeLimitMiddleware,
+        max_bytes=settings.max_body_bytes,
+        import_max_bytes=settings.max_import_bytes,
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_split_csv(settings.allowed_origins),

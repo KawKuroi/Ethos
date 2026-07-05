@@ -78,28 +78,6 @@ const GAMES: CategoryDetailData = {
   ctxKb: "84 KB",
 };
 
-function soon(
-  slug: string,
-  name: string,
-  accent: string,
-  provider: string,
-  ns: string,
-  blurb: string,
-  note: string,
-): CategoryDetailData {
-  return {
-    slug,
-    name,
-    accent,
-    provider,
-    ns,
-    blurb,
-    state: "soon",
-    soonNote: note,
-    soonEta: "Próximamente",
-  };
-}
-
 const MUSIC: CategoryDetailData = {
   slug: "music",
   name: "Música",
@@ -110,36 +88,44 @@ const MUSIC: CategoryDetailData = {
   blurb: "Scrobbles, artistas y canciones más escuchadas por periodo.",
 };
 
+const FILM: CategoryDetailData = {
+  slug: "film",
+  name: "Cine y TV",
+  accent: "#8b5cf6",
+  provider: "Trakt",
+  ns: "film.*",
+  state: "live",
+  blurb: "Películas, series, episodios y tiempo total visto.",
+};
+
+const ANIME: CategoryDetailData = {
+  slug: "anime",
+  name: "Anime y manga",
+  accent: "#e0883c",
+  provider: "AniList",
+  ns: "anime.*",
+  state: "live",
+  blurb: "Series vistas, capítulos de manga leídos y títulos en curso.",
+};
+
+const BOOKS: CategoryDetailData = {
+  slug: "books",
+  name: "Libros",
+  accent: "#2f9e6b",
+  provider: "Goodreads",
+  ns: "books.*",
+  state: "live",
+  blurb: "Leídos, páginas, lecturas en curso y autores más leídos.",
+};
+
+// Con la Fase 3 completa las cinco categorías del catálogo están activas;
+// no queda ninguna "en desarrollo" (el estado sigue soportado para futuras).
 export const CATEGORY_DETAIL: Record<string, CategoryDetailData> = {
   games: GAMES,
   music: MUSIC,
-  film: soon(
-    "film",
-    "Cine y TV",
-    "#8b5cf6",
-    "Trakt",
-    "film.*",
-    "Películas, series, episodios y tiempo total visto.",
-    "Estamos preparando el conector de Trakt.",
-  ),
-  anime: soon(
-    "anime",
-    "Anime y manga",
-    "#e0883c",
-    "AniList",
-    "anime.*",
-    "Series vistas, capítulos de manga leídos y títulos en curso.",
-    "Estamos preparando el conector de AniList.",
-  ),
-  books: soon(
-    "books",
-    "Libros",
-    "#2f9e6b",
-    "Goodreads",
-    "books.*",
-    "Leídos, páginas, lecturas en curso y autores más leídos.",
-    "Estamos preparando el import de Goodreads.",
-  ),
+  film: FILM,
+  anime: ANIME,
+  books: BOOKS,
 };
 
 export function categoryBySlug(slug: string): CategoryDetailData | undefined {

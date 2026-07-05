@@ -45,7 +45,16 @@ async function apiFetch(path: string, init: RequestInit = {}): Promise<Response>
     },
   });
   if (!response.ok) {
-    throw new ApiError(`El API respondió ${response.status}`, response.status);
+    // El backend responde errores con `detail` legible (p. ej. la guía de un
+    // import rechazado); si existe, se muestra ese texto.
+    let message = `El API respondió ${response.status}`;
+    try {
+      const body = (await response.json()) as { detail?: unknown };
+      if (typeof body.detail === "string" && body.detail) message = body.detail;
+    } catch {
+      // Cuerpo no JSON: se conserva el mensaje genérico.
+    }
+    throw new ApiError(message, response.status);
   }
   return response;
 }
@@ -118,6 +127,113 @@ export type MusicSource = {
   summary: MusicSummary | null;
 };
 
+export type TopMovie = {
+  title: string;
+  year: number | null;
+  plays: number;
+};
+
+export type TopShow = {
+  title: string;
+  episodes_watched: number;
+};
+
+export type RecentWatch = {
+  title: string;
+  media_type: string;
+  watched_at: string | null;
+};
+
+export type FilmSummary = {
+  movies_watched: number;
+  shows_watched: number;
+  episodes_watched: number;
+  hours: number;
+  top_movies: TopMovie[];
+  top_shows: TopShow[];
+  recently_watched: RecentWatch[];
+  last_synced_at: string | null;
+};
+
+export type FilmSource = {
+  state: SyncState;
+  synced_at: string | null;
+  detail: string | null;
+  summary: FilmSummary | null;
+};
+
+export type AnimeTopRated = {
+  title: string;
+  media_type: string;
+  score: number;
+  progress: number;
+};
+
+export type AnimeCurrent = {
+  title: string;
+  media_type: string;
+  progress: number;
+};
+
+export type AnimeSummary = {
+  anime_watched: number;
+  manga_read: number;
+  episodes_watched: number;
+  chapters_read: number;
+  mean_score: number | null;
+  top_rated: AnimeTopRated[];
+  current: AnimeCurrent[];
+  last_synced_at: string | null;
+};
+
+export type AnimeSource = {
+  state: SyncState;
+  synced_at: string | null;
+  detail: string | null;
+  summary: AnimeSummary | null;
+};
+
+export type TopAuthor = {
+  name: string;
+  books: number;
+};
+
+export type CurrentBook = {
+  title: string;
+  author: string;
+};
+
+export type RecentRead = {
+  title: string;
+  author: string;
+  finished_at: string | null;
+  rating: number | null;
+};
+
+export type BooksSummary = {
+  books_read: number;
+  pages_read: number;
+  currently_reading: CurrentBook[];
+  wishlisted: number;
+  top_authors: TopAuthor[];
+  recent_reads: RecentRead[];
+  last_synced_at: string | null;
+};
+
+export type BooksSource = {
+  state: SyncState;
+  synced_at: string | null;
+  detail: string | null;
+  summary: BooksSummary | null;
+};
+
+export type ImportResult = {
+  provider: string;
+  category: string;
+  status: string;
+  items: number;
+};
+
 // ===== Operaciones =====
 
 export function getGamesSource(): Promise<GamesSource> {
@@ -153,20 +269,22 @@ export function connectSteam(params: Record<string, string>): Promise<void> {
   }).then(() => undefined);
 }
 
-// Descarga `games.context.json` disparando el guardado en el navegador.
-export async function downloadGamesContext(): Promise<void> {
-  const response = await apiFetch("/context/games");
+// ===== Contexto descargable (genérico por categoría) =====
+
+// Descarga `<slug>.context.json` disparando el guardado en el navegador.
+export async function downloadContext(slug: string): Promise<void> {
+  const response = await apiFetch(`/context/${slug}`);
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "games.context.json";
+  a.download = `${slug}.context.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
-export async function getGamesContextText(): Promise<string> {
-  const response = await apiFetch("/context/games");
+export async function getContextText(slug: string): Promise<string> {
+  const response = await apiFetch(`/context/${slug}`);
   return JSON.stringify(await response.json(), null, 2);
 }
 
@@ -191,19 +309,56 @@ export function refreshListenBrainz(): Promise<void> {
   );
 }
 
-// Descarga `music.context.json` disparando el guardado en el navegador.
-export async function downloadMusicContext(): Promise<void> {
-  const response = await apiFetch("/context/music");
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "music.context.json";
-  a.click();
-  URL.revokeObjectURL(url);
+// ===== Cine y TV / Trakt =====
+
+export function getFilmSource(): Promise<FilmSource> {
+  return apiJson<FilmSource>("/sources/film");
 }
 
-export async function getMusicContextText(): Promise<string> {
-  const response = await apiFetch("/context/music");
-  return JSON.stringify(await response.json(), null, 2);
+// Conecta Trakt por username público (D41) y encola el primer refresco.
+export function connectTrakt(userName: string): Promise<void> {
+  return apiFetch("/sources/trakt", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_name: userName }),
+  }).then(() => undefined);
+}
+
+export function refreshTrakt(): Promise<void> {
+  return apiFetch("/sources/trakt/refresh", { method: "POST" }).then(() => undefined);
+}
+
+// ===== Anime y manga / AniList =====
+
+export function getAnimeSource(): Promise<AnimeSource> {
+  return apiJson<AnimeSource>("/sources/anime");
+}
+
+// Conecta AniList por username público (D45) y encola el primer refresco.
+export function connectAniList(userName: string): Promise<void> {
+  return apiFetch("/sources/anilist", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_name: userName }),
+  }).then(() => undefined);
+}
+
+export function refreshAniList(): Promise<void> {
+  return apiFetch("/sources/anilist/refresh", { method: "POST" }).then(() => undefined);
+}
+
+// ===== Libros / import (Goodreads) =====
+
+export function getBooksSource(): Promise<BooksSource> {
+  return apiJson<BooksSource>("/sources/books");
+}
+
+// Sube un export como texto al import genérico: el backend detecta el
+// proveedor por la firma del archivo (D49) y ejecuta su flujo.
+export function importFile(text: string): Promise<ImportResult> {
+  return apiJson<ImportResult>("/imports", {
+    method: "POST",
+    headers: { "Content-Type": "text/csv" },
+    body: text,
+  });
 }

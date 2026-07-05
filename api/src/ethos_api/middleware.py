@@ -67,23 +67,36 @@ class BodySizeLimitMiddleware:
 
     Content-Length mayor al límite → 413 inmediato. Cuerpos chunked (sin
     Content-Length) se cortan simulando la desconexión del cliente cuando
-    exceden el límite.
+    exceden el límite. Las rutas de import de archivos (`/imports` y
+    `/sources/*/import`) usan un límite mayor propio (D49) sin aflojar el
+    del resto de la API.
     """
 
-    def __init__(self, app: ASGIApp, max_bytes: int) -> None:
+    def __init__(
+        self, app: ASGIApp, max_bytes: int, import_max_bytes: int | None = None
+    ) -> None:
         self.app = app
         self.max_bytes = max_bytes
+        self.import_max_bytes = import_max_bytes or max_bytes
+
+    def _limit_for(self, path: str) -> int:
+        if path == "/imports" or (
+            path.startswith("/sources/") and path.endswith("/import")
+        ):
+            return self.import_max_bytes
+        return self.max_bytes
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
+        limit = self._limit_for(str(scope.get("path", "")))
         headers = dict(scope.get("headers", []))
         content_length = headers.get(b"content-length")
         if content_length is not None:
             try:
-                if int(content_length) > self.max_bytes:
+                if int(content_length) > limit:
                     await _plain_response(send, 413, b"Cuerpo demasiado grande")
                     return
             except ValueError:
@@ -97,7 +110,7 @@ class BodySizeLimitMiddleware:
             message = await receive()
             if message["type"] == "http.request":
                 received += len(message.get("body", b""))
-                if received > self.max_bytes:
+                if received > limit:
                     return {"type": "http.disconnect"}
             return message
 

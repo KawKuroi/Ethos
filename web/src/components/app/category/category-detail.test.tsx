@@ -31,10 +31,26 @@ describe("CategoryDetail", () => {
   });
 
   it("muestra el estado en desarrollo para una categoría soon", () => {
-    render(<CategoryDetail category={CATEGORY_DETAIL.film} />);
+    // Con la Fase 3 completa el catálogo no tiene categorías soon; el estado
+    // sigue soportado para futuras (Lugares, Comida, Juegos de mesa).
+    render(
+      <CategoryDetail
+        category={{
+          slug: "places",
+          name: "Lugares",
+          accent: "#8b5cf6",
+          provider: "Swarm",
+          ns: "places.*",
+          blurb: "Sitios visitados y rachas.",
+          state: "soon",
+          soonNote: "Estamos preparando el conector de Swarm.",
+          soonEta: "Próximamente",
+        }}
+      />,
+    );
     expect(
       screen.getByText(/esta categoría está en desarrollo/i),
     ).toBeInTheDocument();
-    expect(screen.getAllByText(/trakt/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/swarm/i).length).toBeGreaterThan(0);
   });
 });

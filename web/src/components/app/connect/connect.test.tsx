@@ -66,11 +66,42 @@ describe("ConnectAi", () => {
     expect(screen.getByText("music.top_artists")).toBeInTheDocument();
   });
 
-  it("una consulta sin categoría activa cae en profile.search", () => {
+  it("enruta una consulta de series a film.top_movies", () => {
     vi.useFakeTimers();
     render(<ConnectAi />);
     const input = screen.getByLabelText(/escribe tu pregunta/i);
     fireEvent.change(input, { target: { value: "¿qué series vi?" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+    expect(screen.getByText("film.top_movies")).toBeInTheDocument();
+  });
+
+  it("enruta libros y anime a sus tools", () => {
+    vi.useFakeTimers();
+    render(<ConnectAi />);
+    const input = screen.getByLabelText(/escribe tu pregunta/i);
+    fireEvent.change(input, { target: { value: "¿qué libro estoy leyendo?" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+    expect(screen.getByText("books.currently_reading")).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: "¿mi manga favorito?" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+    expect(screen.getByText("anime.top_rated")).toBeInTheDocument();
+  });
+
+  it("una consulta sin categoría reconocible cae en profile.search", () => {
+    vi.useFakeTimers();
+    render(<ConnectAi />);
+    const input = screen.getByLabelText(/escribe tu pregunta/i);
+    fireEvent.change(input, { target: { value: "¿mi comida preferida?" } });
     fireEvent.keyDown(input, { key: "Enter" });
     act(() => {
       vi.advanceTimersByTime(800);

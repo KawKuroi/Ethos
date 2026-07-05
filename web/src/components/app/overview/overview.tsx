@@ -2,16 +2,10 @@
 
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import type { GamesSource, GamesSummary, MusicSource } from "@/lib/api";
-import { useGamesSource } from "@/lib/use-games-source";
-import { useMusicSource } from "@/lib/use-music-source";
-import {
-  GLOBAL_ALERTS,
-  type GlobalAlert,
-  MCP_CONNECTED,
-  PANORAMA,
-  type PanoramaRow,
-} from "./data";
+import type { GamesSummary } from "@/lib/api";
+import { fmtInt } from "@/lib/format";
+import { useActiveSources, type ActiveSourceView } from "@/lib/use-active-sources";
+import { GLOBAL_ALERTS, type GlobalAlert, MCP_CONNECTED } from "./data";
 import styles from "./overview.module.css";
 
 const ALERT_COLOR: Record<GlobalAlert["level"], string> = {
@@ -19,20 +13,8 @@ const ALERT_COLOR: Record<GlobalAlert["level"], string> = {
   error: "var(--error)",
 };
 
-const GAMES = PANORAMA.find((r) => r.id === "games") as PanoramaRow;
-const MUSIC = PANORAMA.find((r) => r.id === "music") as PanoramaRow;
-const SOON = PANORAMA.filter((r) => r.state === "soon");
-
-function isLive(state: string | undefined): boolean {
-  return state === "fresh" || state === "syncing";
-}
-
 function accentVar(accent: string): CSSProperties {
   return { "--rowAccent": accent } as CSSProperties;
-}
-
-function fmt(n: number): string {
-  return Math.round(n).toLocaleString("es-ES");
 }
 
 function McpBanner() {
@@ -101,9 +83,9 @@ function GlobalAlerts() {
 
 function StatBand({ summary, meta }: { summary: GamesSummary | null; meta: string }) {
   const stats = [
-    { value: summary ? fmt(summary.games) : "—", label: "juegos" },
-    { value: summary ? fmt(summary.hours) : "—", label: "horas" },
-    { value: summary ? fmt(summary.wishlisted) : "—", label: "deseados" },
+    { value: summary ? fmtInt(summary.games) : "—", label: "juegos" },
+    { value: summary ? fmtInt(summary.hours) : "—", label: "horas" },
+    { value: summary ? fmtInt(summary.wishlisted) : "—", label: "deseados" },
     {
       value:
         summary && summary.avg_completion_pct != null
@@ -131,45 +113,44 @@ function StatBand({ summary, meta }: { summary: GamesSummary | null; meta: strin
   );
 }
 
-type RowVariant = "live" | "soon" | "off";
-
-function GamesRow({ source }: { source: GamesSource | null }) {
-  const state = source?.state;
-  const variant: RowVariant =
-    state === "fresh" || state === "syncing" ? "live" : "off";
-  const hours = source?.summary?.hours ?? 0;
-  const syncing = state === "syncing";
+// Fila del panorama para cualquier categoría activable: activa muestra su
+// métrica hero y barra; apagada invita a conectarla.
+function SourceRow({ view, maxHero }: { view: ActiveSourceView; maxHero: number }) {
+  const barPct =
+    view.live && maxHero > 0
+      ? Math.max(6, Math.round((view.heroValue / maxHero) * 100))
+      : 0;
 
   return (
     <Link
-      href={`/app/categoria/${GAMES.id}`}
+      href={`/app/categoria/${view.slug}`}
       className={styles.row}
-      style={accentVar(GAMES.accent)}
+      style={accentVar(view.accent)}
     >
-      <span className={`${styles.rowChip} ${variant === "live" ? styles.rowChipLive : styles.rowChipSoon}`}>
-        {GAMES.initial}
+      <span className={`${styles.rowChip} ${view.live ? styles.rowChipLive : styles.rowChipSoon}`}>
+        {view.initial}
       </span>
       <div className={styles.rowName}>
-        <div className={`${styles.rowNameText} ${variant === "live" ? styles.rowNameLive : styles.rowNameSoon}`}>
-          {GAMES.name}
+        <div className={`${styles.rowNameText} ${view.live ? styles.rowNameLive : styles.rowNameSoon}`}>
+          {view.name}
         </div>
         <div className={styles.rowProvider}>
-          {GAMES.provider} · {GAMES.modeLabel}
+          {view.provider} · {view.modeLabel}
         </div>
       </div>
 
-      {variant === "live" ? (
+      {view.live ? (
         <>
           <div className={styles.bar}>
-            <div className={styles.barFill} style={{ width: "100%" }} />
+            <div className={styles.barFill} style={{ width: `${barPct}%` }} />
           </div>
           <div className={styles.rowValue}>
-            {syncing ? (
+            {view.syncing ? (
               <span className={styles.rowHeroLabel}>sincronizando…</span>
             ) : (
               <>
-                <span className={styles.rowHero}>{fmt(hours)}</span>
-                <span className={styles.rowHeroLabel}>horas jugadas</span>
+                <span className={styles.rowHero}>{fmtInt(view.heroValue)}</span>
+                <span className={styles.rowHeroLabel}>{view.heroLabel}</span>
               </>
             )}
           </div>
@@ -186,82 +167,11 @@ function GamesRow({ source }: { source: GamesSource | null }) {
   );
 }
 
-function MusicRow({ source }: { source: MusicSource | null }) {
-  const live = isLive(source?.state);
-  const variant: RowVariant = live ? "live" : "off";
-  const scrobbles = source?.summary?.scrobbles_total ?? 0;
-  const syncing = source?.state === "syncing";
-
-  return (
-    <Link
-      href={`/app/categoria/${MUSIC.id}`}
-      className={styles.row}
-      style={accentVar(MUSIC.accent)}
-    >
-      <span className={`${styles.rowChip} ${variant === "live" ? styles.rowChipLive : styles.rowChipSoon}`}>
-        {MUSIC.initial}
-      </span>
-      <div className={styles.rowName}>
-        <div className={`${styles.rowNameText} ${variant === "live" ? styles.rowNameLive : styles.rowNameSoon}`}>
-          {MUSIC.name}
-        </div>
-        <div className={styles.rowProvider}>
-          {MUSIC.provider} · {MUSIC.modeLabel}
-        </div>
-      </div>
-
-      {variant === "live" ? (
-        <>
-          <div className={styles.bar}>
-            <div className={styles.barFill} style={{ width: "100%" }} />
-          </div>
-          <div className={styles.rowValue}>
-            {syncing ? (
-              <span className={styles.rowHeroLabel}>sincronizando…</span>
-            ) : (
-              <>
-                <span className={styles.rowHero}>{fmt(scrobbles)}</span>
-                <span className={styles.rowHeroLabel}>escuchas</span>
-              </>
-            )}
-          </div>
-          <span className={styles.dotLive} aria-label="activa" />
-        </>
-      ) : (
-        <>
-          <div className={styles.barEmpty} />
-          <span className={styles.offLabel}>conéctala →</span>
-          <span className={styles.dotOff} aria-label="apagada" />
-        </>
-      )}
-    </Link>
-  );
-}
-
-function SoonRow({ row }: { row: PanoramaRow }) {
-  return (
-    <Link href={`/app/categoria/${row.id}`} className={styles.row} style={accentVar(row.accent)}>
-      <span className={`${styles.rowChip} ${styles.rowChipSoon}`}>{row.initial}</span>
-      <div className={styles.rowName}>
-        <div className={`${styles.rowNameText} ${styles.rowNameSoon}`}>{row.name}</div>
-        <div className={styles.rowProvider}>
-          {row.provider} · {row.modeLabel}
-        </div>
-      </div>
-      <div className={styles.barEmpty} />
-      <span className={styles.soonLabel}>en desarrollo · próximamente</span>
-      <span className={styles.dotSoon} aria-label="en desarrollo" />
-    </Link>
-  );
-}
-
-function Panorama({
-  gamesSource,
-  musicSource,
-}: {
-  gamesSource: GamesSource | null;
-  musicSource: MusicSource | null;
-}) {
+function Panorama({ views }: { views: ActiveSourceView[] }) {
+  // La barra de cada fila es relativa al hero mayor entre las activas. Las
+  // métricas mezclan unidades (horas, escuchas…), pero la barra solo dibuja
+  // proporción visual, como en el prototipo.
+  const maxHero = Math.max(0, ...views.filter((v) => v.live).map((v) => v.heroValue));
   return (
     <>
       <div className={styles.panoHead}>
@@ -273,15 +183,13 @@ function Panorama({
           </span>
           <span className={styles.legendItem}>
             <span className={styles.legendDotSoon} />
-            en desarrollo
+            apagada
           </span>
         </div>
       </div>
       <div className={`${styles.card} ${styles.panorama}`}>
-        <GamesRow source={gamesSource} />
-        <MusicRow source={musicSource} />
-        {SOON.map((row) => (
-          <SoonRow key={row.id} row={row} />
+        {views.map((view) => (
+          <SourceRow key={view.slug} view={view} maxHero={maxHero} />
         ))}
       </div>
     </>
@@ -304,7 +212,7 @@ function Activity({ summary }: { summary: GamesSummary | null }) {
         <div className={styles.timeline}>
           <span className={styles.timelineLine} aria-hidden="true" />
           {events.map((game) => (
-            <div key={game.title} className={styles.event} style={accentVar(GAMES.accent)}>
+            <div key={game.title} className={styles.event} style={accentVar("#3b82c4")}>
               <span className={styles.eventPin} aria-hidden="true" />
               <div className={styles.eventText}>Jugaste a {game.title}</div>
               <div className={styles.eventMeta}>
@@ -319,21 +227,15 @@ function Activity({ summary }: { summary: GamesSummary | null }) {
   );
 }
 
-function activeMeta(gamesLive: boolean, musicLive: boolean): string {
-  const providers: string[] = [];
-  if (gamesLive) providers.push("Steam");
-  if (musicLive) providers.push("ListenBrainz");
+function activeMeta(views: ActiveSourceView[]): string {
+  const providers = views.filter((v) => v.live).map((v) => v.provider);
   if (providers.length === 0) return "Sin fuentes activas";
   const label = providers.length === 1 ? "fuente activa" : "fuentes activas";
   return `${providers.length} ${label} · ${providers.join(" · ")}`;
 }
 
 export function Overview() {
-  const games = useGamesSource();
-  const music = useMusicSource();
-  const loading = games.loading || music.loading;
-  const summary = games.source?.summary ?? null;
-  const meta = activeMeta(isLive(games.source?.state), isLive(music.source?.state));
+  const { loading, views, gamesSummary } = useActiveSources();
 
   return (
     <div className="eth-screen">
@@ -343,9 +245,9 @@ export function Overview() {
         <div className={styles.loading}>Cargando tu perfil…</div>
       ) : (
         <>
-          <StatBand summary={summary} meta={meta} />
-          <Panorama gamesSource={games.source} musicSource={music.source} />
-          <Activity summary={summary} />
+          <StatBand summary={gamesSummary} meta={activeMeta(views)} />
+          <Panorama views={views} />
+          <Activity summary={gamesSummary} />
         </>
       )}
     </div>
