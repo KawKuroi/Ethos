@@ -83,7 +83,6 @@ export function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
-  const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -135,10 +134,6 @@ export function AuthForm() {
     }
     if (password.length < 8) {
       setError("La contraseña necesita al menos 8 caracteres.");
-      return;
-    }
-    if (isRegister && !agree) {
-      setError("Acepta los Términos y la Política de privacidad para continuar.");
       return;
     }
 
@@ -295,36 +290,6 @@ export function AuthForm() {
             </button>
           </span>
         </label>
-
-        {isRegister && (
-          <label className={`${styles.terms} ${styles.fieldIn}`}>
-            <button
-              type="button"
-              onClick={() => setAgree((v) => !v)}
-              className={`${styles.check} ${agree ? styles.checkOn : ""}`}
-              role="checkbox"
-              aria-checked={agree}
-              aria-label="Acepto los Términos y la Política de privacidad"
-            >
-              {agree && (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--on-accent)" strokeWidth="3.2" aria-hidden="true">
-                  <path d="M5 12.5l4.2 4.2L19 6.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </button>
-            <span className={styles.termsText}>
-              Acepto los{" "}
-              <Link href="/terminos" className={styles.termsLink}>
-                Términos
-              </Link>{" "}
-              y la{" "}
-              <Link href="/privacidad" className={styles.termsLink}>
-                Política de privacidad
-              </Link>
-              .
-            </span>
-          </label>
-        )}
 
         {error && <p className={styles.error}>{error}</p>}
         {notice && <p className={styles.ok}>{notice}</p>}

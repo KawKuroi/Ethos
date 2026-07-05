@@ -332,45 +332,6 @@
   background: var(--soft);
 }
 
-.terms {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  cursor: pointer;
-  margin-top: 2px;
-}
-.check {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 auto;
-  margin-top: 1px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-  border: 1px solid var(--line);
-  background: var(--surface);
-}
-.checkOn {
-  border-color: var(--accent);
-  background: var(--accent);
-}
-.termsText {
-  font-family: var(--fb);
-  font-size: 12.5px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-.termsLink {
-  color: var(--accent);
-  font-weight: 600;
-}
-.termsLink:hover {
-  text-decoration: underline;
-}
-
 .error {
   font-family: var(--fb);
   font-size: 12.5px;

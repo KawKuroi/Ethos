@@ -83,7 +83,7 @@ Marca `[x]` conforme lo revises.
 ## Verificación visual en producción
 
 - [ ] **Auth** — `/auth`: alternar login/registro, mostrar/ocultar contraseña,
-  validaciones (correo, mínimo 8, Términos), toggle de tema; `/auth/recuperar`
+  validaciones (correo, mínimo 8), toggle de tema; `/auth/recuperar`
   y `/auth/nueva-clave`. (D26)
 - [ ] **Shell de la app** — `/app`: barra lateral (Inicio · Fuentes · Conectar
   IA · Ayuda), resaltado del activo, badge pulsante en "Conectar IA", engrane →

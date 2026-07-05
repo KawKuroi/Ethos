@@ -38,16 +38,13 @@ describe("AuthForm", () => {
     mocks.signInWithOAuth.mockResolvedValue({ error: null });
   });
 
-  it("alterna a registro mostrando Nombre y Términos", () => {
+  it("alterna a registro mostrando el campo Nombre", () => {
     render(<AuthForm />);
     expect(screen.queryByPlaceholderText("Cómo te llamamos")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
     expect(screen.getByPlaceholderText("Cómo te llamamos")).toBeInTheDocument();
-    expect(
-      screen.getByRole("checkbox", { name: /términos/i }),
-    ).toBeInTheDocument();
   });
 
   it("muestra u oculta la contraseña", () => {
@@ -75,7 +72,7 @@ describe("AuthForm", () => {
     expect(mocks.signInWithPassword).not.toHaveBeenCalled();
   });
 
-  it("exige aceptar los Términos al registrarse", () => {
+  it("registra sin exigir términos (no existen en el producto)", async () => {
     const { container } = render(<AuthForm />);
     fireEvent.click(screen.getByRole("button", { name: /crear cuenta/i }));
     fireEvent.change(screen.getByPlaceholderText("Cómo te llamamos"), {
@@ -89,8 +86,8 @@ describe("AuthForm", () => {
     });
     submitForm(container);
 
-    expect(screen.getByText(/acepta los términos/i)).toBeInTheDocument();
-    expect(mocks.signUp).not.toHaveBeenCalled();
+    await waitFor(() => expect(mocks.signUp).toHaveBeenCalled());
+    expect(screen.queryByText(/términos/i)).toBeNull();
   });
 
   it("inicia sesión con correo y contraseña válidos y redirige a la app", async () => {

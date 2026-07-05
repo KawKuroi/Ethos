@@ -86,8 +86,9 @@ contexto.", 3 perks, "Perfil privado · tú decides qué se comparte") + panel d
 formulario. Segmented Iniciar sesión / Crear cuenta; social "Continuar con
 Google" y "Continuar con GitHub"; divisor "o con tu correo"; campos Nombre
 (solo registro), Correo, Contraseña (mostrar/ocultar, mínimo 8, "¿Olvidaste tu
-contraseña?" en login); checkbox de Términos y Política de privacidad
-(registro); submit con spinner; toggle de tema.
+contraseña?" en login); submit con spinner; toggle de tema. El checkbox de
+Términos y Política de privacidad del prototipo se retiró: esas páginas no
+existen ni se planean (decisión del usuario, 2026-07-05).
 
 ## 4. Landing (`Landing mockups.dc.html`)
 
