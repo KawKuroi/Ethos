@@ -33,7 +33,7 @@ class SteamProfile:
     visibility: int | None
 
 
-class SteamConnector(Connector[SteamRawData]):
+class SteamConnector(Connector[SteamRawData, NormalizedItem]):
     """Conector del proveedor Steam."""
 
     id: ClassVar[str] = "steam"

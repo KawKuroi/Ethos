@@ -83,3 +83,19 @@ class NormalizedItem(BaseModel):
     # De qué fuente vino cada campo; alimenta la transparencia del dump.
     provenance: dict[str, str] = Field(default_factory=dict)
     schema_version: int = 1
+
+
+class NormalizedEvent(BaseModel):
+    """Un evento con timestamp (p. ej. un listen de música).
+
+    Forma alternativa a `NormalizedItem` para las fuentes de tipo evento
+    (D38): en vez de "obra + relación", una marca temporal más los campos
+    del evento en `payload`. Habilita las consultas por ventana temporal.
+    """
+
+    category: Category
+    occurred_at: datetime
+    # Campos del evento (p. ej. {"artist": "...", "track": "...", "release": "..."}).
+    payload: dict[str, str] = Field(default_factory=dict)
+    source: str
+    schema_version: int = 1

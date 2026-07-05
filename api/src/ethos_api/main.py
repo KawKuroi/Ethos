@@ -16,6 +16,7 @@ from ethos_api.middleware import (
     RateLimitMiddleware,
     SecurityHeadersMiddleware,
 )
+from ethos_api.music.router import router as music_router
 
 
 def _split_csv(value: str) -> list[str]:
@@ -49,6 +50,7 @@ def create_app() -> FastAPI:
     # Endpoints HTTP de la API (autenticados con la sesión de Supabase).
     app.include_router(credentials_router)
     app.include_router(games_router)
+    app.include_router(music_router)
     app.include_router(mcp_token_router)
 
     @app.get("/health")

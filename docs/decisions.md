@@ -109,3 +109,15 @@ Los datos de juegos, las credenciales y los tokens del MCP persisten tras puerto
 
 ## D36 — Refresco asíncrono v1 con BackgroundTasks y estados de frescura
 El refresco corre en segundo plano con `BackgroundTasks` de FastAPI y deja estado explícito por usuario: `never/syncing/fresh/private/error` + `synced_at` (stale se deriva por edad). Perfil de Steam privado → estado `private` con guía para la web. La cola durable (Supabase Queues) llega con la infra de D35; el refresco incremental (D17) sigue abierto para Fase 2. Decisión delegada por el usuario. Estado: firme.
+
+## D37 — Conexión de Música: ListenBrainz por username público
+La fuente de Música se lee de ListenBrainz por el username público del usuario (`GET /1/user/{user}/listens`); no requiere OAuth ni token. El username se guarda como credencial del proveedor `listenbrainz` (categoría music), cifrado como el steamid (D20). Decisión delegada por el usuario (2026-07-04). Estado: firme.
+
+## D38 — Modelo de eventos con timestamp
+Las fuentes de tipo evento (Música y futuras) usan `NormalizedEvent` (`occurred_at`, `category`, `payload`, `source`) en vez de `NormalizedItem` ("obra + relación"). El `Connector` se generaliza a `Connector[RawT, OutT]` (Steam da items, ListenBrainz da eventos). Los eventos persisten en `user_events` (migración 0004) con índice (user_id, category, occurred_at desc) para las consultas por ventana. El estado de frescura se comparte en `sources_status.py`. Decisión delegada. Estado: firme.
+
+## D39 — Granularidad y resumen de Música
+Cada listen guarda artista + track (+ release cuando exista). El resumen (`build_music_summary`) expone total de scrobbles, scrobbles de la ventana, top artistas y top tracks de los últimos 30 días (ventana por defecto), estrenando la consulta temporal real. Tools del MCP: `music.summary`, `music.top_artists`, `music.recent` (+ resource `ethos://music/summary`). Decisión delegada. Estado: firme.
+
+## D40 — Refresco incremental de Música (cierra D17)
+El refresco trae solo los listens posteriores al último `occurred_at` guardado (`min_ts` de ListenBrainz) y los añade; la llave de cambio es el timestamp del último listen. Una pasada por refresco en v1 (el histórico profundo se rellena en refrescos sucesivos). Resuelve el pendiente D17 para fuentes de evento. Decisión delegada. Estado: firme.

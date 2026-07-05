@@ -10,12 +10,13 @@ from __future__ import annotations
 from typing import Any
 
 from ethos_api.connectors.base import Connector
+from ethos_api.connectors.listenbrainz.connector import ListenBrainzConnector
 from ethos_api.connectors.steam.connector import SteamConnector
 from ethos_api.schema import Category
 
 # El registro guarda clases (los conectores declaran su identidad como
 # ClassVars); quien resuelve decide cómo instanciar según sus dependencias.
-ConnectorClass = type[Connector[Any]]
+ConnectorClass = type[Connector[Any, Any]]
 
 
 class ConnectorRegistry:
@@ -50,3 +51,4 @@ class ConnectorRegistry:
 # Registro por defecto de la aplicación con los conectores implementados.
 registry = ConnectorRegistry()
 registry.register(SteamConnector)
+registry.register(ListenBrainzConnector)

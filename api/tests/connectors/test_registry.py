@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from ethos_api.connectors.listenbrainz.connector import ListenBrainzConnector
 from ethos_api.connectors.registry import ConnectorRegistry, registry
 from ethos_api.connectors.steam.connector import SteamConnector
 from ethos_api.schema import Category
@@ -20,14 +21,16 @@ def test_catalogo_de_5_categorias() -> None:
     ]
 
 
-def test_registro_por_defecto_resuelve_steam() -> None:
+def test_registro_por_defecto_resuelve_conectores() -> None:
     assert registry.get(Category.games, "steam") is SteamConnector
+    assert registry.get(Category.music, "listenbrainz") is ListenBrainzConnector
     assert registry.providers(Category.games) == ["steam"]
+    assert registry.providers(Category.music) == ["listenbrainz"]
 
 
 def test_get_inexistente_lanza_lookup_error() -> None:
     with pytest.raises(LookupError):
-        registry.get(Category.music, "listenbrainz")
+        registry.get(Category.film, "trakt")
 
 
 def test_registro_duplicado_lanza_value_error() -> None:

@@ -1,0 +1,36 @@
+{
+  "payload": {
+    "count": 4,
+    "user_id": "oyente",
+    "listens": [
+      {
+        "listened_at": 1710000300,
+        "track_metadata": {
+          "artist_name": "Alvvays",
+          "track_name": "Belinda Says",
+          "release_name": "Blue Rev"
+        }
+      },
+      {
+        "listened_at": 1710000200,
+        "track_metadata": {
+          "artist_name": "Alvvays",
+          "track_name": "Pharmacist",
+          "release_name": "Blue Rev"
+        }
+      },
+      {
+        "listened_at": 1710000100,
+        "track_metadata": {
+          "artist_name": "Mitski",
+          "track_name": "My Love Mine All Mine",
+          "release_name": "The Land Is Inhospitable"
+        }
+      },
+      {
+        "listened_at": 1710000000,
+        "track_metadata": { "artist_name": "", "track_name": "" }
+      }
+    ]
+  }
+}

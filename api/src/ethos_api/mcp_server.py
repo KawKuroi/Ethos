@@ -23,6 +23,9 @@ from ethos_api.games.deps import get_games_store
 from ethos_api.games.store import GamesStore
 from ethos_api.games.summary import build_games_summary
 from ethos_api.mcp_auth import get_mcp_token_store, user_from_authorization
+from ethos_api.music.deps import get_event_store
+from ethos_api.music.store import EventStore
+from ethos_api.music.summary import build_music_summary
 from ethos_api.schema import ItemStatus
 
 mcp: FastMCP = FastMCP(name="Ethos")
@@ -48,20 +51,20 @@ def _kb(payload: object) -> float:
     return round(len(json.dumps(payload, ensure_ascii=False)) / 1024, 1)
 
 
-def _context_kb(user_id: str, store: GamesStore) -> float:
-    """Tamaño del contexto completo, referencia de la métrica D28."""
+def _games_context_kb(user_id: str, store: GamesStore) -> float:
+    """Tamaño del contexto completo de Juegos, referencia de la métrica D28."""
     items = store.items_for_user(user_id)
     profile = store.profile_for_user(user_id)
     summary = build_games_summary(items, profile)
     return _kb(build_games_context(summary, items, profile))
 
 
-def _served(payload: dict[str, object], user_id: str, store: GamesStore) -> dict[str, object]:
+def _served(payload: dict[str, object], kb_total: float) -> dict[str, object]:
     """Añade la métrica de KB servidos vs contexto total (D28)."""
     return {
         **payload,
         "kb_served": _kb(payload),
-        "kb_total": _context_kb(user_id, store),
+        "kb_total": kb_total,
     }
 
 
@@ -74,7 +77,7 @@ def games_summary_payload(user_id: str, store: GamesStore) -> dict[str, object]:
         store.profile_for_user(user_id),
         synced_at=store.status_for_user(user_id).synced_at,
     )
-    return _served(summary.model_dump(mode="json"), user_id, store)
+    return _served(summary.model_dump(mode="json"), _games_context_kb(user_id, store))
 
 
 def games_top_payload(user_id: str, store: GamesStore, limit: int) -> dict[str, object]:
@@ -84,7 +87,7 @@ def games_top_payload(user_id: str, store: GamesStore, limit: int) -> dict[str, 
     payload: dict[str, object] = {
         "top_by_hours": [t.model_dump() for t in summary.top_by_hours]
     }
-    return _served(payload, user_id, store)
+    return _served(payload, _games_context_kb(user_id, store))
 
 
 def games_recent_payload(user_id: str, store: GamesStore) -> dict[str, object]:
@@ -94,7 +97,7 @@ def games_recent_payload(user_id: str, store: GamesStore) -> dict[str, object]:
     payload: dict[str, object] = {
         "recently_played": [r.model_dump() for r in summary.recently_played]
     }
-    return _served(payload, user_id, store)
+    return _served(payload, _games_context_kb(user_id, store))
 
 
 def profile_search_payload(user_id: str, store: GamesStore, query: str) -> dict[str, object]:
@@ -115,7 +118,44 @@ def profile_search_payload(user_id: str, store: GamesStore, query: str) -> dict[
     payload: dict[str, object] = {"matched": bool(matches), "results": matches[:10]}
     if not matches:
         payload["hint"] = "solo Juegos está activa en la v1"
-    return _served(payload, user_id, store)
+    return _served(payload, _games_context_kb(user_id, store))
+
+
+def _music_context_kb(user_id: str, store: EventStore) -> float:
+    """Tamaño del contexto completo de Música, referencia de la métrica D28."""
+    from ethos_api.music.context import build_music_context
+
+    summary = build_music_summary(store.events_for_user(user_id))
+    return _kb(build_music_context(summary))
+
+
+def music_summary_payload(user_id: str, store: EventStore) -> dict[str, object]:
+    summary = build_music_summary(store.events_for_user(user_id))
+    return _served(summary.model_dump(mode="json"), _music_context_kb(user_id, store))
+
+
+def music_top_artists_payload(
+    user_id: str, store: EventStore, limit: int
+) -> dict[str, object]:
+    summary = build_music_summary(store.events_for_user(user_id), top_limit=limit)
+    payload: dict[str, object] = {
+        "window_days": summary.window_days,
+        "top_artists": [a.model_dump() for a in summary.top_artists],
+    }
+    return _served(payload, _music_context_kb(user_id, store))
+
+
+def music_recent_payload(
+    user_id: str, store: EventStore, limit: int
+) -> dict[str, object]:
+    """Últimos listens (el store los guarda del más reciente al más antiguo)."""
+    events = store.events_for_user(user_id)[:limit]
+    payload: dict[str, object] = {
+        "recent": [
+            {"occurred_at": e.occurred_at.isoformat(), **e.payload} for e in events
+        ]
+    }
+    return _served(payload, _music_context_kb(user_id, store))
 
 
 @mcp.tool
@@ -148,7 +188,31 @@ def profile_search(query: str) -> dict[str, object]:
     return profile_search_payload(_require_user(), get_games_store(), query)
 
 
+@mcp.tool(name="music.summary")
+def music_summary() -> dict[str, object]:
+    """Resumen de Música: scrobbles, top artistas y top tracks de la ventana."""
+    return music_summary_payload(_require_user(), get_event_store())
+
+
+@mcp.tool(name="music.top_artists")
+def music_top_artists(limit: int = 10) -> dict[str, object]:
+    """Artistas más escuchados en los últimos 30 días."""
+    return music_top_artists_payload(_require_user(), get_event_store(), limit)
+
+
+@mcp.tool(name="music.recent")
+def music_recent(limit: int = 20) -> dict[str, object]:
+    """Últimos listens registrados, del más reciente al más antiguo."""
+    return music_recent_payload(_require_user(), get_event_store(), limit)
+
+
 @mcp.resource("ethos://games/summary")
 def games_summary_resource() -> dict[str, object]:
     """Resource con el resumen de Juegos (misma información que la tool)."""
     return games_summary_payload(_require_user(), get_games_store())
+
+
+@mcp.resource("ethos://music/summary")
+def music_summary_resource() -> dict[str, object]:
+    """Resource con el resumen de Música (misma información que la tool)."""
+    return music_summary_payload(_require_user(), get_event_store())

@@ -5,23 +5,13 @@ visual en producción. efesto va añadiendo aquí lo que no puede hacer por ti.
 Marca `[x]` conforme lo revises.
 
 ## Infraestructura / configuración (desbloquea funcionalidad)
-
-- [ ] **Aplicar la migración 0003 en Supabase** (persistencia real del backend,
-  D35). En el dashboard de Supabase → SQL Editor → pega el contenido de
-  `supabase/migrations/0003_games_and_mcp_tokens.sql` → Run. (Igual que
-  hiciste con 0001-0002 en Fase 0.) Crea `user_items` y `mcp_tokens` y amplía
-  `source_state`. Sin esto, el backend sigue funcionando pero en memoria (los
-  datos se pierden al redeploy).
-- [ ] **Verificar env vars del API en Render** — `SUPABASE_URL` y
-  `SUPABASE_SERVICE_ROLE_KEY` deben estar pobladas (quedaron de Fase 0); con
-  ellas el backend usa Supabase automáticamente tras el deploy del push.
-- [ ] **Poblar `NEXT_PUBLIC_API_URL` en Vercel** — apúntala a
-  `https://ethos-api-s10w.onrender.com`. Sin ella, las pantallas de la app no
-  pueden llamar al backend (verás errores al cargar Inicio/Fuentes/Detalle).
 - [ ] **Habilitar OpenID de Steam en el flujo** — necesita la Steam Web API key
   en Render (`STEAM_API_KEY`, ya de Fase 0) y que el dominio de la web esté en
   `ALLOWED_ORIGINS` del API (CORS). Prueba: en Fuentes → Juegos → "Conectar
   Steam", vuelve, y comprueba que aparecen tu biblioteca y horas.
+- [ ] **Aplicar la migración 0004 en Supabase** (Fase 2: tabla `user_events`
+  para los listens de música). SQL Editor → pega
+  `supabase/migrations/0004_user_events.sql` → Run.
 
 ## Prueba end-to-end de Fase 1 (cuando estén las env vars)
 

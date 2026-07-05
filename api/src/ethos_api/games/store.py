@@ -7,33 +7,29 @@ y `source_state` (migración 0003, RLS owner-only).
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
-from enum import StrEnum
 from typing import Any, Protocol
 
 from ethos_api.connectors.steam.connector import SteamProfile
 from ethos_api.schema import Category, NormalizedItem
+from ethos_api.sources_status import (
+    DB_TO_STATE,
+    STATE_TO_DB,
+    SourceStatus,
+    SyncState,
+)
 from ethos_api.supabase_rest import SupabaseRest
 
-
-class SyncState(StrEnum):
-    """Estado de frescura de la fuente de un usuario (D36)."""
-
-    never = "never"
-    syncing = "syncing"
-    fresh = "fresh"
-    private = "private"
-    error = "error"
-
-
-@dataclass
-class SourceStatus:
-    """Estado del refresco de la fuente de juegos de un usuario."""
-
-    state: SyncState = SyncState.never
-    synced_at: datetime | None = None
-    detail: str | None = None
+# Reexport para compatibilidad: otros módulos importan estos desde games.store.
+__all__ = [
+    "DB_TO_STATE",
+    "STATE_TO_DB",
+    "GamesStore",
+    "InMemoryGamesStore",
+    "SourceStatus",
+    "SupabaseGamesStore",
+    "SyncState",
+]
 
 
 class GamesStore(Protocol):
@@ -91,19 +87,6 @@ class InMemoryGamesStore:
 
     def status_for_user(self, user_id: str) -> SourceStatus:
         return self._status.get(user_id, SourceStatus())
-
-
-# Mapeo entre SyncState y el enum `status` de source_state (0001/0003).
-_STATE_TO_DB = {
-    SyncState.never: "never_synced",
-    SyncState.syncing: "syncing",
-    SyncState.fresh: "synced",
-    SyncState.private: "private",
-    SyncState.error: "error",
-}
-_DB_TO_STATE = {db: state for state, db in _STATE_TO_DB.items()}
-# `queued` (de la cola durable futura) se muestra como sincronizando.
-_DB_TO_STATE["queued"] = SyncState.syncing
 
 
 class SupabaseGamesStore:
@@ -180,7 +163,7 @@ class SupabaseGamesStore:
         self._upsert_state(
             user_id,
             {
-                "status": _STATE_TO_DB[status.state],
+                "status": STATE_TO_DB[status.state],
                 "detail": status.detail,
                 "last_synced_at": (
                     status.synced_at.isoformat() if status.synced_at else None
@@ -204,7 +187,7 @@ class SupabaseGamesStore:
         if row.get("last_synced_at"):
             synced_at = datetime.fromisoformat(row["last_synced_at"])
         return SourceStatus(
-            state=_DB_TO_STATE.get(row.get("status", ""), SyncState.never),
+            state=DB_TO_STATE.get(row.get("status", ""), SyncState.never),
             synced_at=synced_at,
             detail=row.get("detail"),
         )

@@ -43,6 +43,24 @@ producción.
 
 ## Bitácora
 
+### 2026-07-04 (Fase 2: backend de Música / ListenBrainz)
+
+- Segunda categoría sobre los puertos de Fase 1, estrenando el modelo de
+  eventos con timestamp (D37-D40). Contrato `NormalizedEvent` y `Connector`
+  generalizado a `Connector[RawT, OutT]` (Steam da items, ListenBrainz da
+  eventos). Cliente de ListenBrainz (`get_listens` con `min_ts`, throttle) y
+  conector que normaliza listens (artist/track/release + occurred_at,
+  descartando los vacíos). Slice `music/`: event store tras puerto (memoria +
+  `SupabaseEventStore` sobre `user_events`, migración 0004), resumen con
+  ventana temporal de 30 días (total, ventana, top artistas, top tracks),
+  refresco incremental por `min_ts` (D40) y endpoints `POST
+  /sources/listenbrainz[/refresh]`, `GET /sources/music`, `GET /context/music`.
+  MCP: tools `music.summary`, `music.top_artists`, `music.recent` + resource,
+  con auth y KB servidos. Estado de frescura extraído a `sources_status.py`
+  (compartido con Juegos). ListenBrainz registrado en el registry. 22 tests
+  nuevos; ruff, mypy y pytest (106, cobertura 94%) en verde. Falta el cableado
+  de la web (Música activa) y aplicar la migración 0004 en Supabase.
+
 ### 2026-07-03 (Fase 1: cableado web ↔ API — cierre del slice)
 
 - Las pantallas dejan los datos de ejemplo y leen del backend con la sesión de

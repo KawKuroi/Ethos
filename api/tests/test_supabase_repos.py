@@ -165,6 +165,41 @@ def test_games_store_perfil() -> None:
     assert perfil.persona_name == "Jugador"
 
 
+def test_event_store_append_y_lectura() -> None:
+    from datetime import UTC, datetime
+
+    from ethos_api.music.store import SupabaseEventStore
+    from ethos_api.schema import NormalizedEvent
+
+    occurred = datetime(2026, 7, 3, 12, 0, tzinfo=UTC)
+    fila = {
+        "occurred_at": occurred.isoformat(),
+        "payload": {"artist": "Alvvays", "track": "Pharmacist"},
+    }
+    fake = FakePostgrest({"user_events": [fila]})
+    store = SupabaseEventStore(_rest(fake))
+
+    store.append_events(
+        "user-1",
+        [
+            NormalizedEvent(
+                category=Category.music,
+                occurred_at=occurred,
+                payload={"artist": "Alvvays", "track": "Pharmacist"},
+                source="listenbrainz",
+            )
+        ],
+    )
+    insert = fake.requests[0]
+    assert insert.method == "POST"
+    assert "user_events" in str(insert.url)
+
+    eventos = store.events_for_user("user-1")
+    assert len(eventos) == 1
+    assert eventos[0].payload["artist"] == "Alvvays"
+    assert store.latest_occurred_at("user-1") == occurred
+
+
 def test_mcp_tokens_emision_y_resolucion() -> None:
     fake = FakePostgrest({"mcp_tokens": [{"user_id": "user-1"}]})
     store = SupabaseMcpTokenStore(_rest(fake))

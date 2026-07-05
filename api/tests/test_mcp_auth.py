@@ -15,6 +15,7 @@ from ethos_api.mcp_server import (
     games_top_payload,
     profile_search_payload,
 )
+from ethos_api.music.store import InMemoryEventStore
 from tests.games.helpers import FakeSteamApi
 from tests.helpers import auth_headers
 
@@ -126,3 +127,50 @@ async def test_ping_sigue_abierto() -> None:
     async with Client(mcp) as client:
         result = await client.call_tool("ping", {})
         assert result.data == "pong"
+
+
+def _music_store_poblado(user: str = "user-1") -> InMemoryEventStore:
+    from ethos_api.music.service import refresh_user_music
+    from tests.music.helpers import FakeListenBrainzApi
+
+    store = InMemoryEventStore()
+    refresh_user_music(user, "oyente", FakeListenBrainzApi(), store)
+    return store
+
+
+def test_payload_de_musica_reporta_kb_y_ventana() -> None:
+    from ethos_api.mcp_server import music_summary_payload, music_top_artists_payload
+
+    store = _music_store_poblado()
+    resumen = music_summary_payload("user-1", store)
+    assert resumen["scrobbles_total"] == 3
+    kb_served, kb_total = resumen["kb_served"], resumen["kb_total"]
+    assert isinstance(kb_served, float) and kb_served > 0
+    assert isinstance(kb_total, float) and kb_total > 0
+
+    top = music_top_artists_payload("user-1", store, limit=5)
+    artistas = top["top_artists"]
+    assert isinstance(artistas, list)
+    assert artistas[0]["name"] == "Alvvays"
+
+
+def test_music_recent_respeta_limit() -> None:
+    from ethos_api.mcp_server import music_recent_payload
+
+    store = _music_store_poblado()
+    payload = music_recent_payload("user-1", store, limit=2)
+    recent = payload["recent"]
+    assert isinstance(recent, list)
+    assert len(recent) == 2
+
+
+@pytest.mark.anyio
+async def test_music_summary_tool_exige_token() -> None:
+    from fastmcp import Client
+    from fastmcp.exceptions import ToolError
+
+    from ethos_api.mcp_server import mcp
+
+    async with Client(mcp) as client:
+        with pytest.raises(ToolError, match="No autenticado"):
+            await client.call_tool("music.summary", {})

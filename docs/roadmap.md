@@ -36,11 +36,11 @@ Web — implementación del diseño (`design.md`, D25/D29):
 
 ## Fase 2 — Segunda categoría: Música / ListenBrainz
 
-- [ ] Conector de ListenBrainz por API (listens con timestamp).
-- [ ] Estrena la consulta temporal real ("más escuchadas en los últimos 30 días").
-- [ ] Modelo de eventos con timestamp y sus índices.
-- [ ] Tools del MCP para música (`music.*`: artistas, álbumes, tracks, ventanas temporales).
-- [ ] Música sale de "en desarrollo" y queda activa en la web (el detalle por categoría ya es genérico).
+- [x] Conector de ListenBrainz por API (listens con timestamp). (D37)
+- [x] Estrena la consulta temporal real ("más escuchadas en los últimos 30 días"). (D39)
+- [x] Modelo de eventos con timestamp y sus índices. (`NormalizedEvent` + `user_events`, migración 0004, D38)
+- [x] Tools del MCP para música (`music.summary`, `music.top_artists`, `music.recent` + resource). (D39)
+- [ ] Música sale de "en desarrollo" y queda activa en la web (el detalle por categoría ya es genérico). — falta el cableado web (siguiente chunk)
 
 ## Fase 3 — Categorías restantes (secuencial, D27)
 

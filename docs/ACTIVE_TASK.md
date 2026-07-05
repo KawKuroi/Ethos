@@ -1,83 +1,71 @@
-# ACTIVE_TASK — Cableado web ↔ API (cierre de Fase 1)
+# ACTIVE_TASK — Fase 2: Música / ListenBrainz (backend)
 
-Fase 1. Conectar las pantallas de la web al backend real con la sesión de
-Supabase, sustituyendo los datos de ejemplo de Juegos por datos del usuario.
-Las categorías "en desarrollo" siguen con constantes (no tienen backend).
+Fase 2, chunk backend. Segunda categoría sobre los puertos de Fase 1, pero
+estrenando el **modelo de eventos con timestamp** y la consulta temporal real
+("más escuchadas en los últimos 30 días"). Decisiones delegadas por el usuario.
 
 ### 1. Contexto y Archivos Afectados
 
-La web tiene auth con sesión en cookies (`@supabase/ssr`). El API expone
-`/sources/games`, `/context/games`, `/sources/steam[/refresh]`, `/mcp-token`
-y las tools MCP, autenticados con el JWT de Supabase. Falta: un cliente de API
-en la web que adjunte el token, y que Inicio/Fuentes/Detalle/Conectar IA lean
-datos reales; más el flujo de conexión de Steam por OpenID (redirect + retorno).
+Fase 1 dejó: contrato `NormalizedItem` (obra + relación), registro de conectores
+(D21), stores tras puerto (memoria + Supabase), MCP con auth por token y el
+slice de Juegos como plantilla. Música es de tipo evento (listens con
+timestamp), no "obra + relación": necesita un contrato y un store propios.
 
-Afectados — **API**: `games/router.py` (resumen en `/sources/games` + endpoint
-de login de Steam) y sus tests. **Web**: `lib/api.ts` (nuevo), `.env.example`,
-`overview/`, `sources/`, `category/`, `connect/`, ruta de retorno de Steam y
-tests.
+Afectados: `schema.py` (contrato de evento), `connectors/base.py` (generalizar
+la salida), `connectors/listenbrainz/*` (nuevo), `music/*` (nuevo: store,
+summary, service, router, deps), `mcp_server.py` (tools `music.*`),
+`connectors/registry.py`, `main.py`, `supabase/migrations/0004_*.sql` y tests.
 
 ### 2. Evaluación Crítica — decisiones tomadas
 
-- **Fetch en cliente**: las pantallas con datos por usuario pasan a client
-  components que piden al API con el `access_token` de la sesión del navegador
-  (estados loading / vacío / error). Evita duplicar la sesión en el server de
-  Next y reutiliza el cliente ya montado.
-- **`/sources/games` devuelve el resumen** (`GamesSummary | null`) además del
-  estado: una sola llamada alimenta Fuentes, Inicio y Detalle. Se actualizan sus
-  tests (cambia la forma).
-- **Sin sparkline con datos reales**: no hay serie temporal en v1 (D34); el
-  Detalle omite el sparkline hasta que lleguen los eventos (Fase 2).
-- **Conexión de Steam**: `GET /sources/steam/login?return_to=` devuelve la URL
-  de OpenID; la web redirige, Steam vuelve a `/app/steam/return`, esa página
-  postea los `openid.*` a `/sources/steam` y encola el refresco.
-- **Estados de categoría reales**: Juegos sin conectar aparece **apagada** (con
-  CTA Conectar Steam), no "activa"; `private` guía a hacer público el perfil.
-- **Conectar IA**: endpoint y token reales de `/mcp-token`; el playground sigue
-  simulado (D-decisión previa).
-- Nuevo env `NEXT_PUBLIC_API_URL` (a poblar en Vercel; anotado en por-revisar).
+- **D37 · Conexión de Música**: ListenBrainz se lee por **username público** (su
+  API de listens no requiere OAuth). El username se guarda como credencial del
+  proveedor `listenbrainz` (categoría music), cifrado como el steamid.
+- **D38 · Modelo de eventos**: contrato `NormalizedEvent` (`occurred_at`,
+  `category`, `payload`, `source`) y tabla `user_events` (índice por
+  usuario/categoría/`occurred_at`). El `Connector` se generaliza a
+  `Connector[RawT, OutT]` para que Steam siga dando items y ListenBrainz dé
+  eventos.
+- **D39 · Granularidad y resumen**: cada listen guarda artista + track + release;
+  el resumen expone total de scrobbles, scrobbles de la ventana, **top artistas**
+  y **top tracks** de los últimos 30 días (ventana por defecto), estrenando la
+  consulta temporal. Álbumes se derivan del release cuando exista.
+- **D40 · Refresco incremental (cierra D17)**: ListenBrainz acepta `min_ts`; el
+  refresco trae solo listens posteriores al último `occurred_at` guardado y los
+  añade (la llave de cambio es el timestamp del último listen).
+
+Deuda: paginación de listens acotada por página en v1 (una pasada por refresco);
+el histórico profundo se rellena en refrescos sucesivos.
 
 ### 3. Plan de Acción Detallado
 
-Bloque A — API
-- [x] **Paso 1: [games/router.py]** `SourceStatusOut` con `summary`; construir
-  el resumen en `GET /sources/games`. `GET /sources/steam/login` → URL OpenID.
-- [x] **Paso 2: [tests/games/test_games_api.py]** ajustar a la nueva forma y
-  añadir test del login.
-
-Bloque B — Web · infraestructura
-- [x] **Paso 3: [web/.env.example]** `NEXT_PUBLIC_API_URL`.
-- [x] **Paso 4: [web/src/lib/api.ts]** `apiFetch` con Bearer de la sesión +
-  helpers tipados (`getGamesSource`, `getMcpToken`, `steamLoginUrl`,
-  `connectSteam`, `refreshSteam`, `downloadGamesContext`).
-- [x] **Paso 5: [web/src/components/app/connect-steam.tsx]** botón que pide la
-  URL y redirige; **[web/src/app/steam/return/page.tsx]** retorno que postea.
-
-Bloque C — Web · pantallas
-- [x] **Paso 6: [sources]** Juegos desde el estado real (activa/apagada/private
-  con CTA); las demás, constantes.
-- [x] **Paso 7: [overview]** stat band, panorama de Juegos y actividad desde el
-  resumen; estado vacío cuando no hay datos.
-- [x] **Paso 8: [category]** Detalle de Juegos con datos reales (status strip,
-  stat band, top, reciente), refrescar y descargar reales; estados apagada/
-  private; las soon quedan igual.
-- [x] **Paso 9: [connect]** endpoint y token reales de `/mcp-token`.
-
-Bloque D — Tests
-- [x] **Paso 10: [web tests]** mockear `lib/api`; actualizar overview/sources/
-  category/connect y cubrir el cliente y el retorno de Steam.
+- [x] **Paso 1: [schema.py]** `NormalizedEvent` (evento con timestamp).
+- [x] **Paso 2: [connectors/base.py]** `Connector[RawT, OutT]`; Steam pasa a
+  `Connector[SteamRawData, NormalizedItem]`.
+- [x] **Paso 3: [connectors/listenbrainz/client.py]** cliente de la API
+  (`get_listens` con `min_ts`, throttle e inyección de httpx).
+- [x] **Paso 4: [connectors/listenbrainz/connector.py]** normaliza listens →
+  `NormalizedEvent` (artist/track/release + occurred_at).
+- [x] **Paso 5: [music/store.py]** `EventStore` puerto + memoria +
+  `SupabaseEventStore` (`user_events`), con estado de frescura reutilizando
+  `SourceStatus`/`source_state`.
+- [x] **Paso 6: [music/summary.py]** resumen con ventana (total, ventana, top
+  artistas, top tracks).
+- [x] **Paso 7: [music/service.py]** refresco incremental desde el último
+  `occurred_at`.
+- [x] **Paso 8: [music/router.py + deps.py]** `POST /sources/listenbrainz`
+  (conectar por username + primer refresco), `POST /.../refresh`,
+  `GET /sources/music`, `GET /context/music`.
+- [x] **Paso 9: [mcp_server.py]** tools `music.summary`, `music.top_artists`,
+  `music.recent` con auth y KB servidos.
+- [x] **Paso 10: [registry.py + main.py + migración 0004]** registrar el
+  conector, montar el router y crear `user_events`.
+- [x] **Paso 11: [tests]** cliente (MockTransport), connector, store (memoria +
+  PostgREST simulado), summary (ventana), service (fake), router (JWT), tools.
 
 ### 4. Reporte de Pruebas
 
-**[APROBADO]**
-
-- API: ruff, mypy, pytest 86/86. Web: tsc, eslint, vitest 38/38, next build OK
-  (rutas /app/* y /steam/return generadas).
-- Cableado: Inicio, Fuentes y Detalle de Juegos leen de `/sources/games`;
-  descarga desde `/context/games`; Conectar IA construye el endpoint y genera
-  el token desde `/mcp-token`; conexión de Steam por OpenID (login + retorno).
-- Estados reales: Juegos apagada→CTA Conectar Steam, private→guía, fresh→datos.
-  Las categorías en desarrollo siguen con constantes (sin backend).
-- Secretos: el token de sesión viaja solo en Authorization; grep limpio.
-- Pendiente del usuario: poblar `NEXT_PUBLIC_API_URL` en Vercel (por-revisar).
-  Verificación end-to-end real: la hace el usuario en producción.
+**[APROBADO]** — ruff y mypy sin incidencias; pytest 106/106 (22 nuevos),
+cobertura 94.2%. Secretos: ListenBrainz se lee por username público, sin
+tokens; grep limpio. Idioma D19 correcto. Pendiente: cablear la web (Música
+activa) y aplicar la migración 0004 en Supabase (por-revisar.md).
