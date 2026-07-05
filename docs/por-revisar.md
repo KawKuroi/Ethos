@@ -56,10 +56,13 @@ Marca `[x]` conforme lo revises.
   "En desarrollo" y el panorama de Inicio enseña las cinco filas (activas o
   apagadas). Confirma que te cuadra visualmente en producción.
 
-- [ ] **OAuth Google y GitHub en Supabase** — habilitar ambos proveedores
-  (Authentication → Providers), con client id/secret y la redirect URL
-  apuntando a `https://<tu-web>/auth/callback`. Hasta hacerlo, los botones
-  "Continuar con Google/GitHub" no completan el login. (Auth, D26)
+- [ ] **OAuth Google en Supabase** (GitHub se retiró de la web, D26 revisada) —
+  crear la app OAuth en Google Cloud Console con redirect URI
+  `https://<tu-proyecto>.supabase.co/auth/v1/callback`, habilitar el proveedor
+  Google (Authentication → Sign In / Providers) con su client id/secret, y en
+  URL Configuration poner Site URL `https://<tu-web>` y añadir
+  `https://<tu-web>/auth/callback` a las Redirect URLs. Hasta hacerlo, el
+  botón "Continuar con Google" no completa el login. (Auth, D26)
 - [ ] **Variables de entorno de la web** — poblar `NEXT_PUBLIC_SUPABASE_URL` y
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` en Vercel (y en `web/.env.local` para
   desarrollo). Sin ellas, `/auth` lanza el error de configuración. (D26)

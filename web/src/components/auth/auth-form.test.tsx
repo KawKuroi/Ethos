@@ -109,14 +109,37 @@ describe("AuthForm", () => {
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/app"));
   });
 
-  it("lanza OAuth con el proveedor elegido", async () => {
+  it("lanza OAuth con Google (único social; GitHub se retiró)", async () => {
     render(<AuthForm />);
-    fireEvent.click(screen.getByRole("button", { name: /continuar con github/i }));
+    expect(screen.queryByRole("button", { name: /github/i })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /continuar con google/i }));
 
     await waitFor(() =>
       expect(mocks.signInWithOAuth).toHaveBeenCalledWith(
-        expect.objectContaining({ provider: "github" }),
+        expect.objectContaining({ provider: "google" }),
       ),
+    );
+  });
+
+  it("distingue la configuración ausente de un fallo de red", async () => {
+    mocks.signInWithPassword.mockImplementation(() => {
+      throw new Error(
+        "Falta configurar NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+      );
+    });
+    const { container } = render(<AuthForm />);
+    fireEvent.change(screen.getByPlaceholderText("tu@correo.com"), {
+      target: { value: "a@b.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Tu contraseña"), {
+      target: { value: "12345678" },
+    });
+    submitForm(container);
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/no tiene configurada la conexión/i),
+      ).toBeInTheDocument(),
     );
   });
 });

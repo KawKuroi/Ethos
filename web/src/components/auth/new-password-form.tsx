@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getBrowserClient } from "@/lib/supabase/client";
+import { connectionMessage } from "./errors";
 import styles from "./auth.module.css";
 
 export function NewPasswordForm() {
@@ -38,8 +39,8 @@ export function NewPasswordForm() {
         return;
       }
       router.push("/app");
-    } catch {
-      setError("No se pudo conectar. Revisa tu conexión e inténtalo de nuevo.");
+    } catch (err) {
+      setError(connectionMessage(err));
       setLoading(false);
     }
   }

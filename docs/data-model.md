@@ -104,7 +104,7 @@ frente al tamaño total del contexto de la categoría.
 
 ## 7. Cuenta, sesión y credenciales
 
-Sesión con Supabase Auth (correo/contraseña, Google, GitHub — D26).
+Sesión con Supabase Auth (correo/contraseña o Google — D26 revisada).
 
 Tabla `user_credentials` (D20) para "guardar las APIs" del usuario:
 

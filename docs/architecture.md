@@ -26,7 +26,7 @@ justifiquen.
 
 ## 3. Flujo de datos
 
-1. La persona se autentica (Supabase Auth: correo/contraseña, Google, GitHub — D26).
+1. La persona se autentica (Supabase Auth: correo/contraseña o Google — D26 revisada).
 2. Por categoría, conecta un proveedor vía API o sube un import (guiado por proveedor).
 3. El backend extrae (API) o parsea (import) y normaliza al esquema común.
 4. Se guarda en Postgres, normalizado e indexado, aislado por usuario (RLS).
@@ -109,7 +109,7 @@ Actividad física dejó de ser necesaria al retirarse la categoría (D23/D31).
 - Tokens de terceros: cifrados a nivel de app (Fernet: AES-128-CBC + HMAC) antes de guardarse en Postgres; la llave vive en el secret manager, nunca en el repo. Se descifran solo en memoria al llamar la API. Mejora futura opcional: envelope encryption con KMS.
 - Anti-abuso (D30): rate limit por IP (429 + Retry-After), límite de tamaño de cuerpo (413), cabeceras de seguridad, CORS restringido al origen de la web, hosts confiables, docs interactivos apagados en producción y throttle del cliente de Steam (cuota de la API key).
 - Aislamiento entre usuarios: Row-Level Security en Postgres.
-- Login de la app: Supabase Auth con correo/contraseña, Google y GitHub (D26). Steam no es login de la app: su OpenID es el flujo de conexión de la fuente de Juegos (D12).
+- Login de la app: Supabase Auth con correo/contraseña y Google (D26 revisada; GitHub retirado). Steam no es login de la app: su OpenID es el flujo de conexión de la fuente de Juegos (D12).
 - Borrado: "eliminar todos los datos" borra el contexto conservando la cuenta; "eliminar cuenta" es borrado diferido con correo de deshacer de 30 días.
 
 ### 8.1 Sesión y credenciales de terceros

@@ -36,7 +36,7 @@ La UI está completamente especificada en el diseño de Claude Design (ver `desi
 
 ## 6. Requisitos funcionales
 
-- Cuenta y autenticación de usuario: correo/contraseña, Google y GitHub, con recuperación de contraseña (D26).
+- Cuenta y autenticación de usuario: correo/contraseña y Google, con recuperación de contraseña (D26 revisada; GitHub retirado).
 - Por cada categoría: elegir proveedor y modo (API o import); conectar; cambiar de proveedor, preguntando si se conserva el histórico o se reemplaza.
 - Extracción de datos (vía API o parseo de import) y normalización a un esquema común.
 - Almacenamiento normalizado e indexado, multiusuario y aislado por usuario.

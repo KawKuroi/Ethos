@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase/client";
+import { connectionMessage } from "./errors";
 import styles from "./auth.module.css";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -34,8 +35,8 @@ export function RecoverForm() {
       }
       setSent(true);
       setLoading(false);
-    } catch {
-      setError("No se pudo conectar. Revisa tu conexión e inténtalo de nuevo.");
+    } catch (err) {
+      setError(connectionMessage(err));
       setLoading(false);
     }
   }

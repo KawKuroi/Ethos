@@ -84,7 +84,8 @@ icono). Badge pulsante en "Conectar IA" mientras la IA no esté conectada.
 Layout partido: panel de marca (fondo accent, wordmark, "Tu gusto, hecho
 contexto.", 3 perks, "Perfil privado · tú decides qué se comparte") + panel de
 formulario. Segmented Iniciar sesión / Crear cuenta; social "Continuar con
-Google" y "Continuar con GitHub"; divisor "o con tu correo"; campos Nombre
+Google" (el "Continuar con GitHub" del prototipo se retiró, D26 revisada
+2026-07-05); divisor "o con tu correo"; campos Nombre
 (solo registro), Correo, Contraseña (mostrar/ocultar, mínimo 8, "¿Olvidaste tu
 contraseña?" en login); submit con spinner; toggle de tema. El checkbox de
 Términos y Política de privacidad del prototipo se retiró: esas páginas no
