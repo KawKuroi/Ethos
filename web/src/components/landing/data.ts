@@ -50,6 +50,40 @@ export const CATS: LandingCategory[] = [
   },
 ];
 
+// Categorías diferidas fuera del catálogo activo (D27/D31): visibles como "en
+// desarrollo" con opción de aviso (D50). El slug coincide con el id del backend.
+export type DeferredCategory = {
+  slug: string;
+  name: string;
+  accent: string;
+  provider: string;
+  note: string;
+};
+
+export const DEFERRED_CATS: DeferredCategory[] = [
+  {
+    slug: "places",
+    name: "Lugares",
+    accent: "#0ea5a4",
+    provider: "Swarm",
+    note: "Sitios a los que vas, guardados desde Swarm.",
+  },
+  {
+    slug: "food",
+    name: "Comida",
+    accent: "#e0663c",
+    provider: "Beli",
+    note: "Restaurantes y platos que puntúas en Beli.",
+  },
+  {
+    slug: "board",
+    name: "Juegos de mesa",
+    accent: "#9a6b3f",
+    provider: "BoardGameGeek",
+    note: "Tu colección y partidas de BoardGameGeek.",
+  },
+];
+
 export const HERO_SOURCES = [
   { name: "Steam", initial: "S", accent: "#3b82c4" },
   { name: "Spotify", initial: "S", accent: "#2f9e6b" },

@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
-import { CATS } from "./data";
+import { NotifyForm } from "@/components/notify-form";
+import { CATS, DEFERRED_CATS } from "./data";
 import styles from "./landing.module.css";
 
 // "La misma secuencia, para cada parte de tu gusto": una tarjeta por
@@ -53,6 +54,34 @@ export function Gallery() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className={styles.soonBlock}>
+        <div className={styles.soonBlockHead}>
+          <h3 className={styles.h3}>En camino</h3>
+          <span className={styles.galleryNote}>Aún no, pero llegan.</span>
+        </div>
+        <p className={styles.galleryIntro}>
+          Estas categorías están en desarrollo. Déjanos tu correo y te avisamos
+          en cuanto puedas conectarlas.
+        </p>
+        <div className={styles.soonGrid}>
+          {DEFERRED_CATS.map((category) => (
+            <div
+              key={category.slug}
+              className={styles.soonCard}
+              style={{ "--ca": category.accent } as CSSProperties}
+            >
+              <div className={styles.cardHead}>
+                <span className={styles.cardInitial}>{category.name.charAt(0)}</span>
+                <div className={styles.cardName}>{category.name}</div>
+                <span className={styles.soonTag}>en desarrollo</span>
+              </div>
+              <p className={styles.soonCardNote}>{category.note}</p>
+              <NotifyForm category={category.slug} accent={category.accent} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

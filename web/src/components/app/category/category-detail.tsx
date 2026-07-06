@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import { NotifyForm } from "@/components/notify-form";
+import { getBrowserClient } from "@/lib/supabase/client";
 import type { CategoryDetailData } from "./data";
 import { contextJson, contextMcp } from "./context";
 import { sparkPoints } from "./sparkline";
@@ -112,6 +114,56 @@ function DownloadModal({
   );
 }
 
+// Pantalla de categoría en desarrollo con aviso (D50). Prellena el correo con
+// el de la sesión para que el usuario del panel solo confirme.
+function SoonScreen({ category }: { category: CategoryDetailData }) {
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    try {
+      getBrowserClient()
+        .auth.getUser()
+        .then(({ data }) => {
+          if (active && data.user?.email) setEmail(data.user.email);
+        })
+        .catch(() => {
+          // Sin sesión legible: el usuario escribe el correo a mano.
+        });
+    } catch {
+      // Cliente de Supabase sin configurar (SSR/tests): sin prellenado.
+    }
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return (
+    <div className="eth-screen">
+      <Link href="/app" className={styles.back}>
+        ← Inicio
+      </Link>
+      <div className={styles.soon}>
+        <span className={styles.soonBadge}>
+          <span className={styles.soonBadgeDot} />
+          {category.soonEta}
+        </span>
+        <div className={styles.soonTitle}>Esta categoría está en desarrollo</div>
+        <p className={styles.soonNote}>
+          {category.soonNote} Aún no puedes conectar{" "}
+          <strong style={{ color: "var(--ink)", fontWeight: 600 }}>
+            {category.provider}
+          </strong>
+          , pero ya la estamos preparando.
+        </p>
+        <div className={styles.soonNotify}>
+          <NotifyForm category={category.slug} accent={category.accent} defaultEmail={email} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function CategoryDetail({ category }: { category: CategoryDetailData }) {
   const [refreshing, setRefreshing] = useState(false);
   const [fresh, setFresh] = useState(category.freshLabel ?? "");
@@ -128,27 +180,7 @@ export function CategoryDetail({ category }: { category: CategoryDetailData }) {
   }
 
   if (category.state === "soon") {
-    return (
-      <div className="eth-screen">
-        <Link href="/app" className={styles.back}>
-          ← Inicio
-        </Link>
-        <div className={styles.soon}>
-          <span className={styles.soonBadge}>
-            <span className={styles.soonBadgeDot} />
-            {category.soonEta}
-          </span>
-          <div className={styles.soonTitle}>Esta categoría está en desarrollo</div>
-          <p className={styles.soonNote}>
-            {category.soonNote} Aún no puedes conectar{" "}
-            <strong style={{ color: "var(--ink)", fontWeight: 600 }}>
-              {category.provider}
-            </strong>
-            , pero ya la estamos preparando.
-          </p>
-        </div>
-      </div>
-    );
+    return <SoonScreen category={category} />;
   }
 
   const stats = category.stats ?? [];

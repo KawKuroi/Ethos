@@ -234,6 +234,38 @@ export type ImportResult = {
   items: number;
 };
 
+// ===== Interés en categorías en desarrollo (D50) =====
+
+// Registra un correo para avisar cuando una categoría diferida se active.
+// Público: usable desde la landing sin sesión; si hay sesión, adjunta el token
+// para que el backend asocie el usuario (endpoint /category-interest).
+export async function registerCategoryInterest(
+  category: string,
+  email: string,
+): Promise<void> {
+  const {
+    data: { session },
+  } = await getBrowserClient().auth.getSession();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (session) headers.Authorization = `Bearer ${session.access_token}`;
+
+  const response = await fetch(`${baseUrl()}/category-interest`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ category, email }),
+  });
+  if (!response.ok) {
+    let message = `El API respondió ${response.status}`;
+    try {
+      const body = (await response.json()) as { detail?: unknown };
+      if (typeof body.detail === "string" && body.detail) message = body.detail;
+    } catch {
+      // Cuerpo no JSON: se conserva el mensaje genérico.
+    }
+    throw new ApiError(message, response.status);
+  }
+}
+
 // ===== Operaciones =====
 
 export function getGamesSource(): Promise<GamesSource> {

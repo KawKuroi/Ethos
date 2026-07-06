@@ -21,11 +21,12 @@ https://ethos-steel.vercel.app
 
 ## Activo
 
-**Fase 3 cerrada (2026-07-05); siguiente: Fase 4 — pulido y robustez.** El
-catálogo completo está activo; no queda ninguna categoría "en desarrollo".
-Pendiente del usuario para producción: `TRAKT_CLIENT_ID` en Render (AniList y
-Goodreads no requieren keys), migraciones 0003/0004, env vars de Vercel y la
-verificación e2e de las cinco categorías — ver `por-revisar.md`.
+**Fase 4 en curso (pulido y robustez).** Las cinco categorías del catálogo
+están activas; las tres diferidas (Lugares, Comida, Juegos de mesa) se muestran
+"en desarrollo" con aviso (D50, primera tarea de la fase). Pendiente del
+usuario para producción: `TRAKT_CLIENT_ID` en Render (AniList y Goodreads no
+requieren keys), migraciones 0003/0004/0005, env vars de Vercel y la
+verificación e2e — ver `por-revisar.md`.
 
 Fase 0 completa (2026-07-02): Supabase real con migraciones aplicadas,
 servicio en Render (blueprint `render.yaml`), web en Vercel, keep-alive de
@@ -40,6 +41,24 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-05 (Fase 4 · aviso de categorías en desarrollo, D50)
+
+- Primera tarea de la Fase 4. Las categorías diferidas (Lugares/Swarm,
+  Comida/Beli, Juegos de mesa/BoardGameGeek) vuelven a la UI como "en
+  desarrollo" con formulario "Avísame cuando esté lista".
+- Backend: migración 0005 (`category_interest`, RLS sin políticas públicas),
+  slice `interest/` (modelos, repositorio memoria+Supabase, endpoint público
+  `POST /category-interest`), `get_optional_user_id` en `auth.py` (asocia el
+  usuario si hay JWT, anónimo si no), `email-validator` como dependencia
+  explícita. 6 tests nuevos (anónimo, con sesión, dedupe, categoría activa
+  rechazada, correo inválido, token inválido ignorado). api 174 tests, 93.0%.
+- Web: `NotifyForm` compartido, `registerCategoryInterest` en `lib/api.ts`
+  (adjunta el token solo si hay sesión), bloque "En camino" en la landing,
+  entradas soon en `category/data.ts` (rutas `places/food/board`), pantalla
+  soon con aviso y correo prellenado de la sesión, filas soon en el panorama y
+  Fuentes. Tests de landing/sources/category-detail actualizados a D50 + test
+  de `NotifyForm`. web 64 tests, tsc/eslint/build en verde.
 
 ### 2026-07-05 (Fase 3 cerrada: Cine/TV web + AniList + Goodreads + import genérico)
 

@@ -156,6 +156,12 @@ function SourceRow({ view, maxHero }: { view: ActiveSourceView; maxHero: number 
           </div>
           <span className={styles.dotLive} aria-label="activa" />
         </>
+      ) : view.soon ? (
+        <>
+          <div className={styles.barEmpty} />
+          <span className={styles.offLabel}>en desarrollo →</span>
+          <span className={styles.dotOff} aria-label="en desarrollo" />
+        </>
       ) : (
         <>
           <div className={styles.barEmpty} />

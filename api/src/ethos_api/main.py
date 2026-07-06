@@ -13,6 +13,7 @@ from ethos_api.credentials.router import router as credentials_router
 from ethos_api.film.router import router as film_router
 from ethos_api.games.router import router as games_router
 from ethos_api.imports.router import router as imports_router
+from ethos_api.interest.router import router as interest_router
 from ethos_api.mcp_auth import router as mcp_token_router
 from ethos_api.mcp_server import mcp
 from ethos_api.middleware import (
@@ -59,6 +60,7 @@ def create_app() -> FastAPI:
     app.include_router(anime_router)
     app.include_router(books_router)
     app.include_router(imports_router)
+    app.include_router(interest_router)
     app.include_router(mcp_token_router)
 
     @app.get("/health")

@@ -1582,6 +1582,48 @@
   gap: 14px;
 }
 
+/* ===== Categorías en desarrollo con aviso (D50) ===== */
+.soonBlock {
+  margin-top: 34px;
+}
+.soonBlockHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.soonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+.soonCard {
+  background: var(--surface);
+  border: 1.5px dashed color-mix(in oklab, var(--ca) 40%, var(--line));
+  border-radius: 16px;
+  padding: 17px 17px 15px;
+}
+.soonTag {
+  font-family: var(--fm);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ca);
+  background: color-mix(in oklab, var(--ca) 13%, transparent);
+  padding: 4px 9px;
+  border-radius: var(--pill);
+  flex: 0 0 auto;
+}
+.soonCardNote {
+  font-family: var(--fb);
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
 .galleryCard {
   position: relative;
   overflow: hidden;

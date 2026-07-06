@@ -98,7 +98,9 @@ export function Sources() {
   const { loading, views } = useActiveSources();
 
   const live = views.filter((v) => v.live);
-  const off = views.filter((v) => !v.live);
+  // Las diferidas "en desarrollo" tienen su propia sección (SOON); fuera de las
+  // apagadas para no duplicarlas.
+  const off = views.filter((v) => !v.live && !v.soon);
 
   const summary = [
     { value: String(live.length), label: "activas" },

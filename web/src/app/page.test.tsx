@@ -35,10 +35,12 @@ describe("Landing", () => {
     ]) {
       expect(screen.getAllByText(name).length).toBeGreaterThan(0);
     }
-    // Las diferidas y la retirada (Actividad física, D31) no aparecen.
-    for (const name of ["Lugares", "Comida", "Juegos de mesa", "Actividad física"]) {
-      expect(screen.queryByText(name)).not.toBeInTheDocument();
+    // Las diferidas se muestran "en desarrollo" con aviso (D50).
+    for (const name of ["Lugares", "Comida", "Juegos de mesa"]) {
+      expect(screen.getAllByText(name).length).toBeGreaterThan(0);
     }
+    // La retirada (Actividad física, D31) no aparece.
+    expect(screen.queryByText("Actividad física")).not.toBeInTheDocument();
   });
 
   it("muestra FAQ, sugerencias y footer", () => {

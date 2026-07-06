@@ -89,4 +89,23 @@ def get_current_user_id(
     return str(user_id)
 
 
+def get_optional_user_id(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+) -> str | None:
+    """Devuelve el id del usuario si hay un JWT válido; None si no hay o falla.
+
+    Para endpoints usables tanto por un visitante anónimo (landing pública)
+    como por un usuario con sesión (panel), sin exigir autenticación.
+    """
+    if credentials is None:
+        return None
+    try:
+        payload = _decode(credentials.credentials)
+    except jwt.PyJWTError:
+        return None
+    user_id = payload.get("sub")
+    return str(user_id) if user_id else None
+
+
 CurrentUserId = Annotated[str, Depends(get_current_user_id)]
+OptionalUserId = Annotated[str | None, Depends(get_optional_user_id)]

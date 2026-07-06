@@ -80,6 +80,19 @@ Marca `[x]` conforme lo revises.
   "Elige una nueva contraseña · Ethos"). Envía uno de prueba y revisa cómo
   se ve.
 
+## Fase 4 · Aviso de categorías en desarrollo (D50)
+
+- [ ] **Aplicar la migración 0005** (`category_interest`) en Supabase antes de
+  usar el aviso en producción; sin ella, `POST /category-interest` falla al
+  persistir.
+- [ ] **Mecanismo de aviso real pendiente**: hoy solo se guarda el interés
+  (correo + categoría). Falta decidir cómo avisar cuando una categoría diferida
+  se active (correo masivo desde la lista `category_interest`) — se define
+  cuando exista proveedor de correo (ver tarea de sugerencias/contacto).
+- [ ] **Verifica el flujo**: en la landing (bloque "En camino") y en el panel
+  (`/app/categoria/places`, panorama y Fuentes), deja un correo en "Avísame" y
+  confirma que responde "Te avisaremos en …".
+
 ## Decisiones que tomé por delegación (2026-07-03) — revísalas
 
 - [ ] **D32** Wishlist de Steam sin títulos en v1 (solo conteo + appids por

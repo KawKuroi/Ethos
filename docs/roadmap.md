@@ -8,12 +8,12 @@ catálogo (D27) activas de punta a punta. Queda la Fase 4.
 
 ## Fase 4 — Pulido y robustez
 
-- [ ] "Avísame cuando esté lista" para categorías en desarrollo.
+- [x] "Avísame cuando esté lista" para categorías en desarrollo.
 - [ ] Entradas a mano (añadir registros sin proveedor).
 - [ ] Envío real de sugerencias y contacto (persistencia + notificación).
 - [ ] Borrado de cuenta con deshacer de 30 días (correo + purga diferida).
-- [ ] Playground de Conectar IA con LLM real (opcional; la v1 lo simula).
-- [ ] Migración del auth del MCP a OAuth 2.1 (si se requiere).
+- [ ] Playground de Conectar IA con LLM real.
+- [ ] Migración del auth del MCP a OAuth 2.1.
 - [ ] Enriquecimiento de géneros de juegos.
 - [ ] Envelope encryption con KMS (si se requiere).
 - [ ] Opción de mover el backend a Cloud Run para eliminar cold starts.

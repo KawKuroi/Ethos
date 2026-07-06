@@ -21,12 +21,61 @@ export type ActiveSourceView = {
   modeLabel: "API" | "Import";
   live: boolean;
   syncing: boolean;
+  // Categoría diferida "en desarrollo" (D50): no conectable, ofrece aviso.
+  soon?: boolean;
   // Métrica hero de la fila del panorama ("1.840" + "horas jugadas").
   heroValue: number;
   heroLabel: string;
   // Cifra corta de la tarjeta de Fuentes ("312 juegos").
   countLabel: string;
 };
+
+// Categorías diferidas fuera del catálogo activo (D27/D31), mostradas "en
+// desarrollo" en el panorama con enlace a su pantalla de aviso (D50).
+const DEFERRED_VIEWS: ActiveSourceView[] = [
+  {
+    slug: "places",
+    name: "Lugares",
+    initial: "L",
+    accent: "#0ea5a4",
+    provider: "Swarm",
+    modeLabel: "API",
+    live: false,
+    syncing: false,
+    soon: true,
+    heroValue: 0,
+    heroLabel: "",
+    countLabel: "en desarrollo",
+  },
+  {
+    slug: "food",
+    name: "Comida",
+    initial: "C",
+    accent: "#e0663c",
+    provider: "Beli",
+    modeLabel: "API",
+    live: false,
+    syncing: false,
+    soon: true,
+    heroValue: 0,
+    heroLabel: "",
+    countLabel: "en desarrollo",
+  },
+  {
+    slug: "board",
+    name: "Juegos de mesa",
+    initial: "J",
+    accent: "#9a6b3f",
+    provider: "BoardGameGeek",
+    modeLabel: "API",
+    live: false,
+    syncing: false,
+    soon: true,
+    heroValue: 0,
+    heroLabel: "",
+    countLabel: "en desarrollo",
+  },
+];
 
 export type ActiveSourcesState = {
   loading: boolean;
@@ -131,5 +180,5 @@ export function useActiveSources(): ActiveSourcesState {
 
   const loading =
     games.loading || music.loading || film.loading || anime.loading || books.loading;
-  return { loading, views, gamesSummary };
+  return { loading, views: [...views, ...DEFERRED_VIEWS], gamesSummary };
 }
