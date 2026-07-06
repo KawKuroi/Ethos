@@ -9,6 +9,7 @@ import { useBooksSource } from "@/lib/use-books-source";
 import { ImportPanel } from "../import-panel";
 import { ContextDownloadModal } from "./context-modal";
 import { CATEGORY_DETAIL } from "./data";
+import { ManualEntries } from "./manual-entries";
 import styles from "./category.module.css";
 
 const BOOKS = CATEGORY_DETAIL.books;
@@ -209,6 +210,7 @@ function ConnectedView({
       <CurrentlyReading summary={summary} />
       <TopAuthors summary={summary} />
       <RecentReads summary={summary} />
+      <ManualEntries slug="books" accent={BOOKS.accent} onChange={onImported} />
 
       {modalOpen && (
         <ContextDownloadModal

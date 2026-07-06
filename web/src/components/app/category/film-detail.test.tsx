@@ -24,6 +24,9 @@ vi.mock("@/lib/api", () => ({
   downloadContext: () => Promise.resolve(),
   refreshTrakt: () => Promise.resolve(),
   connectTrakt: () => Promise.resolve(),
+  listManualItems: () => Promise.resolve([]),
+  addManualItem: () => Promise.resolve({}),
+  deleteManualItem: () => Promise.resolve(),
 }));
 
 const FRESH: FilmSource = {

@@ -1,45 +1,40 @@
-# ACTIVE_TASK — Fase 4 · Aviso de categorías en desarrollo (D50)
+# ACTIVE_TASK — Fase 4 · Entradas a mano (D51)
 
-Primera tarea de la Fase 4: las categorías diferidas (Lugares, Comida, Juegos
-de mesa) se muestran "en desarrollo" con un "Avísame cuando esté lista" que
-persiste el correo.
+Registros añadidos a mano (sin proveedor) en las categorías de obra.
 
 ### 1. Contexto y Archivos Afectados
 
-Backend nuevo: `interest/{__init__,models,repository,deps,router}.py`,
-migración `0005_category_interest.sql`. Editados: `auth.py`
-(`get_optional_user_id`), `main.py` (router), `pyproject.toml`
-(`email-validator`). Web nuevo: `components/notify-form.{tsx,module.css}`.
-Editados: `lib/api.ts` (`registerCategoryInterest`), `landing/data.ts` +
-`gallery.tsx` + `landing.module.css` (bloque "En camino"), `category/data.ts`
-(entradas soon), `category/category-detail.tsx` + `.module.css` (pantalla soon
-con aviso), `lib/use-active-sources.ts` + `overview.tsx` (filas soon),
-`sources.tsx` (excluye soon de apagadas). Tests actualizados: landing, sources,
-category-detail; nuevos: `interest/test_interest_api.py`, `notify-form.test.tsx`.
+Backend nuevo: `items/{__init__,support,models,service,router}.py`,
+`tests/items/test_items_api.py`. Editados: los cuatro stores de item
+(`games/film/anime/books/store.py`) con `add_item`/`delete_item` y refresco que
+conserva las entradas a mano; `main.py` (router). Web nuevo:
+`category/manual-entries.{tsx,module.css}` + test. Editados: `lib/api.ts`
+(ops de items), los cuatro detalles (`games/film/anime/books-detail.tsx`) con
+el bloque `ManualEntries`, y sus tests (mock de `@/lib/api`).
 
 ### 2. Evaluación Crítica
 
-Veredicto: **bueno**. Reutiliza el patrón repositorio (memoria+Supabase) y el
-estado "soon" ya existente del diseño. Endpoint público controlado (rate limit
-por IP, idempotente por correo+categoría, valida el set diferido, RLS sin
-políticas públicas). Riesgo menor: endpoint sin auth = superficie de spam,
-mitigado por el rate limit y el upsert idempotente. Deuda: el aviso real al
-lanzar una categoría queda pendiente (necesita proveedor de correo, ver tarea
-de sugerencias/contacto).
+Veredicto: **bueno**. Reutiliza `user_items` sin migración; al vivir junto a
+los del proveedor, resúmenes/contexto/MCP los incluyen sin tocar esos caminos.
+El punto delicado —que el refresco no borre lo manual— se resuelve acotando el
+borrado (`external_id not like 'manual:*'` / `keep_manual`), cubierto por test.
+Deuda: la UI de entradas a mano solo está en el detalle conectado (extender a
+categorías sin proveedor queda como mejora, por-revisar). Música queda fuera
+(es de eventos).
 
 ### 3. Plan de Acción Detallado
 
-- [x] Migración 0005 + slice `interest/` (modelos, repo, deps, router público).
-- [x] `get_optional_user_id` en `auth.py`; `email-validator` en pyproject.
-- [x] `registerCategoryInterest` + `NotifyForm` compartido.
-- [x] Resurfacar diferidas: landing "En camino", panorama, Fuentes, pantalla soon.
-- [x] Tests backend (6) y web (NotifyForm + ajustes a landing/sources/detail).
-- [x] Docs: D50, roadmap, current, por-revisar.
+- [x] Módulo `items/` (support, models, service, router genérico por categoría).
+- [x] `add_item`/`delete_item` + refresco seguro en los 4 stores (memoria+Supabase).
+- [x] `lib/api.ts` (list/add/delete) + `ManualEntries` en los 4 detalles.
+- [x] Tests backend (10) y web (`ManualEntries`) + mocks de detalles.
+- [x] Docs: D51, roadmap, current, por-revisar.
 
 ### 4. Reporte de Pruebas
 
-**[APROBADO]** — api: ruff + mypy limpios (121 archivos), pytest 174/174
-(6 nuevos), cobertura 93.0%. web: tsc + eslint limpios, vitest 64/64, build en
-verde (8 rutas de categoría: 5 activas + 3 soon). Secretos: grep limpio (solo
-nombres de campos y correos de ejemplo en tests). Sin credenciales nuevas
-(AniList/interés no requieren keys). Idioma D19 correcto.
+**[APROBADO]** — api: ruff + mypy limpios (126 archivos), pytest 184/184
+(10 nuevos: alta/lista/borrado, resumen que cuenta lo manual, refresco que lo
+conserva, aislamiento, categoría sin soporte, id no manual, inexistente),
+cobertura 92.6%. web: tsc + eslint limpios, vitest 67/67 (ManualEntries +
+mocks de los 4 detalles), build en verde. Secretos: grep limpio. Sin migración.
+Idioma D19 correcto.

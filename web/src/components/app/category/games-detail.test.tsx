@@ -24,6 +24,9 @@ vi.mock("@/lib/api", () => ({
   downloadContext: () => Promise.resolve(),
   refreshSteam: () => Promise.resolve(),
   getSteamLoginUrl: () => Promise.resolve("https://steamcommunity.com/openid/login"),
+  listManualItems: () => Promise.resolve([]),
+  addManualItem: () => Promise.resolve({}),
+  deleteManualItem: () => Promise.resolve(),
 }));
 
 const FRESH: GamesSource = {

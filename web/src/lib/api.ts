@@ -234,6 +234,56 @@ export type ImportResult = {
   items: number;
 };
 
+// ===== Entradas a mano (D51) =====
+
+export type ItemStatus =
+  | "in_library"
+  | "consumed"
+  | "in_progress"
+  | "wishlist"
+  | "abandoned";
+
+export type ManualItem = {
+  external_id: string;
+  category: string;
+  title: string;
+  status: ItemStatus;
+  creators: string[];
+  year: number | null;
+  rating: number | null;
+  review: string | null;
+  favorite: boolean;
+};
+
+export type ManualItemInput = {
+  category: string;
+  title: string;
+  status: ItemStatus;
+  creators?: string[];
+  year?: number | null;
+  rating?: number | null;
+  review?: string | null;
+  favorite?: boolean;
+};
+
+export function listManualItems(category: string): Promise<ManualItem[]> {
+  return apiJson<ManualItem[]>(`/items/${category}`);
+}
+
+export function addManualItem(body: ManualItemInput): Promise<ManualItem> {
+  return apiJson<ManualItem>("/items", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export function deleteManualItem(category: string, externalId: string): Promise<void> {
+  return apiFetch(`/items/${category}/${encodeURIComponent(externalId)}`, {
+    method: "DELETE",
+  }).then(() => undefined);
+}
+
 // ===== Interés en categorías en desarrollo (D50) =====
 
 // Registra un correo para avisar cuando una categoría diferida se active.

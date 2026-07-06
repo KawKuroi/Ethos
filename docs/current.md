@@ -42,6 +42,20 @@ producción.
 
 ## Bitácora
 
+### 2026-07-06 (Fase 4 · entradas a mano, D51)
+
+- Registros añadidos a mano (sin proveedor) en games/film/anime/books. Viven en
+  `user_items` con `source="manual"` y `external_id` `manual:<uuid>`: cuentan en
+  resúmenes, contexto y MCP sin código extra, y el refresco los conserva
+  (`replace_items` acota su borrado; en memoria `keep_manual`).
+- Backend: módulo `items/` (support, models, service, router) con
+  `POST /items`, `GET /items/{category}`, `DELETE /items/{category}/{id}`;
+  `add_item`/`delete_item` y refresco seguro en los cuatro stores de item.
+  10 tests nuevos. api 184 tests, 92.6%.
+- Web: `ManualEntries` (añadir/listar/borrar) en el detalle conectado de las
+  cuatro categorías + ops en `lib/api.ts`; recarga el resumen al cambiar. web
+  67 tests, tsc/eslint/build en verde.
+
 ### 2026-07-05 (Fase 4 · aviso de categorías en desarrollo, D50)
 
 - Primera tarea de la Fase 4. Las categorías diferidas (Lugares/Swarm,

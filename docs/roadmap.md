@@ -9,7 +9,7 @@ catálogo (D27) activas de punta a punta. Queda la Fase 4.
 ## Fase 4 — Pulido y robustez
 
 - [x] "Avísame cuando esté lista" para categorías en desarrollo.
-- [ ] Entradas a mano (añadir registros sin proveedor).
+- [x] Entradas a mano (añadir registros sin proveedor).
 - [ ] Envío real de sugerencias y contacto (persistencia + notificación).
 - [ ] Borrado de cuenta con deshacer de 30 días (correo + purga diferida).
 - [ ] Playground de Conectar IA con LLM real.

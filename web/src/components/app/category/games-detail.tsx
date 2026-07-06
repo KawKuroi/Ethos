@@ -10,6 +10,7 @@ import { useGamesSource } from "@/lib/use-games-source";
 import { ConnectSteamButton } from "../connect-steam";
 import { ContextDownloadModal } from "./context-modal";
 import { CATEGORY_DETAIL } from "./data";
+import { ManualEntries } from "./manual-entries";
 import styles from "./category.module.css";
 
 const GAMES = CATEGORY_DETAIL.games;
@@ -180,6 +181,8 @@ function ConnectedView({
           </div>
         </div>
       )}
+
+      <ManualEntries slug="games" accent={GAMES.accent} onChange={onRefresh} />
 
       {modalOpen && (
         <ContextDownloadModal

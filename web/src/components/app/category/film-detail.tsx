@@ -15,6 +15,7 @@ import { useFilmSource } from "@/lib/use-film-source";
 import { ConnectUsernameForm } from "../connect-username";
 import { ContextDownloadModal } from "./context-modal";
 import { CATEGORY_DETAIL } from "./data";
+import { ManualEntries } from "./manual-entries";
 import styles from "./category.module.css";
 
 const FILM = CATEGORY_DETAIL.film;
@@ -213,6 +214,7 @@ function ConnectedView({
       <TopMovies summary={summary} />
       <TopShows summary={summary} />
       <RecentlyWatched summary={summary} />
+      <ManualEntries slug="film" accent={FILM.accent} onChange={onRefresh} />
 
       {modalOpen && (
         <ContextDownloadModal

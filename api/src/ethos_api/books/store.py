@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Protocol
 
+from ethos_api.items.support import keep_manual, manual_external_id
 from ethos_api.schema import Category, NormalizedItem
 from ethos_api.sources_status import (
     DB_TO_STATE,
@@ -27,6 +28,10 @@ class BooksStore(Protocol):
 
     def items_for_user(self, user_id: str) -> list[NormalizedItem]: ...
 
+    def add_item(self, user_id: str, item: NormalizedItem) -> None: ...
+
+    def delete_item(self, user_id: str, external_id: str) -> bool: ...
+
     def set_status(self, user_id: str, status: SourceStatus) -> None: ...
 
     def status_for_user(self, user_id: str) -> SourceStatus: ...
@@ -40,10 +45,20 @@ class InMemoryBooksStore:
         self._status: dict[str, SourceStatus] = {}
 
     def replace_items(self, user_id: str, items: list[NormalizedItem]) -> None:
-        self._items[user_id] = list(items)
+        # Conserva las entradas a mano; el refresco solo reemplaza lo del proveedor.
+        self._items[user_id] = keep_manual(self._items.get(user_id, [])) + list(items)
 
     def items_for_user(self, user_id: str) -> list[NormalizedItem]:
         return list(self._items.get(user_id, []))
+
+    def add_item(self, user_id: str, item: NormalizedItem) -> None:
+        self._items.setdefault(user_id, []).append(item)
+
+    def delete_item(self, user_id: str, external_id: str) -> bool:
+        items = self._items.get(user_id, [])
+        kept = [i for i in items if manual_external_id(i) != external_id]
+        self._items[user_id] = kept
+        return len(kept) != len(items)
 
     def set_status(self, user_id: str, status: SourceStatus) -> None:
         self._status[user_id] = status
@@ -65,24 +80,42 @@ class SupabaseBooksStore:
     def _category_params(self, user_id: str) -> dict[str, str]:
         return {"user_id": f"eq.{user_id}", "category": f"eq.{self._CATEGORY}"}
 
+    def _row(self, user_id: str, item: NormalizedItem) -> dict[str, object]:
+        external_id = (
+            manual_external_id(item)
+            if item.source == "manual"
+            else item.work.external_ids.get("goodreads", "")
+        )
+        return {
+            "user_id": user_id,
+            "category": self._CATEGORY,
+            "external_id": external_id,
+            "status": item.status.value,
+            "title": item.work.title,
+            # Columna indexada genérica: aquí guarda las páginas, la métrica.
+            "playtime_minutes": item.engagement.get("pages", 0),
+            "payload": item.model_dump(mode="json"),
+        }
+
     def replace_items(self, user_id: str, items: list[NormalizedItem]) -> None:
-        self._rest.delete(self._ITEMS, self._category_params(user_id))
-        self._rest.insert(
+        # No borra las entradas a mano (external_id `manual:*`): el refresco
+        # del proveedor solo reemplaza lo suyo.
+        self._rest.delete(
             self._ITEMS,
-            [
-                {
-                    "user_id": user_id,
-                    "category": self._CATEGORY,
-                    "external_id": item.work.external_ids.get("goodreads", ""),
-                    "status": item.status.value,
-                    "title": item.work.title,
-                    # Columna indexada genérica: aquí guarda las páginas,
-                    # la métrica de la categoría.
-                    "playtime_minutes": item.engagement.get("pages", 0),
-                    "payload": item.model_dump(mode="json"),
-                }
-                for item in items
-            ],
+            {**self._category_params(user_id), "external_id": "not.like.manual:*"},
+        )
+        self._rest.insert(self._ITEMS, [self._row(user_id, item) for item in items])
+
+    def add_item(self, user_id: str, item: NormalizedItem) -> None:
+        self._rest.insert(self._ITEMS, [self._row(user_id, item)])
+
+    def delete_item(self, user_id: str, external_id: str) -> bool:
+        return (
+            self._rest.delete(
+                self._ITEMS,
+                {**self._category_params(user_id), "external_id": f"eq.{external_id}"},
+            )
+            > 0
         )
 
     def items_for_user(self, user_id: str) -> list[NormalizedItem]:

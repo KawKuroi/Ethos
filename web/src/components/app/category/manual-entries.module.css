@@ -1,0 +1,140 @@
+/* Entradas a mano de una categoría (D51). Acento por fila: --catAccent. */
+.section {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: var(--bw) solid var(--line);
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.eyebrow {
+  font-family: var(--fm);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.count {
+  font-family: var(--fm);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--catAccent, var(--accent));
+  background: color-mix(in oklab, var(--catAccent, var(--accent)) 13%, transparent);
+  padding: 2px 8px;
+  border-radius: var(--pill);
+}
+.toggle {
+  margin-left: auto;
+  font-family: var(--fb);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--catAccent, var(--accent));
+}
+.list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 13px;
+  border: var(--bw) solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.rowBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.rowTitle {
+  font-family: var(--fb);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.rowStatus {
+  font-family: var(--fm);
+  font-size: 11px;
+  color: var(--muted);
+}
+.remove {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: color-mix(in oklab, var(--error, #d8543f) 12%, transparent);
+  color: var(--error, #d8543f);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.form {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.input {
+  flex: 1 1 180px;
+  min-width: 0;
+  padding: 9px 13px;
+  border-radius: 10px;
+  border: var(--bw) solid var(--line);
+  background: var(--surface);
+  font-family: var(--fb);
+  font-size: 14px;
+  color: var(--ink);
+}
+.select {
+  padding: 9px 13px;
+  border-radius: 10px;
+  border: var(--bw) solid var(--line);
+  background: var(--surface);
+  font-family: var(--fb);
+  font-size: 13px;
+  color: var(--ink);
+}
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--catAccent, var(--accent));
+}
+.add {
+  padding: 9px 17px;
+  border-radius: 10px;
+  border: none;
+  background: var(--catAccent, var(--accent));
+  color: var(--on-accent);
+  cursor: pointer;
+  font-family: var(--fb);
+  font-size: 13px;
+  font-weight: 700;
+}
+.add:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.error {
+  flex-basis: 100%;
+  font-family: var(--fb);
+  font-size: 12px;
+  color: var(--error, #d8543f);
+}

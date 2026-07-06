@@ -93,6 +93,15 @@ Marca `[x]` conforme lo revises.
   (`/app/categoria/places`, panorama y Fuentes), deja un correo en "Avísame" y
   confirma que responde "Te avisaremos en …".
 
+## Fase 4 · Entradas a mano (D51)
+
+- [ ] **Verifica el flujo**: en el detalle de una categoría conectada (p. ej.
+  Libros), abre "Añadido a mano", crea un registro y comprueba que aparece y
+  que el resumen lo cuenta; bórralo y confirma que desaparece.
+- [ ] Nota de alcance: por ahora la sección "Añadido a mano" vive en el detalle
+  **conectado**. Añadirla también a categorías sin proveedor conectado (para
+  llevar solo entradas a mano) queda como mejora si la quieres.
+
 ## Decisiones que tomé por delegación (2026-07-03) — revísalas
 
 - [ ] **D32** Wishlist de Steam sin títulos en v1 (solo conteo + appids por

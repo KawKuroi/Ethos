@@ -15,6 +15,7 @@ import { useAnimeSource } from "@/lib/use-anime-source";
 import { ConnectUsernameForm } from "../connect-username";
 import { ContextDownloadModal } from "./context-modal";
 import { CATEGORY_DETAIL } from "./data";
+import { ManualEntries } from "./manual-entries";
 import styles from "./category.module.css";
 
 const ANIME = CATEGORY_DETAIL.anime;
@@ -187,6 +188,7 @@ function ConnectedView({
 
       <TopRated summary={summary} />
       <Current summary={summary} />
+      <ManualEntries slug="anime" accent={ANIME.accent} onChange={onRefresh} />
 
       {modalOpen && (
         <ContextDownloadModal

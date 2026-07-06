@@ -29,6 +29,9 @@ vi.mock("@/lib/api", () => ({
       status: "imported",
       items: 4,
     }),
+  listManualItems: () => Promise.resolve([]),
+  addManualItem: () => Promise.resolve({}),
+  deleteManualItem: () => Promise.resolve(),
   ApiError: class ApiError extends Error {},
 }));
 
