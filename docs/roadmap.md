@@ -10,7 +10,7 @@ catálogo (D27) activas de punta a punta. Queda la Fase 4.
 
 - [x] "Avísame cuando esté lista" para categorías en desarrollo.
 - [x] Entradas a mano (añadir registros sin proveedor).
-- [ ] Envío real de sugerencias y contacto (persistencia + notificación).
+- [x] Envío real de sugerencias y contacto (persistencia + notificación).
 - [ ] Borrado de cuenta con deshacer de 30 días (correo + purga diferida).
 - [ ] Playground de Conectar IA con LLM real.
 - [ ] Migración del auth del MCP a OAuth 2.1.

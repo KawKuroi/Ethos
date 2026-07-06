@@ -171,6 +171,12 @@
   cursor: default;
   opacity: 0.7;
 }
+.sendError {
+  margin-top: 10px;
+  font-family: var(--fb);
+  font-size: 13px;
+  color: var(--error, #d8543f);
+}
 
 .contact {
   display: flex;

@@ -1,40 +1,37 @@
-# ACTIVE_TASK — Fase 4 · Entradas a mano (D51)
+# ACTIVE_TASK — Fase 4 · Sugerencias y contacto reales (D52)
 
-Registros añadidos a mano (sin proveedor) en las categorías de obra.
+Los formularios de sugerencias (landing y Ayuda) persisten de verdad y avisan
+al admin por correo (opcional).
 
 ### 1. Contexto y Archivos Afectados
 
-Backend nuevo: `items/{__init__,support,models,service,router}.py`,
-`tests/items/test_items_api.py`. Editados: los cuatro stores de item
-(`games/film/anime/books/store.py`) con `add_item`/`delete_item` y refresco que
-conserva las entradas a mano; `main.py` (router). Web nuevo:
-`category/manual-entries.{tsx,module.css}` + test. Editados: `lib/api.ts`
-(ops de items), los cuatro detalles (`games/film/anime/books-detail.tsx`) con
-el bloque `ManualEntries`, y sus tests (mock de `@/lib/api`).
+Backend nuevo: `feedback/{__init__,models,repository,mailer,deps,router}.py`,
+migración `0006_feedback.sql`, `tests/feedback/test_feedback_api.py`. Editados:
+`config.py` (SMTP + feedback_to/from), `main.py` (router). Web editado:
+`lib/api.ts` (`submitFeedback`), `landing/suggestions.tsx`, `app/help/help.tsx`
+y sus CSS + tests.
 
 ### 2. Evaluación Crítica
 
-Veredicto: **bueno**. Reutiliza `user_items` sin migración; al vivir junto a
-los del proveedor, resúmenes/contexto/MCP los incluyen sin tocar esos caminos.
-El punto delicado —que el refresco no borre lo manual— se resuelve acotando el
-borrado (`external_id not like 'manual:*'` / `keep_manual`), cubierto por test.
-Deuda: la UI de entradas a mano solo está en el detalle conectado (extender a
-categorías sin proveedor queda como mejora, por-revisar). Música queda fuera
-(es de eventos).
+Veredicto: **bueno**. Mismo patrón repositorio (memoria+Supabase) y endpoint
+público controlado (rate limit, `user_id` opcional, RLS sin acceso público).
+El aviso por correo usa `smtplib` de la stdlib (sin dependencia nueva), es
+opcional (gated por env) y best-effort en segundo plano: nunca bloquea ni
+tumba el formulario. Deuda: el contacto personal sigue siendo el `mailto:` del
+diseño (dirección real por configurar, por-revisar); no hay panel admin para
+leer el feedback (se revisa en Supabase).
 
 ### 3. Plan de Acción Detallado
 
-- [x] Módulo `items/` (support, models, service, router genérico por categoría).
-- [x] `add_item`/`delete_item` + refresco seguro en los 4 stores (memoria+Supabase).
-- [x] `lib/api.ts` (list/add/delete) + `ManualEntries` en los 4 detalles.
-- [x] Tests backend (10) y web (`ManualEntries`) + mocks de detalles.
-- [x] Docs: D51, roadmap, current, por-revisar.
+- [x] Migración 0006 + módulo `feedback/` (models, repo, mailer, router).
+- [x] Config SMTP opcional; aviso best-effort en BackgroundTasks.
+- [x] `submitFeedback` + cableado de landing y Ayuda (estados y errores).
+- [x] Tests backend (8: persistencia, sesión, kind, validación, mailer) y web.
+- [x] Docs: D52, roadmap, current, por-revisar.
 
 ### 4. Reporte de Pruebas
 
-**[APROBADO]** — api: ruff + mypy limpios (126 archivos), pytest 184/184
-(10 nuevos: alta/lista/borrado, resumen que cuenta lo manual, refresco que lo
-conserva, aislamiento, categoría sin soporte, id no manual, inexistente),
-cobertura 92.6%. web: tsc + eslint limpios, vitest 67/67 (ManualEntries +
-mocks de los 4 detalles), build en verde. Secretos: grep limpio. Sin migración.
+**[APROBADO]** — api: ruff + mypy limpios (136 archivos), pytest 192/192
+(8 nuevos), cobertura 92.6%. web: tsc + eslint limpios, vitest 68/68, build en
+verde. Secretos: grep limpio (SMTP solo por env; tokens de prueba en tests).
 Idioma D19 correcto.

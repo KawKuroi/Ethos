@@ -1,7 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { Help } from "./help";
+
+const submitFeedback = vi.fn();
+
+vi.mock("@/lib/api", () => ({
+  submitFeedback: (body: unknown) => submitFeedback(body),
+}));
 
 describe("Help", () => {
   it("abre y cierra el acordeón de FAQ", () => {
@@ -17,14 +23,16 @@ describe("Help", () => {
     expect(screen.getByText(/descargas los archivos de contexto/i)).toBeInTheDocument();
   });
 
-  it("confirma el envío de una sugerencia", () => {
+  it("confirma el envío de una sugerencia", async () => {
+    submitFeedback.mockResolvedValueOnce(undefined);
     render(<Help />);
     fireEvent.change(screen.getByLabelText(/tu sugerencia/i), {
       target: { value: "Añadid Spotify" },
     });
     fireEvent.click(screen.getByRole("button", { name: /enviar/i }));
     expect(
-      screen.getByRole("button", { name: /enviado/i }),
+      await screen.findByRole("button", { name: /enviado/i }),
     ).toBeInTheDocument();
+    expect(submitFeedback).toHaveBeenCalledWith({ message: "Añadid Spotify" });
   });
 });

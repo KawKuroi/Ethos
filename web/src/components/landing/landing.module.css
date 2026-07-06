@@ -1883,6 +1883,15 @@
   cursor: pointer;
   align-self: flex-start;
 }
+.sendBtn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.sugError {
+  font-family: var(--fb);
+  font-size: 13px;
+  color: var(--error, #d8543f);
+}
 
 /* ===== Footer ===== */
 

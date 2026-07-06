@@ -42,6 +42,18 @@ producción.
 
 ## Bitácora
 
+### 2026-07-06 (Fase 4 · sugerencias y contacto reales, D52)
+
+- Los formularios de sugerencias (landing y Ayuda) persisten de verdad. Backend:
+  módulo `feedback/` (models, repository memoria+Supabase, mailer SMTP stdlib,
+  router `POST /feedback` público con `user_id` opcional), migración 0006
+  (`feedback`, RLS sin políticas públicas), config SMTP (todo vacío por defecto
+  → sin aviso, solo persiste). Aviso al admin best-effort en `BackgroundTasks`.
+  8 tests nuevos. api 192 tests, 92.6%.
+- Web: `submitFeedback` en `lib/api.ts`; landing `Suggestions` y `Help` cableados
+  (estados enviando/enviado/error). El contacto personal sigue siendo el
+  `mailto:` del diseño. Tests de ambos formularios actualizados. web 68 tests.
+
 ### 2026-07-06 (Fase 4 · entradas a mano, D51)
 
 - Registros añadidos a mano (sin proveedor) en games/film/anime/books. Viven en

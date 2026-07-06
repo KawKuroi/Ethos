@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { submitFeedback } from "@/lib/api";
 import { FAQS } from "./data";
 import styles from "./help.module.css";
 
@@ -8,13 +9,25 @@ export function Help() {
   const [open, setOpen] = useState(0);
   const [text, setText] = useState("");
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
-  function send() {
-    if (sent || text.trim().length === 0) return;
-    // Envío real de sugerencias: Fase 4 (persistencia + notificación).
-    setSent(true);
-    setText("");
-    setTimeout(() => setSent(false), 1800);
+  async function send() {
+    if (sent || sending || text.trim().length === 0) return;
+    setSending(true);
+    setError("");
+    try {
+      // Envío real (persistencia + aviso, D52). Desde Ayuda va asociado a la
+      // sesión si la hay; el formulario no pide correo (queda "anónimo" en UI).
+      await submitFeedback({ message: text.trim() });
+      setSent(true);
+      setText("");
+      setTimeout(() => setSent(false), 1800);
+    } catch {
+      setError("No se pudo enviar. Reinténtalo.");
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -83,11 +96,16 @@ export function Help() {
                 type="button"
                 className={styles.sendBtn}
                 onClick={send}
-                disabled={sent}
+                disabled={sent || sending}
               >
-                {sent ? "Enviado ✓" : "Enviar →"}
+                {sent ? "Enviado ✓" : sending ? "Enviando…" : "Enviar →"}
               </button>
             </div>
+            {error && (
+              <div className={styles.sendError} role="alert">
+                {error}
+              </div>
+            )}
           </div>
 
           <div className={styles.contact}>

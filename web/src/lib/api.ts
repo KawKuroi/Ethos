@@ -234,6 +234,42 @@ export type ImportResult = {
   items: number;
 };
 
+// ===== Sugerencias y contacto (D52) =====
+
+export type FeedbackInput = {
+  message: string;
+  kind?: "suggestion" | "contact";
+  category?: string | null;
+  name?: string | null;
+  email?: string | null;
+};
+
+// Envía una sugerencia o contacto. Público: usable sin sesión (landing); si hay
+// sesión, adjunta el token para asociar el usuario (endpoint /feedback).
+export async function submitFeedback(body: FeedbackInput): Promise<void> {
+  const {
+    data: { session },
+  } = await getBrowserClient().auth.getSession();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (session) headers.Authorization = `Bearer ${session.access_token}`;
+
+  const response = await fetch(`${baseUrl()}/feedback`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    let message = `El API respondió ${response.status}`;
+    try {
+      const data = (await response.json()) as { detail?: unknown };
+      if (typeof data.detail === "string" && data.detail) message = data.detail;
+    } catch {
+      // Cuerpo no JSON: mensaje genérico.
+    }
+    throw new ApiError(message, response.status);
+  }
+}
+
 // ===== Entradas a mano (D51) =====
 
 export type ItemStatus =

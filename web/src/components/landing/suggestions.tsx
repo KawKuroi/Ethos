@@ -3,18 +3,41 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 
+import { submitFeedback } from "@/lib/api";
 import styles from "./landing.module.css";
 
-// Formulario de sugerencias. El envío real (persistencia) llega en Fase 4;
-// mientras, usa el efímero "Enviado ✓" del design system.
+// Formulario de sugerencias con envío real (persistencia + aviso, D52).
 export function Suggestions() {
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSent(true);
-    event.currentTarget.reset();
-    setTimeout(() => setSent(false), 1600);
+    if (sending || sent) return;
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const message = String(data.get("suggestion") ?? "").trim();
+    if (!message) {
+      setError("Escribe tu sugerencia antes de enviarla.");
+      return;
+    }
+    setSending(true);
+    setError("");
+    try {
+      await submitFeedback({
+        message,
+        name: String(data.get("name") ?? "").trim() || null,
+        email: String(data.get("email") ?? "").trim() || null,
+      });
+      setSent(true);
+      form.reset();
+      setTimeout(() => setSent(false), 1600);
+    } catch {
+      setError("No se pudo enviar. Reinténtalo.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -50,9 +73,14 @@ export function Suggestions() {
           rows={3}
           aria-label="Tu sugerencia"
         />
-        <button type="submit" className={styles.sendBtn}>
-          {sent ? "Enviado ✓" : "Enviar sugerencia"}
+        <button type="submit" className={styles.sendBtn} disabled={sending}>
+          {sent ? "Enviado ✓" : sending ? "Enviando…" : "Enviar sugerencia"}
         </button>
+        {error && (
+          <span className={styles.sugError} role="alert">
+            {error}
+          </span>
+        )}
       </form>
     </section>
   );

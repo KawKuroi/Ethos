@@ -102,6 +102,18 @@ Marca `[x]` conforme lo revises.
   **conectado**. Añadirla también a categorías sin proveedor conectado (para
   llevar solo entradas a mano) queda como mejora si la quieres.
 
+## Fase 4 · Sugerencias y contacto (D52)
+
+- [ ] **Aplicar la migración 0006** (`feedback`) en Supabase antes de recibir
+  sugerencias en producción.
+- [ ] **Configurar el aviso por correo (opcional)**: pon `SMTP_HOST`,
+  `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `FEEDBACK_FROM` y `FEEDBACK_TO` en
+  Render para recibir un correo por cada sugerencia. Sin ellas, las sugerencias
+  se guardan igual en la tabla `feedback` (las revisas en Supabase).
+- [ ] **Dirección de contacto real**: el botón "Escribir" de Ayuda usa
+  `mailto:hola@ethos.app` (placeholder). Cámbialo por tu correo real en
+  `web/src/components/app/help/help.tsx`.
+
 ## Decisiones que tomé por delegación (2026-07-03) — revísalas
 
 - [ ] **D32** Wishlist de Steam sin títulos en v1 (solo conteo + appids por

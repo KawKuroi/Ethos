@@ -46,7 +46,7 @@ def test_add_list_and_delete(
 ) -> None:
     test_client, _, _ = client
     created = _add_book(test_client)
-    assert created["external_id"].startswith("manual:")
+    assert str(created["external_id"]).startswith("manual:")
     assert created["title"] == "Un libro a mano"
 
     listed = test_client.get("/items/books", headers=auth_headers()).json()

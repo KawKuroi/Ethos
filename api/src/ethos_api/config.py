@@ -46,5 +46,15 @@ class Settings(BaseSettings):
     # de un usuario sin OAuth (header trakt-api-key), D41.
     trakt_client_id: SecretStr = SecretStr("")
 
+    # Notificación por correo de sugerencias/contacto (D52). Todo vacío por
+    # defecto: sin SMTP configurado, el feedback se persiste pero no se avisa.
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: SecretStr = SecretStr("")
+    # Remitente y destinatario de los avisos (el admin recibe en feedback_to).
+    feedback_from: str = ""
+    feedback_to: str = ""
+
 
 settings = Settings()
