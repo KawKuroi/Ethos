@@ -14,6 +14,7 @@ vi.mock("@/lib/use-anime-source", () => ({
     loading: mocks.loading,
     error: false,
     reload: () => {},
+    silentReload: () => {},
     source: mocks.source,
   }),
 }));

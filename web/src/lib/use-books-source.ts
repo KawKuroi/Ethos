@@ -8,10 +8,11 @@ export type BooksSourceState = {
   source: BooksSource | null;
   error: boolean;
   reload: () => void;
+  silentReload: () => void;
 };
 
 // Carga el estado + resumen de la fuente de Libros del usuario.
 export function useBooksSource(): BooksSourceState {
-  const { loading, data, error, reload } = useSource(getBooksSource);
-  return { loading, source: data, error, reload };
+  const { loading, data, error, reload, silentReload } = useSource(getBooksSource);
+  return { loading, source: data, error, reload, silentReload };
 }

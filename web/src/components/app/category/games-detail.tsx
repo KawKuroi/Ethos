@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { refreshSteam, type GamesSource, type GamesSummary } from "@/lib/api";
 import { relativeTime } from "@/lib/format";
+import { JUST_CONNECTED_GAMES, useAutoReload } from "@/lib/use-source";
 import { useGamesSource } from "@/lib/use-games-source";
 import { ConnectSteamButton } from "../connect-steam";
 import { ContextDownloadModal } from "./context-modal";
@@ -191,6 +192,32 @@ function ConnectedView({
   );
 }
 
+function SyncingView() {
+  return (
+    <div className="eth-screen" style={accentVar()}>
+      <Link href="/app" className={styles.back}>
+        ← Inicio
+      </Link>
+      <div className={styles.header}>
+        <span className={styles.headerIcon}>J</span>
+        <div className={styles.headerBody}>
+          <h2 className={styles.headerName}>Juegos</h2>
+          <div className={styles.headerBlurb}>{GAMES.blurb}</div>
+        </div>
+      </div>
+      <div className={styles.soon}>
+        <div className={styles.soonTitle}>
+          <span className={styles.spin} /> Sincronizando tu biblioteca…
+        </div>
+        <p className={styles.soonNote}>
+          Steam ya está conectado: estamos trayendo tus juegos, horas y
+          deseados. Esto tarda unos segundos y la pantalla se actualizará sola.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function OffView({ state, detail }: { state: GamesSource["state"]; detail: string | null }) {
   const isPrivate = state === "private";
   return (
@@ -224,7 +251,30 @@ function OffView({ state, detail }: { state: GamesSource["state"]; detail: strin
 }
 
 export function GamesDetail() {
-  const { loading, source, error } = useGamesSource();
+  const { loading, source, error, reload, silentReload } = useGamesSource();
+  // La conexión de Steam ocurre en /steam/return y redirige aquí; deja una
+  // marca para que, aunque el estado aún no sea "syncing" (el primer refresco
+  // arranca en segundo plano, tras responder), esta vista muestre la
+  // sincronización desde el primer instante en vez de la vista "apagada".
+  const [justConnected, setJustConnected] = useState(false);
+  useEffect(() => {
+    // sessionStorage solo existe tras montar en el navegador (esta página es
+    // SSG); leerlo en un efecto evita el desajuste de hidratación.
+    if (sessionStorage.getItem(JUST_CONNECTED_GAMES)) {
+      sessionStorage.removeItem(JUST_CONNECTED_GAMES);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- señal client-only leída una vez tras montar
+      setJustConnected(true);
+    }
+  }, []);
+
+  const state = source?.state;
+  const settled =
+    (state === "fresh" && !!source?.summary) ||
+    state === "private" ||
+    state === "error";
+  // Mientras el refresco corre (o acabamos de conectar), la vista se
+  // actualiza sola hasta que llegue el resumen o un estado terminal.
+  useAutoReload((justConnected || state === "syncing") && !settled, silentReload);
 
   if (loading) {
     return (
@@ -252,7 +302,11 @@ export function GamesDetail() {
 
   const isLive = source.state === "fresh" || source.state === "syncing";
   if (isLive && source.summary) {
-    return <ConnectedView source={source} summary={source.summary} onRefresh={() => location.reload()} />;
+    return <ConnectedView source={source} summary={source.summary} onRefresh={reload} />;
+  }
+  // "syncing" real, o recién conectado y el estado aún no se materializa.
+  if (source.state === "syncing" || (justConnected && source.state === "never")) {
+    return <SyncingView />;
   }
   return <OffView state={source.state} detail={source.detail} />;
 }

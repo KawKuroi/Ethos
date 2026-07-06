@@ -9,6 +9,7 @@ import {
   type MusicSummary,
 } from "@/lib/api";
 import { fmtInt as fmt, relativeTime } from "@/lib/format";
+import { useAutoReload } from "@/lib/use-source";
 import { useMusicSource } from "@/lib/use-music-source";
 import { ConnectListenBrainzForm } from "../connect-listenbrainz";
 import { ContextDownloadModal } from "./context-modal";
@@ -193,8 +194,8 @@ function SyncingView({ onReload }: { onReload: () => void }) {
       <div className={styles.soon}>
         <div className={styles.soonTitle}>Sincronizando tus escuchas…</div>
         <p className={styles.soonNote}>
-          Estamos trayendo tus listens de ListenBrainz. Esto tarda unos segundos;
-          actualiza para ver tu resumen.
+          Estamos trayendo tus listens de ListenBrainz. Esto tarda unos
+          segundos y la pantalla se actualizará sola.
         </p>
         <div style={{ marginTop: "20px", display: "flex", gap: "10px", justifyContent: "center" }}>
           <button type="button" className={styles.btnPrimary} onClick={onReload}>
@@ -238,8 +239,16 @@ function ConnectView({
 }
 
 export function MusicDetail() {
-  const { loading, source, error, reload } = useMusicSource();
+  const { loading, source, error, reload, silentReload } = useMusicSource();
   const [justConnected, setJustConnected] = useState(false);
+  // Mientras el refresco corre en segundo plano, la vista se actualiza sola;
+  // para al llegar el resumen o un estado terminal (privado/error).
+  const state = source?.state;
+  const settled =
+    (state === "fresh" && !!source?.summary) ||
+    state === "private" ||
+    state === "error";
+  useAutoReload((justConnected || state === "syncing") && !settled, silentReload);
 
   if (loading && !justConnected) {
     return (
@@ -265,12 +274,11 @@ export function MusicDetail() {
     );
   }
 
-  const state = source?.state;
   const isLive = state === "fresh" || state === "syncing";
   if (isLive && source?.summary) {
     return <ConnectedView source={source} summary={source.summary} onRefresh={reload} />;
   }
-  if (state === "syncing" || justConnected) {
+  if (state === "syncing" || (justConnected && (!state || state === "never"))) {
     return (
       <SyncingView
         onReload={() => {

@@ -10,6 +10,7 @@ import {
   type FilmSummary,
 } from "@/lib/api";
 import { fmtInt, relativeTime } from "@/lib/format";
+import { useAutoReload } from "@/lib/use-source";
 import { useFilmSource } from "@/lib/use-film-source";
 import { ConnectUsernameForm } from "../connect-username";
 import { ContextDownloadModal } from "./context-modal";
@@ -235,7 +236,7 @@ function SyncingView({ onReload }: { onReload: () => void }) {
         <div className={styles.soonTitle}>Sincronizando lo que has visto…</div>
         <p className={styles.soonNote}>
           Estamos trayendo tus películas y series de Trakt. Esto tarda unos
-          segundos; actualiza para ver tu resumen.
+          segundos y la pantalla se actualizará sola.
         </p>
         <div style={{ marginTop: "20px", display: "flex", gap: "10px", justifyContent: "center" }}>
           <button type="button" className={styles.btnPrimary} onClick={onReload}>
@@ -286,8 +287,16 @@ function ConnectView({
 }
 
 export function FilmDetail() {
-  const { loading, source, error, reload } = useFilmSource();
+  const { loading, source, error, reload, silentReload } = useFilmSource();
   const [justConnected, setJustConnected] = useState(false);
+  // Mientras el refresco corre en segundo plano, la vista se actualiza sola;
+  // para al llegar el resumen o un estado terminal (privado/error).
+  const state = source?.state;
+  const settled =
+    (state === "fresh" && !!source?.summary) ||
+    state === "private" ||
+    state === "error";
+  useAutoReload((justConnected || state === "syncing") && !settled, silentReload);
 
   if (loading && !justConnected) {
     return (
@@ -313,12 +322,11 @@ export function FilmDetail() {
     );
   }
 
-  const state = source?.state;
   const isLive = state === "fresh" || state === "syncing";
   if (isLive && source?.summary) {
     return <ConnectedView source={source} summary={source.summary} onRefresh={reload} />;
   }
-  if (state === "syncing" || justConnected) {
+  if (state === "syncing" || (justConnected && (!state || state === "never"))) {
     return (
       <SyncingView
         onReload={() => {

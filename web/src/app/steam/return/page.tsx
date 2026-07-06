@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { connectSteam } from "@/lib/api";
+import { JUST_CONNECTED_GAMES } from "@/lib/use-source";
 
 type Phase = "connecting" | "error";
 
@@ -18,7 +19,12 @@ export default function SteamReturnPage() {
       if (key.startsWith("openid.")) params[key] = value;
     });
     connectSteam(params)
-      .then(() => router.replace("/app/categoria/games"))
+      .then(() => {
+        // Señal para que el Detalle de Juegos muestre la sincronización
+        // (el primer refresco corre en segundo plano tras conectar).
+        sessionStorage.setItem(JUST_CONNECTED_GAMES, "1");
+        router.replace("/app/categoria/games");
+      })
       .catch(() => setPhase("error"));
   }, [router]);
 

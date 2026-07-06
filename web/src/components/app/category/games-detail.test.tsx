@@ -14,6 +14,7 @@ vi.mock("@/lib/use-games-source", () => ({
     loading: mocks.loading,
     error: false,
     reload: () => {},
+    silentReload: () => {},
     source: mocks.source,
   }),
 }));
@@ -72,6 +73,39 @@ describe("GamesDetail", () => {
     expect(
       screen.getByRole("button", { name: /conectar steam/i }),
     ).toBeInTheDocument();
+  });
+
+  it("muestra la sincronización mientras corre el primer refresco", () => {
+    mocks.source = {
+      state: "syncing",
+      synced_at: null,
+      detail: null,
+      persona_name: null,
+      summary: null,
+    };
+    render(<GamesDetail />);
+    expect(
+      screen.getByText(/sincronizando tu biblioteca/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/se actualizará sola/i)).toBeInTheDocument();
+  });
+
+  it("muestra sincronización al volver de conectar aunque el estado siga en never", () => {
+    // /steam/return deja esta marca; el primer refresco arranca en segundo
+    // plano, así que el estado puede seguir en "never" al primer fetch.
+    sessionStorage.setItem("ethos_just_connected_games", "1");
+    mocks.source = {
+      state: "never",
+      synced_at: null,
+      detail: null,
+      persona_name: null,
+      summary: null,
+    };
+    render(<GamesDetail />);
+    expect(
+      screen.getByText(/sincronizando tu biblioteca/i),
+    ).toBeInTheDocument();
+    expect(sessionStorage.getItem("ethos_just_connected_games")).toBeNull();
   });
 
   it("guía cuando el perfil de Steam es privado", () => {

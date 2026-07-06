@@ -433,6 +433,11 @@
 .modal {
   width: 100%;
   max-width: 560px;
+  /* Alto acotado al viewport: el contenido largo (el JSON del contexto)
+     scrollea dentro del modal, nunca agranda la página. */
+  max-height: min(78vh, 640px);
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
   border: var(--bw) solid var(--line);
   border-radius: var(--r);
@@ -471,6 +476,10 @@
 }
 .modalBody {
   padding: 18px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
 }
 .tabsRow {
   display: flex;
@@ -519,7 +528,10 @@
   border-radius: var(--rs);
   padding: 14px 16px;
   margin: 0;
-  overflow-x: auto;
+  /* Scroll propio en ambos ejes dentro del alto acotado del modal. */
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   white-space: pre;
 }
 .modalActions {

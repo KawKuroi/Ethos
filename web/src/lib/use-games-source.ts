@@ -8,11 +8,12 @@ export type GamesSourceState = {
   source: GamesSource | null;
   error: boolean;
   reload: () => void;
+  silentReload: () => void;
 };
 
 // Carga el estado + resumen de la fuente de juegos del usuario. Compartido por
 // Inicio, Fuentes y el Detalle de Juegos.
 export function useGamesSource(): GamesSourceState {
-  const { loading, data, error, reload } = useSource(getGamesSource);
-  return { loading, source: data, error, reload };
+  const { loading, data, error, reload, silentReload } = useSource(getGamesSource);
+  return { loading, source: data, error, reload, silentReload };
 }

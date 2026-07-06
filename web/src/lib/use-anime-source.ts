@@ -8,10 +8,11 @@ export type AnimeSourceState = {
   source: AnimeSource | null;
   error: boolean;
   reload: () => void;
+  silentReload: () => void;
 };
 
 // Carga el estado + resumen de la fuente de Anime y manga del usuario.
 export function useAnimeSource(): AnimeSourceState {
-  const { loading, data, error, reload } = useSource(getAnimeSource);
-  return { loading, source: data, error, reload };
+  const { loading, data, error, reload, silentReload } = useSource(getAnimeSource);
+  return { loading, source: data, error, reload, silentReload };
 }
