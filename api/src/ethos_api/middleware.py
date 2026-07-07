@@ -117,6 +117,57 @@ class BodySizeLimitMiddleware:
         await self.app(scope, capped_receive, send)
 
 
+class McpAuthChallengeMiddleware:
+    """Desafío OAuth 2.1 en el transporte del MCP (D56).
+
+    Una petición a `/mcp` sin Bearer resoluble (legacy `eth_live_` u OAuth
+    `eth_oauth_`) recibe 401 con `WWW-Authenticate` apuntando a la metadata
+    del recurso protegido (RFC 9728), que dispara el flujo OAuth en los
+    clientes MCP. El resolver se inyecta para testear sin stores reales.
+    """
+
+    def __init__(
+        self, app: ASGIApp, resolver: Callable[[str | None], str | None]
+    ) -> None:
+        self.app = app
+        self.resolver = resolver
+
+    @staticmethod
+    def _metadata_url(scope: Scope) -> str:
+        from ethos_api.config import settings
+
+        if settings.public_base_url:
+            base = settings.public_base_url.rstrip("/")
+        else:
+            headers = {k.decode(): v.decode() for k, v in scope.get("headers", [])}
+            scheme = headers.get("x-forwarded-proto", scope.get("scheme", "http"))
+            base = f"{scheme}://{headers.get('host', 'localhost')}"
+        return f"{base}/.well-known/oauth-protected-resource/mcp"
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        path = str(scope.get("path", ""))
+        # Solo el transporte del MCP (/mcp y /mcp/…); no rutas como /mcp-token.
+        if scope["type"] != "http" or not (path == "/mcp" or path.startswith("/mcp/")):
+            await self.app(scope, receive, send)
+            return
+
+        headers = dict(scope.get("headers", []))
+        authorization = headers.get(b"authorization")
+        header_value = authorization.decode() if authorization else None
+        if self.resolver(header_value) is None:
+            challenge = (
+                f'Bearer resource_metadata="{self._metadata_url(scope)}"'.encode()
+            )
+            await _plain_response(
+                send,
+                401,
+                b"No autenticado: token del MCP requerido",
+                [(b"www-authenticate", challenge)],
+            )
+            return
+        await self.app(scope, receive, send)
+
+
 class RateLimitMiddleware:
     """Límite de peticiones por IP con ventana deslizante en memoria.
 

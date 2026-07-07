@@ -34,7 +34,7 @@ from ethos_api.games.context import build_games_context
 from ethos_api.games.deps import get_games_store
 from ethos_api.games.store import GamesStore
 from ethos_api.games.summary import build_games_summary
-from ethos_api.mcp_auth import get_mcp_token_store, user_from_authorization
+from ethos_api.mcp_auth import resolve_bearer_user
 from ethos_api.music.deps import get_event_store
 from ethos_api.music.store import EventStore
 from ethos_api.music.summary import build_music_summary
@@ -49,11 +49,14 @@ _AUTH_ERROR = (
 
 
 def _require_user() -> str:
-    """Resuelve el usuario del header Authorization o corta la tool (D22)."""
+    """Resuelve el usuario del header Authorization o corta la tool (D22/D56).
+
+    Acepta el token legacy `eth_live_…` y los access tokens OAuth
+    `eth_oauth_…`. El middleware del desafío 401 ya filtró en el transporte;
+    esto es defensa en profundidad.
+    """
     headers = get_http_headers()
-    user_id = user_from_authorization(
-        headers.get("authorization"), get_mcp_token_store()
-    )
+    user_id = resolve_bearer_user(headers.get("authorization"))
     if user_id is None:
         raise ToolError(_AUTH_ERROR)
     return user_id

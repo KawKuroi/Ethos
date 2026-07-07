@@ -242,6 +242,37 @@ export type ImportResult = {
   items: number;
 };
 
+// ===== OAuth del MCP: consentimiento (D56) =====
+
+export type OAuthApprovalParams = {
+  client_id: string;
+  redirect_uri: string;
+  code_challenge: string;
+  state?: string | null;
+  scope?: string | null;
+};
+
+// Registra la decisión del usuario en el flujo OAuth y devuelve a dónde
+// navegar (redirect del cliente con code o access_denied). Requiere sesión.
+export async function approveOAuth(
+  params: OAuthApprovalParams,
+  approve: boolean,
+): Promise<string> {
+  const { redirect_to } = await apiJson<{ redirect_to: string }>("/oauth/approve", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      client_id: params.client_id,
+      redirect_uri: params.redirect_uri,
+      code_challenge: params.code_challenge,
+      state: params.state || null,
+      scope: params.scope || "ethos:read",
+      approve,
+    }),
+  });
+  return redirect_to;
+}
+
 // ===== Cuenta: borrado de datos y de cuenta (D53) =====
 
 export type AccountDeletionStatus = {

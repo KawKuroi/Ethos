@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     # de un usuario sin OAuth (header trakt-api-key), D41.
     trakt_client_id: SecretStr = SecretStr("")
 
+    # OAuth 2.1 del MCP (D56). URL pública del API (issuer del authorization
+    # server) y de la web (página de consentimiento). Vacías en local: el
+    # issuer se deriva de la petición y la web del primer origen de CORS.
+    public_base_url: str = ""
+    web_base_url: str = ""
+
     # Notificación por correo de sugerencias/contacto (D52). Todo vacío por
     # defecto: sin SMTP configurado, el feedback se persiste pero no se avisa.
     smtp_host: str = ""

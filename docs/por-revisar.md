@@ -125,6 +125,20 @@ Marca `[x]` conforme lo revises.
   "Eliminar cuenta" muestra el banner con la fecha y "Deshacer" lo cancela.
   El correo de aviso usa el mismo SMTP opcional de sugerencias (D52).
 
+## Fase 4 · OAuth 2.1 del MCP (D56)
+
+- [ ] **Aplicar la migración 0008** (`oauth_clients` + `oauth_tokens`) en Supabase.
+- [ ] **Poblar en Render** `PUBLIC_BASE_URL` (URL pública del API, p. ej.
+  `https://ethos-api-s10w.onrender.com`) y `WEB_BASE_URL` (p. ej.
+  `https://ethos-steel.vercel.app`): son el issuer OAuth y la página de
+  consentimiento. Sin ellas se derivan de la petición (vale en local).
+- [ ] **Verifica el flujo**: añade el MCP de Ethos a un cliente compatible
+  (p. ej. Claude) SIN token; debe recibir el 401, descubrir el authorization
+  server, registrarse solo y abrirte `/oauth/autorizar` para aprobar. El token
+  legacy `eth_live_` de Conectar IA sigue funcionando en paralelo.
+- [ ] **Ojo**: `/mcp` ya no responde anónimo (antes el tool `ping` era
+  público); si tenías algún monitor apuntando a `/mcp`, muévelo a `/health`.
+
 ## Decisiones que tomé por delegación (2026-07-03) — revísalas
 
 - [ ] **D32** Wishlist de Steam sin títulos en v1 (solo conteo + appids por

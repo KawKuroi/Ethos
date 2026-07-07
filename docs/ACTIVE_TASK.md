@@ -1,40 +1,46 @@
-# ACTIVE_TASK — Fase 4 · Borrado de cuenta con deshacer de 30 días (D53)
+# ACTIVE_TASK — Fase 4 · OAuth 2.1 en el MCP (D56)
 
-Zona de peligro de Ajustes real: borrar datos (conservando la cuenta) y borrar
-la cuenta con purga diferida a 30 días, correo de aviso y deshacer.
+Migración del auth del MCP al patrón OAuth 2.1 del spec MCP, manteniendo el
+token legacy `eth_live_` (D22).
 
 ### 1. Contexto y Archivos Afectados
 
-Backend nuevo: `account/{__init__,models,service,mailer,auth_admin,deps,
-router,purge_job}.py`, migración `0007_account_deletions.sql`,
-`tests/account/test_account_api.py`. Editados: `auth.py` (`CurrentUserEmail`),
-`main.py` (router). Web editado: `lib/api.ts` (ops de cuenta),
-`settings/settings.tsx` (acciones reales + banner con deshacer) y su test.
+Backend nuevo: `oauth/{__init__,models,store,deps,router}.py`, migración
+`0008_oauth_mcp.sql`, `tests/oauth/test_oauth_flow.py`. Editados: `config.py`
+(`public_base_url`, `web_base_url`), `mcp_auth.py` (`resolve_bearer_user`),
+`mcp_server.py` (`_require_user` por el punto único), `middleware.py`
+(`McpAuthChallengeMiddleware`), `main.py` (router + middleware),
+`tests/conftest.py` (reset del rate limit entre tests). Web nuevo:
+`app/oauth/autorizar/page.tsx`, `components/oauth/consent.{tsx,module.css}` +
+test; `lib/api.ts` (`approveOAuth`).
 
 ### 2. Evaluación Crítica
 
-Veredicto: **bueno**. El borrado diferido con marca en tabla + job de purga es
-el patrón estándar; el deshacer es un simple delete de la marca. El borrado en
-GoTrue (admin API) cascada por FK, así que la purga es un solo punto. Riesgos
-controlados: las rutas exigen Supabase (503 sin él, nunca borran a medias); el
-correo es best-effort y no bloquea. Deuda: el job de purga requiere que el
-usuario lo programe (cron externo, por-revisar); el aviso depende del claim
-`email` del JWT (si falta, no hay correo, pero el banner de Ajustes siempre
-informa).
+Veredicto: **bueno**, con alcance deliberadamente mínimo: AS integrado (una
+sola pieza que mantener), clientes públicos con PKCE S256 obligatorio y
+redirect exact-match (https o loopback), tokens como hash con expiración y
+refresh rotatorio, y 401 con `resource_metadata` para el autodescubrimiento.
+Riesgos controlados: los codes en memoria se pierden en redeploy (el cliente
+reintenta; documentado); `/mcp` deja de responder anónimo (endurece D22, ojo
+monitores). Deuda: sin UI de revocación por cliente (revocar = borrar filas de
+`oauth_tokens`; la lista de clientes autorizados en Ajustes queda como mejora);
+`scope` es informativo (una sola categoría de permiso, lectura).
 
 ### 3. Plan de Acción Detallado
 
-- [x] Migración 0007 + servicio (wipe, schedule, status, cancel, purge).
-- [x] Router `/account/*` + deps (503 sin Supabase) + mailer + auth_admin.
-- [x] Job `python -m ethos_api.account.purge_job` para el cron.
-- [x] Web: ops en `lib/api.ts` + Ajustes real (banner fecha de purga, Deshacer).
-- [x] Tests backend (9) y web (Settings reescrito, 4).
-- [x] Docs: D53, roadmap, current, por-revisar.
+- [x] Migración 0008 (`oauth_clients`, `oauth_tokens`) + stores memoria/Supabase.
+- [x] Router: discovery (8414/9728), register (7591), authorize → consentimiento
+  web, approve (JWT), token (code+PKCE / refresh rotatorio, form a mano).
+- [x] `resolve_bearer_user` (legacy + OAuth) y desafío 401 en `/mcp`.
+- [x] Web: `/oauth/autorizar` (sesión Supabase, autorizar/denegar) + `approveOAuth`.
+- [x] Tests: flujo completo, PKCE malo, code de un solo uso, refresh rotatorio,
+  denegar, redirect no registrada, registro inseguro, discovery, 401 y paso con
+  token OAuth (10) + consent web (4). Fix del rate limit de la suite.
+- [x] Docs: D56, roadmap, current, por-revisar.
 
 ### 4. Reporte de Pruebas
 
-**[APROBADO]** — api: ruff + mypy limpios (146 archivos), pytest 201/201
-(9 nuevos: wipe de tablas, programación con fecha, estado con/sin marca,
-deshacer, 401, 503 sin Supabase, purga de vencidos, email del JWT), cobertura
-91.3%. web: tsc + eslint limpios, vitest 70/70, build en verde. Secretos: grep
-limpio (service_role solo por env). Idioma D19 correcto.
+**[APROBADO]** — api: ruff + mypy limpios (153 archivos), pytest 213/213,
+cobertura 90.3%. web: tsc + eslint limpios, vitest 75/75, build en verde con
+`/oauth/autorizar` prerenderizada. Secretos: grep limpio (prefijos públicos de
+token señalados; solo hashes persisten). Idioma D19 correcto.

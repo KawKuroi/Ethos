@@ -42,6 +42,21 @@ producción.
 
 ## Bitácora
 
+### 2026-07-06 (Fase 4 · OAuth 2.1 en el MCP, D56)
+
+- Authorization server mínimo integrado en el API según el patrón del spec
+  MCP: discovery RFC 8414/9728, DCR RFC 7591 (clientes públicos), authorization
+  code + PKCE S256 obligatorio, token endpoint con refresh rotatorio. Tokens
+  `eth_oauth_`/`eth_refresh_` como hash en `oauth_tokens` (migración 0008);
+  codes en memoria (10 min, un solo uso). `/mcp` responde 401 +
+  `WWW-Authenticate` sin Bearer válido; `eth_live_` sigue vigente
+  (`resolve_bearer_user` único). Config `PUBLIC_BASE_URL`/`WEB_BASE_URL`.
+- Web: página de consentimiento `/oauth/autorizar` (sesión de Supabase,
+  autorizar/denegar, redirección al cliente) + `approveOAuth` en `lib/api.ts`.
+- Fix de suite: reset del rate limit entre tests (la IP compartida del
+  TestClient superaba 120/min con la suite crecida). api 213 tests (90,3%),
+  web 75 tests, build en verde (ruta `/oauth/autorizar` prerenderizada).
+
 ### 2026-07-06 (Fase 4 · géneros de juegos desde la store de Steam, D55)
 
 - Cierra el pendiente D16: los géneros se enriquecen desde la ficha pública de

@@ -13,7 +13,7 @@ catálogo (D27) activas de punta a punta. Queda la Fase 4.
 - [x] Envío real de sugerencias y contacto (persistencia + notificación).
 - [x] Borrado de cuenta con deshacer de 30 días (correo + purga diferida).
 - [x] Playground de Conectar IA: se mantiene simulado con aviso explícito (D54; LLM real descartado por costo 0 USD).
-- [ ] Migración del auth del MCP a OAuth 2.1.
+- [x] Migración del auth del MCP a OAuth 2.1.
 - [x] Enriquecimiento de géneros de juegos.
 - [ ] Envelope encryption con KMS (si se requiere).
 - [ ] Opción de mover el backend a Cloud Run para eliminar cold starts.

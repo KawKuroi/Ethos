@@ -17,14 +17,17 @@ from ethos_api.games.router import router as games_router
 from ethos_api.imports.router import router as imports_router
 from ethos_api.interest.router import router as interest_router
 from ethos_api.items.router import router as items_router
+from ethos_api.mcp_auth import resolve_bearer_user
 from ethos_api.mcp_auth import router as mcp_token_router
 from ethos_api.mcp_server import mcp
 from ethos_api.middleware import (
     BodySizeLimitMiddleware,
+    McpAuthChallengeMiddleware,
     RateLimitMiddleware,
     SecurityHeadersMiddleware,
 )
 from ethos_api.music.router import router as music_router
+from ethos_api.oauth.router import router as oauth_router
 
 
 def _split_csv(value: str) -> list[str]:
@@ -68,6 +71,7 @@ def create_app() -> FastAPI:
     app.include_router(feedback_router)
     app.include_router(account_router)
     app.include_router(mcp_token_router)
+    app.include_router(oauth_router)
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -75,8 +79,10 @@ def create_app() -> FastAPI:
         return {"status": "ok", "environment": settings.environment}
 
     # Pila de protección, de fuera hacia adentro:
-    # SecurityHeaders → TrustedHost → CORS → BodyLimit → RateLimit → app.
-    # (add_middleware antepone: el último añadido queda más afuera.)
+    # SecurityHeaders → TrustedHost → CORS → BodyLimit → RateLimit →
+    # McpAuthChallenge → app. (add_middleware antepone: el último añadido
+    # queda más afuera.)
+    app.add_middleware(McpAuthChallengeMiddleware, resolver=resolve_bearer_user)
     app.add_middleware(
         RateLimitMiddleware, limit_per_minute=settings.rate_limit_per_minute
     )

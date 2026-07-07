@@ -109,6 +109,25 @@ def user_from_authorization(header: str | None, store: McpTokenStore) -> str | N
     return store.resolve(header[7:].strip())
 
 
+def resolve_bearer_user(header: str | None) -> str | None:
+    """Resuelve el usuario de un Bearer legacy (`eth_live_`) u OAuth (`eth_oauth_`).
+
+    Punto único de auth del MCP (D22/D56): lo usan las tools y el middleware
+    del desafío 401. Import local para no acoplar este módulo al de OAuth.
+    """
+    if not header or not header.lower().startswith("bearer "):
+        return None
+    token = header[7:].strip()
+    if token.startswith(_TOKEN_PREFIX):
+        return get_mcp_token_store().resolve(token)
+    from ethos_api.oauth.deps import get_oauth_token_store
+    from ethos_api.oauth.store import ACCESS_PREFIX
+
+    if token.startswith(ACCESS_PREFIX):
+        return get_oauth_token_store().resolve_access(token)
+    return None
+
+
 class McpTokenOut(BaseModel):
     """Token emitido y endpoint del servidor MCP."""
 
