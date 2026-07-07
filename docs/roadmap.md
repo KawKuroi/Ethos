@@ -15,7 +15,7 @@ catálogo (D27) activas de punta a punta. Queda la Fase 4.
 - [x] Playground de Conectar IA: se mantiene simulado con aviso explícito (D54; LLM real descartado por costo 0 USD).
 - [x] Migración del auth del MCP a OAuth 2.1.
 - [x] Enriquecimiento de géneros de juegos.
-- [ ] Envelope encryption con KMS (si se requiere).
+- [x] Envelope encryption con KMS: no se requiere (D57; Fernet + secret manager cubre la amenaza actual).
 - [ ] Opción de mover el backend a Cloud Run para eliminar cold starts.
 - [ ] Empaquetado y distribución pulidos; objetivos de cobertura de tests.
 

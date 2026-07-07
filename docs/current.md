@@ -42,6 +42,14 @@ producción.
 
 ## Bitácora
 
+### 2026-07-06 (Fase 4 · KMS descartado por ahora, D57)
+
+- La condición "si se requiere" no se cumple: Fernet a nivel de app con la
+  llave en el secret manager cubre la amenaza real (fuga de BD sin exponer
+  credenciales) y un KMS rompería el objetivo de 0 USD/mes. Criterios de
+  disparo documentados en D57 (multi-tenant serio, rotación por incidente,
+  cumplimiento). Sin código.
+
 ### 2026-07-06 (Fase 4 · OAuth 2.1 en el MCP, D56)
 
 - Authorization server mínimo integrado en el API según el patrón del spec
