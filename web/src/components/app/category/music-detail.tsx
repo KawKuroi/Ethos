@@ -12,6 +12,7 @@ import { fmtInt as fmt, relativeTime } from "@/lib/format";
 import { useAutoReload } from "@/lib/use-source";
 import { useMusicSource } from "@/lib/use-music-source";
 import { ConnectListenBrainzForm } from "../connect-listenbrainz";
+import { LoadingState } from "../loading-state";
 import { ContextDownloadModal } from "./context-modal";
 import { CATEGORY_DETAIL } from "./data";
 import styles from "./category.module.css";
@@ -256,7 +257,7 @@ export function MusicDetail() {
         <Link href="/app" className={styles.back}>
           ← Inicio
         </Link>
-        <p className={styles.headerBlurb}>Cargando tu música…</p>
+        <LoadingState label="Cargando tu música…" />
       </div>
     );
   }
@@ -275,8 +276,10 @@ export function MusicDetail() {
   }
 
   const isLive = state === "fresh" || state === "syncing";
+  // silentReload: el refresco sustituye los datos en sitio, sin volver a
+  // pasar por la pantalla de carga (el botón ya muestra su propio spinner).
   if (isLive && source?.summary) {
-    return <ConnectedView source={source} summary={source.summary} onRefresh={reload} />;
+    return <ConnectedView source={source} summary={source.summary} onRefresh={silentReload} />;
   }
   if (state === "syncing" || (justConnected && (!state || state === "never"))) {
     return (

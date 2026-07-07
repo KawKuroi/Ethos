@@ -387,13 +387,6 @@
   flex: 0 0 auto;
   white-space: nowrap;
 }
-.loading {
-  font-family: var(--fb);
-  font-size: 13.5px;
-  color: var(--muted);
-  padding: 24px 2px;
-}
-
 /* ===== Actividad reciente ===== */
 .activity {
   padding: 22px 26px 8px;

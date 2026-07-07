@@ -1,0 +1,78 @@
+/* Estado de carga compartido (spinner + esqueleto). Los keyframes viven en
+   el módulo porque los CSS Modules localizan los nombres de animación y no
+   encuentran los globales de globals.css. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 26px 2px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.spinner {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in oklab, var(--ink) 25%, transparent);
+  border-top-color: var(--ink);
+  animation: loadSpin 0.7s linear infinite;
+  display: inline-block;
+  flex: none;
+}
+
+.label {
+  font-family: var(--fb);
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 560px;
+}
+
+.bar {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--soft);
+  animation: loadPulse 1.4s ease-in-out infinite;
+}
+
+.bar:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.bar:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+@keyframes loadSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loadPulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner,
+  .bar {
+    animation: none;
+  }
+}

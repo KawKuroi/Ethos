@@ -1,196 +1,180 @@
 # Por revisar — checklist para el usuario
 
-Cosas que quedan en tus manos: configuración de infraestructura y verificación
-visual en producción. efesto va añadiendo aquí lo que no puede hacer por ti.
-Marca `[x]` conforme lo revises.
+Lo que queda en tus manos, en dos bloques: **Bloqueantes** (sin esto hay
+partes del producto que no funcionan) y **Para ir revisando** (verificaciones
+y decisiones sin prisa). efesto añade aquí lo que no puede hacer por ti;
+marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 
-## Prueba end-to-end de Fase 1 (cuando estén las env vars)
+## Bloqueantes — configuración que detiene el flujo
 
-- [ ] Inicia sesión, conecta Steam desde Fuentes, espera el refresco y revisa
-  Inicio y el Detalle de Juegos con tus datos reales.
-- [ ] En Conectar IA, genera el token, copia endpoint + token y prueba una
-  consulta `games.summary` desde un cliente MCP (Claude Desktop u otro).
-- [ ] Descarga `games.context.json` desde el Detalle de Juegos.
+### Keys y variables de entorno
 
-## Prueba end-to-end de Fase 2 · Música (tras aplicar la migración 0004)
+- [ ] **`TRAKT_CLIENT_ID` en Render** — crea una API app en Trakt (Settings →
+  Your API Apps) y copia su Client ID. Sin la key, el conector de Cine y TV no
+  puede leer datos. El perfil de Trakt que conectes debe ser público (si no,
+  el estado sale `private`).
+- [ ] **Supabase en la web** — `NEXT_PUBLIC_SUPABASE_URL` y
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY` en Vercel y en `web/.env.local` para
+  desarrollo (verificado 2026-07-07: `web/.env.local` no existe todavía). Sin
+  ellas, `/auth` lanza el error de configuración. (D26)
+- [ ] **Env vars del blueprint en Render** — el blueprint ya declara
+  `PUBLIC_BASE_URL` y `WEB_BASE_URL` con sus valores (issuer OAuth del MCP y
+  página de consentimiento, D56), pero los blueprints existentes no añaden
+  env vars solos: revisa en el dashboard que estén pobladas, junto con
+  `TRAKT_CLIENT_ID` y las SMTP si las usas.
 
-- [ ] En Fuentes → Música (o Inicio → fila Música → "conéctala"), escribe tu
-  usuario público de ListenBrainz, conéctalo y espera el refresco: el Detalle de
-  Música debe mostrar escuchas, top artistas y top canciones de los últimos 30
-  días.
-- [ ] Comprueba que en Inicio la fila de Música aparece **activa** (con su número
-  de escuchas) y que Fuentes la lista en "Activas" junto a Juegos.
-- [ ] Prueba una consulta `music.top_artists` desde tu cliente MCP y descarga
-  `music.context.json` desde el Detalle de Música.
-- [ ] Nota de diseño a confirmar: la banda "El gusto en números" de Inicio
-  sigue mostrando cifras de Juegos (su meta ya cuenta las fuentes activas); si
-  quieres que mezcle métricas de música, dilo y lo ajustamos.
+### Supabase Auth (D26)
 
-## Fase 3 · Cine y TV / Trakt
+- [ ] **OAuth Google** — crea la app OAuth en Google Cloud Console con
+  redirect URI `https://<tu-proyecto>.supabase.co/auth/v1/callback` y
+  habilita el proveedor Google (Authentication → Sign In / Providers) con su
+  client id/secret. Hasta entonces, "Continuar con Google" no completa el
+  login. (GitHub se retiró de la web.)
+- [ ] **URL Configuration** — Site URL = `https://<tu-web>` (hoy está en
+  localhost: por eso la confirmación te llevó a
+  `http://localhost:3000/?code=…`) y añade a Redirect URLs
+  `https://<tu-web>/auth` (confirmación de correo, va al login) y
+  `https://<tu-web>/auth/callback` (OAuth y recuperación); en desarrollo,
+  las mismas con `http://localhost:3000`.
 
-- [ ] **Registrar la app de Trakt y poblar `TRAKT_CLIENT_ID`** — crea una API
-  app en Trakt (Settings → Your API Apps), copia su **Client ID** y ponlo en
-  Render como `TRAKT_CLIENT_ID`. Sin esa key el conector no puede leer datos.
-  El perfil de Trakt que conectes debe ser **público** (si no, el estado sale
-  `private`).
-- [ ] **Prueba end-to-end de Cine y TV** — en Fuentes o el Detalle de Cine y
-  TV, conecta tu usuario de Trakt, espera el refresco y revisa horas, tops y
-  vistos recientes; prueba `film.top_movies` por MCP y descarga
-  `film.context.json`.
+### Jobs y monitores
 
-## Fase 3 · Anime y manga / AniList (sin keys que configurar)
+- [ ] **Job de purga de cuentas (D53)** — programa
+  `python -m ethos_api.account.purge_job` a diario (cron job de Render, o
+  GitHub Actions con `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`). Sin él,
+  las cuentas vencidas no se purgan (el deshacer funciona igual).
+- [ ] **Monitores de `/mcp`** — `/mcp` ya no responde anónimo (D56); si
+  tenías algún monitor apuntándole, muévelo a `/health`.
 
-- [ ] **Prueba end-to-end de Anime** — AniList no requiere key ni OAuth: en el
-  Detalle de Anime y manga escribe tu usuario de AniList (listas públicas),
-  espera el refresco y revisa episodios, nota media, mejor puntuados y en
-  curso; prueba `anime.top_rated` por MCP y descarga `anime.context.json`.
+### Opcionales
 
-## Fase 3 · Libros / Goodreads (import)
-
-- [ ] **Prueba end-to-end de Libros** — exporta tu biblioteca de Goodreads
-  (My Books → Import and export → Export Library), súbela en el Detalle de
-  Libros y revisa leídos, páginas, leyendo ahora y autores; prueba
-  `books.currently_reading` por MCP y descarga `books.context.json`. Un
-  archivo que no sea el export debe rechazarse con guía (422).
-- [ ] Nota: con las cinco categorías activas, Fuentes ya no muestra el grupo
-  "En desarrollo" y el panorama de Inicio enseña las cinco filas (activas o
-  apagadas). Confirma que te cuadra visualmente en producción.
-
-- [ ] **OAuth Google en Supabase** (GitHub se retiró de la web, D26 revisada) —
-  crear la app OAuth en Google Cloud Console con redirect URI
-  `https://<tu-proyecto>.supabase.co/auth/v1/callback`, habilitar el proveedor
-  Google (Authentication → Sign In / Providers) con su client id/secret, y en
-  URL Configuration poner Site URL `https://<tu-web>` y añadir
-  `https://<tu-web>/auth/callback` a las Redirect URLs. Hasta hacerlo, el
-  botón "Continuar con Google" no completa el login. (Auth, D26)
-- [ ] **Variables de entorno de la web** — poblar `NEXT_PUBLIC_SUPABASE_URL` y
-  `NEXT_PUBLIC_SUPABASE_ANON_KEY` en Vercel (y en `web/.env.local` para
-  desarrollo). Sin ellas, `/auth` lanza el error de configuración. (D26)
-- [ ] **Redirects permitidos en Supabase Auth** — en URL Configuration: Site
-  URL = `https://<tu-web>` (hoy está en localhost: por eso la confirmación
-  te llevó a `http://localhost:3000/?code=…`) y añade a "Redirect URLs"
-  `https://<tu-web>/auth` (retorno de la confirmación de correo, va al login)
-  y `https://<tu-web>/auth/callback` (OAuth y recuperación); en desarrollo,
-  las mismas con `http://localhost:3000`. (D26)
+- [ ] **SMTP para avisos (D52/D53)** — `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
+  `SMTP_PASSWORD`, `FEEDBACK_FROM` y `FEEDBACK_TO` en Render para recibir un
+  correo por sugerencia y el aviso de borrado de cuenta. Sin ellas todo se
+  guarda igual en Supabase (las sugerencias, en la tabla `feedback`).
 - [ ] **Plantillas de correo con el estilo de Ethos** — en Supabase →
   Authentication → Emails, pega el HTML de
-  `supabase/templates/confirm-signup.html` en "Confirm signup" (asunto
-  sugerido: "Confirma tu correo · Ethos") y el de
+  `supabase/templates/confirm-signup.html` en "Confirm signup" (asunto:
+  "Confirma tu correo · Ethos") y el de
   `supabase/templates/reset-password.html` en "Reset password" (asunto:
-  "Elige una nueva contraseña · Ethos"). Envía uno de prueba y revisa cómo
-  se ve.
+  "Elige una nueva contraseña · Ethos"); envía uno de prueba.
+- [ ] **Correo de contacto real** — el botón "Escribir" de Ayuda usa
+  `mailto:hola@ethos.app` (placeholder); cámbialo en
+  `web/src/components/app/help/help.tsx` (verificado 2026-07-07: sigue ahí).
+- [ ] **Docker / Cloud Run (D58)** — la build de la imagen sigue sin
+  verificar (2026-07-07: el daemon de Docker seguía apagado y `api/.env` no
+  existe para el `--env-file`): `cd api && docker build -t ethos-api .`,
+  `docker run --rm -p 8080:8080 --env-file .env ethos-api` y
+  `curl http://localhost:8080/health`. Migrar a Cloud Run solo si los cold
+  starts de Render molestan de verdad (requiere tarjeta con tope de gasto).
 
-## Fase 4 · Aviso de categorías en desarrollo (D50)
+## Para ir revisando — pruebas y decisiones
 
-- [ ] **Aplicar la migración 0005** (`category_interest`) en Supabase antes de
-  usar el aviso en producción; sin ella, `POST /category-interest` falla al
-  persistir.
-- [ ] **Mecanismo de aviso real pendiente**: hoy solo se guarda el interés
-  (correo + categoría). Falta decidir cómo avisar cuando una categoría diferida
-  se active (correo masivo desde la lista `category_interest`) — se define
-  cuando exista proveedor de correo (ver tarea de sugerencias/contacto).
-- [ ] **Verifica el flujo**: en la landing (bloque "En camino") y en el panel
-  (`/app/categoria/places`, panorama y Fuentes), deja un correo en "Avísame" y
-  confirma que responde "Te avisaremos en …".
+### Pruebas end-to-end por categoría
 
-## Fase 4 · Entradas a mano (D51)
+- [ ] **Juegos / Steam (Fase 1)** — conecta Steam desde Fuentes, espera el
+  refresco y revisa Inicio y el Detalle de Juegos con tus datos; en Conectar
+  IA genera el token y prueba `games.summary` desde un cliente MCP; descarga
+  `games.context.json`.
+- [ ] **Música / ListenBrainz (Fase 2)** — conecta tu usuario público de
+  ListenBrainz y revisa escuchas, top artistas y top canciones (últimos 30
+  días); comprueba que Inicio muestra la fila activa y Fuentes la lista en
+  "Activas"; prueba `music.top_artists` por MCP y descarga
+  `music.context.json`.
+- [ ] **Cine y TV / Trakt (Fase 3)** — necesita `TRAKT_CLIENT_ID` (ver
+  Bloqueantes): conecta tu usuario, revisa horas, tops y vistos recientes;
+  prueba `film.top_movies` por MCP y descarga `film.context.json`.
+- [ ] **Anime y manga / AniList (Fase 3)** — sin keys ni OAuth: escribe tu
+  usuario de AniList (listas públicas) y revisa episodios, nota media, mejor
+  puntuados y en curso; prueba `anime.top_rated` por MCP y descarga
+  `anime.context.json`.
+- [ ] **Libros / Goodreads (Fase 3)** — exporta tu biblioteca (My Books →
+  Import and export → Export Library), súbela en el Detalle de Libros y
+  revisa leídos, páginas, leyendo ahora y autores; prueba
+  `books.currently_reading` por MCP y descarga `books.context.json`. Un
+  archivo que no sea el export debe rechazarse con guía (422).
 
-- [ ] **Verifica el flujo**: en el detalle de una categoría conectada (p. ej.
-  Libros), abre "Añadido a mano", crea un registro y comprueba que aparece y
-  que el resumen lo cuenta; bórralo y confirma que desaparece.
-- [ ] Nota de alcance: por ahora la sección "Añadido a mano" vive en el detalle
-  **conectado**. Añadirla también a categorías sin proveedor conectado (para
-  llevar solo entradas a mano) queda como mejora si la quieres.
+### Flujos de Fase 4
 
-## Fase 4 · Sugerencias y contacto (D52)
+- [ ] **Aviso de categorías en desarrollo (D50)** — en la landing (bloque
+  "En camino") y en el panel (`/app/categoria/places`, panorama y Fuentes),
+  deja un correo en "Avísame" y confirma que responde "Te avisaremos en …".
+- [ ] **Entradas a mano (D51)** — en el detalle de una categoría conectada,
+  abre "Añadido a mano", crea un registro, comprueba que aparece y que el
+  resumen lo cuenta; bórralo y confirma que desaparece.
+- [ ] **Sugerencias (D52)** — envía una sugerencia desde Ayuda y comprueba
+  que llega a la tabla `feedback` (y al correo si configuraste el SMTP).
+- [ ] **Borrado de cuenta (D53)** — en Ajustes: "Eliminar datos" limpia las
+  fuentes; "Eliminar cuenta" muestra el banner con la fecha y "Deshacer" lo
+  cancela. El correo de aviso usa el SMTP opcional.
+- [ ] **OAuth del MCP (D56)** — añade el MCP de Ethos a un cliente
+  compatible (p. ej. Claude) SIN token: debe recibir el 401, descubrir el
+  authorization server, registrarse solo y abrirte `/oauth/autorizar` para
+  aprobar. El token legacy `eth_live_` de Conectar IA sigue funcionando en
+  paralelo.
 
-- [ ] **Aplicar la migración 0006** (`feedback`) en Supabase antes de recibir
-  sugerencias en producción.
-- [ ] **Configurar el aviso por correo (opcional)**: pon `SMTP_HOST`,
-  `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `FEEDBACK_FROM` y `FEEDBACK_TO` en
-  Render para recibir un correo por cada sugerencia. Sin ellas, las sugerencias
-  se guardan igual en la tabla `feedback` (las revisas en Supabase).
-- [ ] **Dirección de contacto real**: el botón "Escribir" de Ayuda usa
-  `mailto:hola@ethos.app` (placeholder). Cámbialo por tu correo real en
-  `web/src/components/app/help/help.tsx`.
+### Verificación visual en producción
 
-## Fase 4 · Borrado de cuenta (D53)
+- [ ] **Auth** — `/auth`: alternar login/registro, mostrar/ocultar
+  contraseña, validaciones (correo, mínimo 8), toggle de tema;
+  `/auth/recuperar` y `/auth/nueva-clave`.
+- [ ] **Shell de la app** — `/app`: barra lateral (Inicio · Fuentes ·
+  Conectar IA · Ayuda), resaltado del activo, badge en "Conectar IA",
+  engrane → Ajustes, header por pantalla y el responsivo (barra → top bar
+  en pantallas estrechas).
+- [ ] **Inicio** — banner de IA, stat band "El gusto en números", panorama
+  con las cinco filas (activas o apagadas) y actividad reciente.
+- [ ] **Detalle de categoría** — `/app/categoria/games`: status strip, stat
+  band con sparkline, Destacados/Reciente/Listas, Refrescar y el modal
+  "Descargar contexto" (pestañas JSON/MCP, copiar, descargar).
+- [ ] **Fuentes** — `/app/fuentes`: resumen y las cinco categorías; con
+  todas activas ya no hay grupo "En desarrollo" — confirma que te cuadra
+  visualmente.
+- [ ] **Conectar IA** — `/app/conectar-ia`: endpoint y token reales, tres
+  pasos y el playground. Ojo: el playground es demostración con datos de
+  ejemplo (D54, decidido así a propósito).
+- [ ] **Ayuda y Ajustes** — FAQ, envío de sugerencias real, Apariencia
+  cambia el tema de verdad, Perfil y Zona de peligro.
 
-- [ ] **Aplicar la migración 0007** (`account_deletions`) en Supabase.
-- [ ] **Programar el job de purga**: ejecuta `python -m ethos_api.account.purge_job`
-  a diario (cron job de Render, o GitHub Actions con las env vars
-  `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`). Sin él, las cuentas vencidas
-  no se purgan (el deshacer funciona igual).
-- [ ] **Verifica el flujo** en Ajustes: "Eliminar datos" limpia las fuentes;
-  "Eliminar cuenta" muestra el banner con la fecha y "Deshacer" lo cancela.
-  El correo de aviso usa el mismo SMTP opcional de sugerencias (D52).
+### SEO y metadatos (2026-07-07)
 
-## Fase 4 · OAuth 2.1 del MCP (D56)
+- [ ] **Imagen OG** — comparte la URL en X/WhatsApp/Discord (o usa
+  opengraph.xyz) y revisa que la tarjeta 1200×630 te convence; se genera en
+  build en `web/src/app/opengraph-image.tsx` (colores/textos editables ahí).
+- [ ] **Cuenta de X/Twitter** — si el proyecto tiene @usuario, dilo para
+  añadir `twitter:site` (quedó fuera por no inventar un handle).
+- [ ] **Dominio propio** — si algún día dejas `ethos-steel.vercel.app`,
+  cambia `SITE_URL` en `web/src/app/layout.tsx` (canónica, OG y JSON-LD
+  salen de ahí).
+- [ ] **Favicons nuevos** — revisa en producción el icono de pestaña (SVG
+  con modo oscuro), el apple-touch-icon (añadir a inicio en iOS) y el
+  manifest ("Añadir a pantalla de inicio" en Android).
 
-- [ ] **Aplicar la migración 0008** (`oauth_clients` + `oauth_tokens`) en Supabase.
-- [ ] **Poblar en Render** `PUBLIC_BASE_URL` (URL pública del API, p. ej.
-  `https://ethos-api-s10w.onrender.com`) y `WEB_BASE_URL` (p. ej.
-  `https://ethos-steel.vercel.app`): son el issuer OAuth y la página de
-  consentimiento. Sin ellas se derivan de la petición (vale en local).
-- [ ] **Verifica el flujo**: añade el MCP de Ethos a un cliente compatible
-  (p. ej. Claude) SIN token; debe recibir el 401, descubrir el authorization
-  server, registrarse solo y abrirte `/oauth/autorizar` para aprobar. El token
-  legacy `eth_live_` de Conectar IA sigue funcionando en paralelo.
-- [ ] **Ojo**: `/mcp` ya no responde anónimo (antes el tool `ping` era
-  público); si tenías algún monitor apuntando a `/mcp`, muévelo a `/health`.
-
-## Fase 4 · Dockerfile / Cloud Run (D58) y blueprint de Render
-
-- [ ] **Verificar la build de la imagen** (el daemon de Docker no estaba
-  corriendo en la máquina al crearla): `cd api && docker build -t ethos-api .`
-  y luego `docker run --rm -p 8080:8080 --env-file .env ethos-api` +
-  `curl http://localhost:8080/health`.
-- [ ] **Render**: el blueprint ahora declara `PUBLIC_BASE_URL`, `WEB_BASE_URL`,
-  `TRAKT_CLIENT_ID` y las SMTP opcionales — puebla en el dashboard las que
-  falten (los blueprints existentes no añaden env vars solos).
-- [ ] Migrar a Cloud Run solo si los cold starts molestan de verdad: requiere
-  tarjeta (con tope de gasto). Guía: build de la imagen → `gcloud run deploy`
-  con las mismas env vars.
-
-## Decisiones que tomé por delegación (2026-07-03) — revísalas
+### Decisiones delegadas y notas de alcance
 
 - [ ] **D32** Wishlist de Steam sin títulos en v1 (solo conteo + appids por
   prioridad); la resolución de títulos queda diferida.
 - [ ] **D33** Completado solo para el top 20 por horas en cada refresco
   (protege la cuota de la API key).
-- [ ] **D34** Forma de `games.context.json`: resumen + top + recientes +
-  wishlist, sin histórico de eventos en v1.
-- [ ] **D35** Persistencia en memoria tras puerto: los datos del backend se
-  pierden al redeploy hasta el respaldo Supabase (único pendiente de Fase 1).
-- [ ] **D36** Refresco con BackgroundTasks y estados de frescura; cola durable
-  después. Perfil privado de Steam → estado `private`.
+- [ ] **D34** `games.context.json`: resumen + top + recientes + wishlist,
+  sin histórico de eventos en v1.
+- [ ] **D36** Refresco con BackgroundTasks y estados de frescura; cola
+  durable después. Perfil privado de Steam → estado `private`.
+- [ ] **Stat band de Inicio** — "El gusto en números" sigue mostrando cifras
+  de Juegos (su meta ya cuenta las fuentes activas); si quieres que mezcle
+  métricas de otras categorías, dilo y lo ajustamos.
+- [ ] **Entradas a mano sin proveedor** — hoy la sección "Añadido a mano"
+  vive solo en el detalle conectado; añadirla a categorías sin proveedor
+  queda como mejora si la quieres.
+- [ ] **Aviso real de "Avísame" (D50)** — hoy solo se guarda el interés
+  (correo + categoría); el correo masivo desde `category_interest` se
+  define cuando exista proveedor de correo (el SMTP de D52).
 
-## Verificación visual en producción
+## Hecho
 
-- [ ] **Auth** — `/auth`: alternar login/registro, mostrar/ocultar contraseña,
-  validaciones (correo, mínimo 8), toggle de tema; `/auth/recuperar`
-  y `/auth/nueva-clave`. (D26)
-- [ ] **Shell de la app** — `/app`: barra lateral (Inicio · Fuentes · Conectar
-  IA · Ayuda), resaltado del activo, badge pulsante en "Conectar IA", engrane →
-  Ajustes, header por pantalla, y el comportamiento responsivo (barra → top bar
-  en pantallas estrechas).
-- [ ] **Inicio** — `/app`: banner de IA, stat band "El gusto en números",
-  panorama (Juegos activa + cuatro "en desarrollo") y actividad reciente. Ojo:
-  los números y la actividad son **datos de ejemplo** del prototipo hasta que
-  esté el backend de Steam; confirma que te parece bien mostrarlos así de
-  momento.
-- [ ] **Detalle de categoría** — `/app/categoria/games` (Juegos): status strip,
-  stat band con sparkline, Destacados/Reciente/Listas, botón Refrescar y modal
-  "Descargar contexto" (pestañas JSON/MCP, copiar, descargar). Y una categoría
-  en desarrollo, p. ej. `/app/categoria/music`.
-- [ ] **Fuentes** — `/app/fuentes`: resumen, grupo Activas (Juegos) y grupo En
-  desarrollo (las cuatro).
-- [ ] **Conectar IA** — `/app/conectar-ia`: endpoint/token (placeholder), tres
-  pasos y el playground (toca una consulta o escribe la tuya; mira el panel "Lo
-  que pasa por detrás"). Ojo: endpoint/token/estado son **simulados** hasta el
-  backend del MCP.
-- [ ] **Ayuda** — `/app/ayuda`: FAQ (acordeón) y el envío de sugerencias
-  (efímero; el envío real es Fase 4).
-- [ ] **Ajustes** — `/app/ajustes`: Apariencia cambia el tema de verdad
-  (claro/oscuro/sistema). Perfil y Zona de peligro son **efímeros/simulados**
-  hasta el backend (persistencia y borrado con deshacer, Fase 4).
+- [x] **Migraciones 0001–0008 aplicadas en Supabase** (confirmado
+  2026-07-07). Los flujos que dependían de 0004–0008 (música, avisos,
+  sugerencias, borrado de cuenta, OAuth del MCP) ya no están bloqueados
+  por base de datos.
+- [x] **D35** Persistencia con respaldo Supabase: la migración 0003 está
+  aplicada y los stores la usan; los datos sobreviven al redeploy.

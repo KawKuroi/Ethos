@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Favicon escalable con soporte de modo oscuro. La "E" se dibuja con
+       rects (no <text>) para no depender de fuentes del sistema. -->
+  <style>
+    .bg { fill: #1b1e23; }
+    .fg { fill: #eef0f3; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #eef0f3; }
+      .fg { fill: #141619; }
+    }
+  </style>
+  <rect class="bg" width="64" height="64" rx="14" />
+  <rect class="fg" x="21" y="17" width="7" height="30" rx="2" />
+  <rect class="fg" x="21" y="17" width="23" height="7" rx="2" />
+  <rect class="fg" x="21" y="28.5" width="19" height="7" rx="2" />
+  <rect class="fg" x="21" y="40" width="23" height="7" rx="2" />
+</svg>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { useActiveSources, type ActiveSourceView } from "@/lib/use-active-sources";
 import { CATEGORY_DETAIL, type CategoryDetailData } from "../category/data";
+import { LoadingState } from "../loading-state";
 import styles from "./sources.module.css";
 
 function accentVar(accent: string): CSSProperties {
@@ -127,7 +128,7 @@ export function Sources() {
       </div>
 
       {loading ? (
-        <div className={styles.loading}>Cargando tus fuentes…</div>
+        <LoadingState label="Cargando tus fuentes…" />
       ) : (
         <>
           {live.length > 0 && (

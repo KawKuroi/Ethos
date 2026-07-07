@@ -8,6 +8,7 @@ import { relativeTime } from "@/lib/format";
 import { JUST_CONNECTED_GAMES, useAutoReload } from "@/lib/use-source";
 import { useGamesSource } from "@/lib/use-games-source";
 import { ConnectSteamButton } from "../connect-steam";
+import { LoadingState } from "../loading-state";
 import { ContextDownloadModal } from "./context-modal";
 import { CATEGORY_DETAIL } from "./data";
 import { ManualEntries } from "./manual-entries";
@@ -272,7 +273,7 @@ function OffView({ state, detail }: { state: GamesSource["state"]; detail: strin
 }
 
 export function GamesDetail() {
-  const { loading, source, error, reload, silentReload } = useGamesSource();
+  const { loading, source, error, silentReload } = useGamesSource();
   // La conexión de Steam ocurre en /steam/return y redirige aquí; deja una
   // marca para que, aunque el estado aún no sea "syncing" (el primer refresco
   // arranca en segundo plano, tras responder), esta vista muestre la
@@ -303,7 +304,7 @@ export function GamesDetail() {
         <Link href="/app" className={styles.back}>
           ← Inicio
         </Link>
-        <p className={styles.headerBlurb}>Cargando tu biblioteca…</p>
+        <LoadingState label="Cargando tu biblioteca…" />
       </div>
     );
   }
@@ -322,8 +323,10 @@ export function GamesDetail() {
   }
 
   const isLive = source.state === "fresh" || source.state === "syncing";
+  // silentReload: el refresco sustituye los datos en sitio, sin volver a
+  // pasar por la pantalla de carga (el botón ya muestra su propio spinner).
   if (isLive && source.summary) {
-    return <ConnectedView source={source} summary={source.summary} onRefresh={reload} />;
+    return <ConnectedView source={source} summary={source.summary} onRefresh={silentReload} />;
   }
   // "syncing" real, o recién conectado y el estado aún no se materializa.
   if (source.state === "syncing" || (justConnected && source.state === "never")) {

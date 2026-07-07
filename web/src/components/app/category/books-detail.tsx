@@ -7,6 +7,7 @@ import type { BooksSource, BooksSummary } from "@/lib/api";
 import { fmtInt, relativeTime } from "@/lib/format";
 import { useBooksSource } from "@/lib/use-books-source";
 import { ImportPanel } from "../import-panel";
+import { LoadingState } from "../loading-state";
 import { ContextDownloadModal } from "./context-modal";
 import { CATEGORY_DETAIL } from "./data";
 import { ManualEntries } from "./manual-entries";
@@ -245,7 +246,7 @@ function ImportView({ onImported }: { onImported: () => void }) {
 }
 
 export function BooksDetail() {
-  const { loading, source, error, reload } = useBooksSource();
+  const { loading, source, error, reload, silentReload } = useBooksSource();
 
   if (loading) {
     return (
@@ -253,7 +254,7 @@ export function BooksDetail() {
         <Link href="/app" className={styles.back}>
           ← Inicio
         </Link>
-        <p className={styles.headerBlurb}>Cargando tus libros…</p>
+        <LoadingState label="Cargando tus libros…" />
       </div>
     );
   }
@@ -271,8 +272,11 @@ export function BooksDetail() {
     );
   }
 
+  // silentReload: reimportar o editar entradas sustituye las cifras en sitio,
+  // sin volver a pasar por la pantalla de carga. El primer import sí usa
+  // reload: la transición a la vista conectada necesita su estado de carga.
   if (source.state === "fresh" && source.summary) {
-    return <ConnectedView source={source} summary={source.summary} onImported={reload} />;
+    return <ConnectedView source={source} summary={source.summary} onImported={silentReload} />;
   }
   return <ImportView onImported={reload} />;
 }

@@ -10,8 +10,8 @@ estamos y lo actualiza al cerrar cada tarea (entrada con fecha `AAAA-MM-DD`).
 de punta a punta (Fases 1-3); y el pulido de la Fase 4 (D50-D59): aviso de
 categorías en desarrollo, entradas a mano, sugerencias y borrado de cuenta
 reales, OAuth 2.1 en el MCP, géneros de juegos, Dockerfile para Cloud Run y
-gates de cobertura en CI (versión 0.2.0). Pendiente de activación en
-producción por el usuario: migraciones 0003-0008, env vars nuevas
+gates de cobertura en CI (versión 0.2.0). Migraciones 0001-0008 aplicadas
+(2026-07-07). Pendiente de activación en producción por el usuario: env vars
 (`TRAKT_CLIENT_ID`, `PUBLIC_BASE_URL`, `WEB_BASE_URL`, SMTP opcionales), job
 de purga y verificación e2e — ver `por-revisar.md`. Sin fase activa:
 candidatas en los pendientes del roadmap.

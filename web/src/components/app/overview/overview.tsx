@@ -5,6 +5,7 @@ import type { CSSProperties } from "react";
 import type { GamesSummary } from "@/lib/api";
 import { fmtInt } from "@/lib/format";
 import { useActiveSources, type ActiveSourceView } from "@/lib/use-active-sources";
+import { LoadingState } from "../loading-state";
 import { GLOBAL_ALERTS, type GlobalAlert, MCP_CONNECTED } from "./data";
 import styles from "./overview.module.css";
 
@@ -248,7 +249,7 @@ export function Overview() {
       {!MCP_CONNECTED && <McpBanner />}
       <GlobalAlerts />
       {loading ? (
-        <div className={styles.loading}>Cargando tu perfil…</div>
+        <LoadingState label="Cargando tu perfil…" />
       ) : (
         <>
           <StatBand summary={gamesSummary} meta={activeMeta(views)} />

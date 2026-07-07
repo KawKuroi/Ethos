@@ -13,6 +13,7 @@ import { fmtInt, relativeTime } from "@/lib/format";
 import { useAutoReload } from "@/lib/use-source";
 import { useAnimeSource } from "@/lib/use-anime-source";
 import { ConnectUsernameForm } from "../connect-username";
+import { LoadingState } from "../loading-state";
 import { ContextDownloadModal } from "./context-modal";
 import { CATEGORY_DETAIL } from "./data";
 import { ManualEntries } from "./manual-entries";
@@ -280,7 +281,7 @@ export function AnimeDetail() {
         <Link href="/app" className={styles.back}>
           ← Inicio
         </Link>
-        <p className={styles.headerBlurb}>Cargando tu anime y manga…</p>
+        <LoadingState label="Cargando tu anime y manga…" />
       </div>
     );
   }
@@ -299,8 +300,10 @@ export function AnimeDetail() {
   }
 
   const isLive = state === "fresh" || state === "syncing";
+  // silentReload: el refresco sustituye los datos en sitio, sin volver a
+  // pasar por la pantalla de carga (el botón ya muestra su propio spinner).
   if (isLive && source?.summary) {
-    return <ConnectedView source={source} summary={source.summary} onRefresh={reload} />;
+    return <ConnectedView source={source} summary={source.summary} onRefresh={silentReload} />;
   }
   if (state === "syncing" || (justConnected && (!state || state === "never"))) {
     return (
