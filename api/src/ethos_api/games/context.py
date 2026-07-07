@@ -60,6 +60,8 @@ def build_games_context(
         },
         "top_by_hours": [t.model_dump() for t in summary.top_by_hours],
         "recently_played": [r.model_dump() for r in summary.recently_played],
+        # Géneros dominantes del top por horas, enriquecidos de la store (D55).
+        "top_genres": [g.model_dump() for g in summary.top_genres],
         # Los títulos de la wishlist se difieren (D32): Steam no los devuelve
         # en la wishlist y resolverlos exige una llamada de store por juego.
         "wishlist": {

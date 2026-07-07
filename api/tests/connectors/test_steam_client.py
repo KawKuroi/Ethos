@@ -100,3 +100,29 @@ def test_throttle_espera_entre_llamadas_consecutivas() -> None:
     client.get_owned_games("123")   # segunda: debe respetar el intervalo
     assert len(esperas) == 1
     assert 0 < esperas[0] <= 1.0
+
+
+def test_get_app_details_usa_la_store_sin_key() -> None:
+    payload = {
+        "440": {
+            "success": True,
+            "data": {"genres": [{"id": "1", "description": "Acción"}]},
+        }
+    }
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json=payload)
+
+    store_http = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://store.steampowered.com",
+    )
+    client = SteamApiClient(api_key="test-key", store_client=store_http)
+
+    data = client.get_app_details(440)
+    assert data["440"]["success"] is True
+    # La store es pública: la API key no viaja en la petición.
+    assert "key" not in dict(seen[0].url.params)
+    assert seen[0].url.params["filters"] == "genres"

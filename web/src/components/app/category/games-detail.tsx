@@ -140,9 +140,14 @@ function ConnectedView({
                   <span className={styles.topValue}>{Math.round(game.hours)} h</span>
                 </div>
                 <div className={styles.topSub}>
-                  {game.completion_pct != null
-                    ? `${Math.round(game.completion_pct)}% completado`
-                    : "—"}
+                  {[
+                    game.genres.length > 0 ? game.genres.slice(0, 3).join(" · ") : null,
+                    game.completion_pct != null
+                      ? `${Math.round(game.completion_pct)}% completado`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" — ") || "—"}
                 </div>
                 <div className={styles.topBar}>
                   <div
@@ -169,6 +174,19 @@ function ConnectedView({
               <span className={styles.recentTime}>reciente</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {summary.top_genres.length > 0 && (
+        <div className={styles.section}>
+          <div className={styles.eyebrow}>Géneros dominantes</div>
+          <div className={styles.tags}>
+            {summary.top_genres.map((genre) => (
+              <span key={genre.name} className={styles.tag}>
+                {genre.name} · {genre.games}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 

@@ -16,6 +16,10 @@ from typing import Any
 import httpx
 
 _BASE_URL = "https://api.steampowered.com"
+# La store API es pública (sin key) y sirve la ficha de cada juego; se usa
+# para el enriquecimiento de géneros (D16/D55). Comparte el throttle: su rate
+# limit es más agresivo que el de la Web API.
+_STORE_BASE_URL = "https://store.steampowered.com"
 
 
 class SteamApiError(RuntimeError):
@@ -30,12 +34,16 @@ class SteamApiClient:
         api_key: str,
         *,
         client: httpx.Client | None = None,
+        store_client: httpx.Client | None = None,
         min_interval_seconds: float = 1.0,
         clock: Callable[[], float] = time.monotonic,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self._api_key = api_key
         self._client = client or httpx.Client(base_url=_BASE_URL, timeout=15.0)
+        self._store_client = store_client or httpx.Client(
+            base_url=_STORE_BASE_URL, timeout=15.0
+        )
         self._min_interval = min_interval_seconds
         self._clock = clock
         self._sleep = sleep
@@ -87,6 +95,24 @@ class SteamApiClient:
             "/IWishlistService/GetWishlist/v1/",
             {"steamid": steamid, "format": "json"},
         )
+
+    def get_app_details(self, appid: int) -> dict[str, Any]:
+        """Ficha de store de un juego, filtrada a géneros (una llamada por juego, D55).
+
+        API pública sin key; en español para que los géneros lleguen ya
+        localizados. El llamador degrada si falla: los géneros son un extra.
+        """
+        self._throttle()
+        respuesta = self._store_client.get(
+            "/api/appdetails",
+            params={"appids": str(appid), "filters": "genres", "l": "spanish"},
+        )
+        if respuesta.status_code != 200:
+            raise SteamApiError(f"La store de Steam respondió {respuesta.status_code}")
+        data: Any = respuesta.json()
+        if not isinstance(data, dict):
+            raise SteamApiError("Respuesta inesperada de la store de Steam")
+        return data
 
     def get_player_achievements(self, steamid: str, appid: int) -> dict[str, Any]:
         """Logros del usuario en un juego (una llamada por juego, D33).

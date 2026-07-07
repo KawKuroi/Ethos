@@ -17,6 +17,7 @@ def _items_y_perfil() -> tuple[list, object]:
         recently_played=load_fixture("steam_recently_played.json"),
         wishlist=load_fixture("steam_wishlist.json"),
         completion_by_appid={440: 75.0},
+        genres_by_appid={440: ["Acción", "Multijugador"], 570: ["Acción", "MOBA"]},
     )
     connector = SteamConnector()
     return connector.normalize(raw), connector.profile(raw)
@@ -43,6 +44,11 @@ def test_resumen_agrega_biblioteca_y_wishlist() -> None:
     # Reciente: solo TF2 tiene actividad en dos semanas.
     assert [r.title for r in summary.recently_played] == ["Team Fortress 2"]
 
+    # Géneros: el top los lleva y el agregado cuenta juegos por género (D55).
+    assert summary.top_by_hours[0].genres == ["Acción", "MOBA"]
+    assert summary.top_genres[0].name == "Acción"
+    assert summary.top_genres[0].games == 2
+
 
 def test_contexto_tiene_la_forma_d34() -> None:
     items, profile = _items_y_perfil()
@@ -59,6 +65,7 @@ def test_contexto_tiene_la_forma_d34() -> None:
         "summary",
         "top_by_hours",
         "recently_played",
+        "top_genres",
         "wishlist",
     }
     resumen = context["summary"]

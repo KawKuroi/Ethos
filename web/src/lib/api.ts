@@ -75,11 +75,18 @@ export type TopGame = {
   title: string;
   hours: number;
   completion_pct: number | null;
+  // Géneros de la ficha de store, enriquecidos con presupuesto (D55).
+  genres: string[];
 };
 
 export type RecentGame = {
   title: string;
   hours_2weeks: number;
+};
+
+export type TopGenre = {
+  name: string;
+  games: number;
 };
 
 export type GamesSummary = {
@@ -89,6 +96,7 @@ export type GamesSummary = {
   avg_completion_pct: number | null;
   top_by_hours: TopGame[];
   recently_played: RecentGame[];
+  top_genres: TopGenre[];
   persona_name: string | null;
   last_synced_at: string | null;
 };

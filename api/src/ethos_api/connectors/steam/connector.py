@@ -20,6 +20,8 @@ class SteamRawData:
     wishlist: dict[str, Any] = field(default_factory=dict)
     # Completado por appid (0-100), calculado aparte con presupuesto (D33).
     completion_by_appid: dict[int, float] = field(default_factory=dict)
+    # Géneros por appid, enriquecidos desde la store con presupuesto (D55).
+    genres_by_appid: dict[int, list[str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -47,7 +49,9 @@ class SteamConnector(Connector[SteamRawData, NormalizedItem]):
         recent_2weeks = self._recent_playtime_by_appid(raw.recently_played)
         games = raw.owned_games.get("response", {}).get("games", [])
         items = [
-            self._normalize_game(game, recent_2weeks, raw.completion_by_appid)
+            self._normalize_game(
+                game, recent_2weeks, raw.completion_by_appid, raw.genres_by_appid
+            )
             for game in games
         ]
         items.extend(self._normalize_wishlist(raw.wishlist))
@@ -71,6 +75,7 @@ class SteamConnector(Connector[SteamRawData, NormalizedItem]):
         game: dict[str, Any],
         recent_2weeks: dict[int, int],
         completion_by_appid: dict[int, float],
+        genres_by_appid: dict[int, list[str]],
     ) -> NormalizedItem:
         appid = int(game["appid"])
 
@@ -90,6 +95,9 @@ class SteamConnector(Connector[SteamRawData, NormalizedItem]):
         completion = completion_by_appid.get(appid)
         if completion is not None:
             extra["completion_pct"] = round(completion, 1)
+        genres = genres_by_appid.get(appid)
+        if genres:
+            extra["genres"] = genres
 
         work = Work(
             title=str(game.get("name", "")),
@@ -135,6 +143,19 @@ class SteamConnector(Connector[SteamRawData, NormalizedItem]):
                 )
             )
         return items
+
+    @staticmethod
+    def genres_from_app_details(appid: int, payload: dict[str, Any]) -> list[str]:
+        """Géneros de la ficha de store (`/api/appdetails`, D55)."""
+        entry = payload.get(str(appid), {})
+        if not entry.get("success"):
+            return []
+        genres = entry.get("data", {}).get("genres", [])
+        return [
+            str(g["description"])
+            for g in genres
+            if isinstance(g, dict) and g.get("description")
+        ]
 
     @staticmethod
     def completion_from_achievements(payload: dict[str, Any]) -> float | None:

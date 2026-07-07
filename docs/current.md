@@ -42,6 +42,14 @@ producción.
 
 ## Bitácora
 
+### 2026-07-06 (Fase 4 · géneros de juegos desde la store de Steam, D55)
+
+- Cierra el pendiente D16: los géneros se enriquecen desde la ficha pública de
+  la store (sin key), con presupuesto top-20 por refresco (como el completado
+  D33) y degradación silenciosa por juego. `work.extra["genres"]`, `genres` en
+  cada TopGame y agregado `top_genres` en resumen/contexto/MCP. Web: géneros en
+  el sub del top y chips "Géneros dominantes". api 203 tests (91,3%), web 71.
+
 ### 2026-07-06 (Fase 4 · playground simulado con aviso, D54)
 
 - El playground de Conectar IA se queda simulado (LLM real descartado: costo y

@@ -34,6 +34,10 @@ def test_refresco_persiste_items_perfil_y_estado_fresh() -> None:
     assert tf2 is not None
     assert tf2.work.extra["completion_pct"] == 75.0
 
+    # Géneros enriquecidos desde la store, mismo presupuesto (D55).
+    assert sorted(client.genre_calls) == [440, 570]
+    assert tf2.work.extra["genres"] == ["Acción", "Indie"]
+
 
 def test_perfil_privado_deja_estado_private_sin_items() -> None:
     store = InMemoryGamesStore()
@@ -62,3 +66,13 @@ def test_fallo_de_logros_no_tumba_el_refresco() -> None:
     tf2 = store.item_by_appid("user-1", "440")
     assert tf2 is not None
     assert "completion_pct" not in tf2.work.extra
+
+
+def test_fallo_de_generos_no_tumba_el_refresco() -> None:
+    store = InMemoryGamesStore()
+    refresh_user_games("user-1", "765", FakeSteamApi(fail_genres=True), store)
+
+    assert store.status_for_user("user-1").state is SyncState.fresh
+    tf2 = store.item_by_appid("user-1", "440")
+    assert tf2 is not None
+    assert "genres" not in tf2.work.extra

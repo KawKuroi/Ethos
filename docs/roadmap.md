@@ -14,7 +14,7 @@ catálogo (D27) activas de punta a punta. Queda la Fase 4.
 - [x] Borrado de cuenta con deshacer de 30 días (correo + purga diferida).
 - [x] Playground de Conectar IA: se mantiene simulado con aviso explícito (D54; LLM real descartado por costo 0 USD).
 - [ ] Migración del auth del MCP a OAuth 2.1.
-- [ ] Enriquecimiento de géneros de juegos.
+- [x] Enriquecimiento de géneros de juegos.
 - [ ] Envelope encryption con KMS (si se requiere).
 - [ ] Opción de mover el backend a Cloud Run para eliminar cold starts.
 - [ ] Empaquetado y distribución pulidos; objetivos de cobertura de tests.
@@ -25,7 +25,6 @@ están cerradas. Retirada (D31): Actividad física — sin fuente viable.
 
 ## Pendientes y decisiones por resolver
 
-- Géneros de juegos: fuente de enriquecimiento (store API de Steam vs IGDB/RAWG). (D16)
 - Qué histórico incluye el contexto descargable cuando lleguen los eventos con timestamp (la forma v1 quedó fijada en D34).
 - Resolución de títulos de la wishlist de Steam (D32): candidata a la caché de catálogos globales.
 - Política de retención del histórico inactivo (cuánto tiempo se conserva).

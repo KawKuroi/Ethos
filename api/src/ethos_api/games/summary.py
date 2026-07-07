@@ -16,6 +16,8 @@ class TopGame(BaseModel):
     title: str
     hours: float
     completion_pct: float | None = None
+    # Géneros de la ficha de store, enriquecidos con presupuesto (D55).
+    genres: list[str] = []
 
 
 class RecentGame(BaseModel):
@@ -23,6 +25,13 @@ class RecentGame(BaseModel):
 
     title: str
     hours_2weeks: float
+
+
+class TopGenre(BaseModel):
+    """Género agregado del top por horas (D55)."""
+
+    name: str
+    games: int
 
 
 class GamesSummary(BaseModel):
@@ -34,6 +43,8 @@ class GamesSummary(BaseModel):
     avg_completion_pct: float | None
     top_by_hours: list[TopGame]
     recently_played: list[RecentGame]
+    # Géneros dominantes entre los juegos enriquecidos (el top por horas).
+    top_genres: list[TopGenre] = []
     persona_name: str | None = None
     last_synced_at: datetime | None = None
 
@@ -74,9 +85,21 @@ def build_games_summary(
                 if isinstance(pct := i.work.extra.get("completion_pct"), int | float)
                 else None
             ),
+            genres=_genres_of(i),
         )
         for i in by_hours[:top_limit]
         if i.engagement.get("playtime_minutes", 0) > 0
+    ]
+
+    # Géneros dominantes entre los juegos enriquecidos (solo el top por horas
+    # trae géneros, D55): conteo de juegos por género, orden descendente.
+    genre_counts: dict[str, int] = {}
+    for item in library:
+        for genre in _genres_of(item):
+            genre_counts[genre] = genre_counts.get(genre, 0) + 1
+    top_genres = [
+        TopGenre(name=name, games=count)
+        for name, count in sorted(genre_counts.items(), key=lambda kv: (-kv[1], kv[0]))[:8]
     ]
 
     recent = sorted(
@@ -99,6 +122,14 @@ def build_games_summary(
         avg_completion_pct=avg_completion,
         top_by_hours=top,
         recently_played=recently_played,
+        top_genres=top_genres,
         persona_name=profile.persona_name if profile else None,
         last_synced_at=synced_at,
     )
+
+
+def _genres_of(item: NormalizedItem) -> list[str]:
+    genres = item.work.extra.get("genres")
+    if not isinstance(genres, list):
+        return []
+    return [str(g) for g in genres]

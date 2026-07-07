@@ -15,6 +15,8 @@ from ethos_api.games.store import GamesStore, SourceStatus, SyncState
 
 # Juegos (top por horas) para los que se calcula el completado por refresco.
 COMPLETION_BUDGET = 20
+# Mismo presupuesto para el enriquecimiento de géneros desde la store (D55).
+GENRES_BUDGET = 20
 _PUBLIC_VISIBILITY = 3
 
 
@@ -30,6 +32,8 @@ class SteamGamesApi(Protocol):
     def get_wishlist(self, steamid: str) -> dict[str, Any]: ...
 
     def get_player_achievements(self, steamid: str, appid: int) -> dict[str, Any]: ...
+
+    def get_app_details(self, appid: int) -> dict[str, Any]: ...
 
 
 def refresh_user_games(
@@ -67,6 +71,7 @@ def refresh_user_games(
         raw.completion_by_appid = _completion_for_top(
             client, connector, steamid, raw.owned_games
         )
+        raw.genres_by_appid = _genres_for_top(client, connector, raw.owned_games)
 
         store.replace_items(user_id, connector.normalize(raw))
         store.set_status(
@@ -111,3 +116,31 @@ def _completion_for_top(
         if pct is not None:
             completion[appid] = pct
     return completion
+
+
+def _genres_for_top(
+    client: SteamGamesApi,
+    connector: SteamConnector,
+    owned_games: dict[str, Any],
+) -> dict[int, list[str]]:
+    """Géneros para el top por horas, con presupuesto propio (D55).
+
+    Una llamada de store por juego; un fallo puntual degrada a sin géneros
+    para ese juego, nunca tumba el refresco.
+    """
+    games = owned_games.get("response", {}).get("games", [])
+    top = sorted(
+        games, key=lambda g: int(g.get("playtime_forever", 0)), reverse=True
+    )[:GENRES_BUDGET]
+
+    genres: dict[int, list[str]] = {}
+    for game in top:
+        appid = int(game["appid"])
+        try:
+            payload = client.get_app_details(appid)
+        except Exception:  # noqa: S112 — ficha no disponible o error puntual.
+            continue
+        found = connector.genres_from_app_details(appid, payload)
+        if found:
+            genres[appid] = found
+    return genres

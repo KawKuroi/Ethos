@@ -24,11 +24,14 @@ class FakeSteamApi:
         visibility: int = 3,
         fail_owned: bool = False,
         fail_achievements: bool = False,
+        fail_genres: bool = False,
     ) -> None:
         self.visibility = visibility
         self.fail_owned = fail_owned
         self.fail_achievements = fail_achievements
+        self.fail_genres = fail_genres
         self.achievement_calls: list[int] = []
+        self.genre_calls: list[int] = []
 
     def get_owned_games(self, steamid: str) -> dict[str, Any]:
         if self.fail_owned:
@@ -53,3 +56,20 @@ class FakeSteamApi:
         if self.fail_achievements:
             raise SteamApiError("juego sin logros")
         return load_fixture("steam_achievements.json")
+
+    def get_app_details(self, appid: int) -> dict[str, Any]:
+        self.genre_calls.append(appid)
+        if self.fail_genres:
+            raise SteamApiError("ficha no disponible")
+        # Forma real de /api/appdetails con filters=genres.
+        return {
+            str(appid): {
+                "success": True,
+                "data": {
+                    "genres": [
+                        {"id": "1", "description": "Acción"},
+                        {"id": "23", "description": "Indie"},
+                    ]
+                },
+            }
+        }

@@ -20,6 +20,7 @@ vi.mock("@/lib/use-games-source", () => ({
         avg_completion_pct: 38,
         top_by_hours: [],
         recently_played: [],
+        top_genres: [],
         persona_name: "Jugador",
         last_synced_at: "2026-07-03T12:00:00Z",
       },

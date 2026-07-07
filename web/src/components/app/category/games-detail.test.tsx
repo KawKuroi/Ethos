@@ -39,8 +39,16 @@ const FRESH: GamesSource = {
     hours: 1840,
     wishlisted: 47,
     avg_completion_pct: 38,
-    top_by_hours: [{ title: "Stardew Valley", hours: 412, completion_pct: 91 }],
+    top_by_hours: [
+      {
+        title: "Stardew Valley",
+        hours: 412,
+        completion_pct: 91,
+        genres: ["Simulación", "Indie"],
+      },
+    ],
     recently_played: [{ title: "Balatro", hours_2weeks: 6.2 }],
+    top_genres: [{ name: "Simulación", games: 1 }],
     persona_name: "Jugador",
     last_synced_at: "2026-07-03T12:00:00Z",
   },
@@ -58,6 +66,9 @@ describe("GamesDetail", () => {
     expect(screen.getByRole("heading", { name: "Juegos" })).toBeInTheDocument();
     expect(screen.getByText("Stardew Valley")).toBeInTheDocument();
     expect(screen.getByText("Jugado recientemente")).toBeInTheDocument();
+    // Géneros enriquecidos (D55): en el sub del top y como chips agregados.
+    expect(screen.getByText(/Simulación · Indie/)).toBeInTheDocument();
+    expect(screen.getByText("Géneros dominantes")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /descargar contexto/i }),
     ).toBeInTheDocument();
