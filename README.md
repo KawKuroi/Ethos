@@ -23,6 +23,8 @@ uv sync
 uv run uvicorn ethos_api.main:app --reload   # expone /health y /mcp/
 ```
 
+Imagen de contenedor (vía Cloud Run u otro host): `docker build -t ethos-api api/`.
+
 ## Web
 
 Requiere Node 24 y pnpm. Detalle en [web/README.md](web/README.md).

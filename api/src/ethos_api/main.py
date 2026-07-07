@@ -47,7 +47,7 @@ def create_app() -> FastAPI:
     is_production = settings.environment == "production"
     app = FastAPI(
         title="Ethos API",
-        version="0.1.0",
+        version="0.2.0",
         lifespan=mcp_app.lifespan,
         # Sin docs interactivos en producción: menos superficie expuesta.
         docs_url=None if is_production else "/docs",

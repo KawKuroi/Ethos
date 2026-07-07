@@ -1,6 +1,6 @@
 [project]
 name = "ethos-api"
-version = "0.1.0"
+version = "0.2.0"
 description = "Backend de Ethos: API HTTP y servidor MCP (FastAPI + FastMCP)."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -65,5 +65,6 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src", "."]
-# Cobertura siempre activa; el umbral bloquea regresiones de testeo.
-addopts = "--cov=ethos_api --cov-report=term-missing --cov-fail-under=85"
+# Cobertura siempre activa; el umbral bloquea regresiones de testeo (D59:
+# objetivo >=88; medición real al fijarlo: 90,3%).
+addopts = "--cov=ethos_api --cov-report=term-missing --cov-fail-under=88"

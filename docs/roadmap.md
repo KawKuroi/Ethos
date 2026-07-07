@@ -3,37 +3,39 @@
 Fases de construcción. Cada tarea se marca `[x]` al completarse; al cerrarse una
 fase entera se mueve a `## Histórico de fases completadas` como resumen breve.
 
-Fases 0-3 completas: infraestructura en producción y las cinco categorías del
-catálogo (D27) activas de punta a punta. Queda la Fase 4.
-
-## Fase 4 — Pulido y robustez
-
-- [x] "Avísame cuando esté lista" para categorías en desarrollo.
-- [x] Entradas a mano (añadir registros sin proveedor).
-- [x] Envío real de sugerencias y contacto (persistencia + notificación).
-- [x] Borrado de cuenta con deshacer de 30 días (correo + purga diferida).
-- [x] Playground de Conectar IA: se mantiene simulado con aviso explícito (D54; LLM real descartado por costo 0 USD).
-- [x] Migración del auth del MCP a OAuth 2.1.
-- [x] Enriquecimiento de géneros de juegos.
-- [x] Envelope encryption con KMS: no se requiere (D57; Fernet + secret manager cubre la amenaza actual).
-- [x] Opción de mover el backend a Cloud Run para eliminar cold starts (D58: Dockerfile listo; migrar cuando se quiera pagar).
-- [ ] Empaquetado y distribución pulidos; objetivos de cobertura de tests.
+**Fases 0-4 completas**: infraestructura en producción, las cinco categorías
+del catálogo (D27) activas de punta a punta y el pulido de la Fase 4 cerrado.
+Sin fase activa: candidatas para la siguiente en "Pendientes".
 
 Diferidas fuera del catálogo (D27, revisión 2026-07-03): Lugares (Swarm),
-Comida (Beli) y Juegos de mesa (BoardGameGeek). Se reevaluarán ahora que las 5
-están cerradas. Retirada (D31): Actividad física — sin fuente viable.
+Comida (Beli) y Juegos de mesa (BoardGameGeek) — ya visibles "en desarrollo"
+con aviso (D50). Retirada (D31): Actividad física — sin fuente viable.
 
 ## Pendientes y decisiones por resolver
 
+- Categorías diferidas (Lugares, Comida, Juegos de mesa): decidir si alguna se construye ahora que hay lista de interesados (D50).
 - Qué histórico incluye el contexto descargable cuando lleguen los eventos con timestamp (la forma v1 quedó fijada en D34).
 - Resolución de títulos de la wishlist de Steam (D32): candidata a la caché de catálogos globales.
 - Política de retención del histórico inactivo (cuánto tiempo se conserva).
-- Destino de las sugerencias (tabla + ¿aviso por correo?) y del contacto personal.
-- Objetivos concretos de cobertura de tests y umbrales de CI.
-- Estrategia de caché de catálogos globales (esquema de logros, metadatos de juegos) compartidos entre usuarios.
+- Estrategia de caché de catálogos globales (esquema de logros, metadatos de juegos, fichas de géneros D55) compartidos entre usuarios.
 - El ping de keep-alive golpea `/health`, que no toca Supabase: añadir un toque de BD (o cron) para evitar su pausa a los 7 días.
+- UI de revocación por cliente OAuth en Ajustes (hoy: revocar = borrar filas de `oauth_tokens`, D56).
+- Entradas a mano en categorías sin proveedor conectado (hoy solo en el detalle conectado, D51).
 
 ## Histórico de fases completadas
+
+### Fase 4 — Pulido y robustez (cerrada 2026-07-06)
+
+Las diez tareas cerradas (D50-D59): aviso de categorías en desarrollo con
+lista de interés (migración 0005), entradas a mano en `user_items` que
+sobreviven al refresco, sugerencias/contacto reales (tabla `feedback` 0006 +
+SMTP opcional), borrado de cuenta con deshacer de 30 días y job de purga
+(0007), playground simulado con aviso explícito (LLM real descartado), OAuth
+2.1 en el MCP (DCR + PKCE + refresh rotatorio + discovery, 0008, consentimiento
+en `/oauth/autorizar`; `eth_live_` sigue vigente), géneros de juegos desde la
+store de Steam (cierra D16), KMS descartado (D57), Dockerfile para Cloud Run
+(D58) y objetivos de cobertura con gates en CI (api ≥88%, web por dimensión,
+D59; versión 0.2.0). api 213 tests (90,3%), web 75, builds en verde.
 
 ### Fase 3 — Categorías restantes (cerrada 2026-07-05)
 

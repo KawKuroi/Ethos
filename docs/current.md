@@ -5,28 +5,28 @@ estamos y lo actualiza al cerrar cada tarea (entrada con fecha `AAAA-MM-DD`).
 
 ## Estado general
 
-Fase 0 cerrada: infraestructura viva en producción (Render + Vercel +
-Supabase + keep-alive). El diseño de la interfaz (Claude Design) está
-terminado y es la fuente de verdad de la UI (D25, `design.md`). **Fases 1, 2
-y 3 completas a nivel de código**: las cinco categorías del catálogo (Juegos,
-Música, Cine y TV, Anime y manga y Libros) de punta a punta — backend,
-persistencia Supabase sin migraciones nuevas, pantallas del diseño, cableado
-web↔API, tools MCP por namespace y modo import genérico con autodetección
-(D49). Pendiente de la activación en producción por el usuario (env vars,
-migraciones 0003/0004, `TRAKT_CLIENT_ID` y verificación visual, ver
-`por-revisar.md`). Siguiente: Fase 4 (pulido y robustez).
+**Fases 0-4 completas a nivel de código.** Infraestructura viva en producción
+(Render + Vercel + Supabase + keep-alive); las cinco categorías del catálogo
+de punta a punta (Fases 1-3); y el pulido de la Fase 4 (D50-D59): aviso de
+categorías en desarrollo, entradas a mano, sugerencias y borrado de cuenta
+reales, OAuth 2.1 en el MCP, géneros de juegos, Dockerfile para Cloud Run y
+gates de cobertura en CI (versión 0.2.0). Pendiente de activación en
+producción por el usuario: migraciones 0003-0008, env vars nuevas
+(`TRAKT_CLIENT_ID`, `PUBLIC_BASE_URL`, `WEB_BASE_URL`, SMTP opcionales), job
+de purga y verificación e2e — ver `por-revisar.md`. Sin fase activa:
+candidatas en los pendientes del roadmap.
 
 URLs de producción: API+MCP https://ethos-api-s10w.onrender.com · web
 https://ethos-steel.vercel.app
 
 ## Activo
 
-**Fase 4 en curso (pulido y robustez).** Las cinco categorías del catálogo
-están activas; las tres diferidas (Lugares, Comida, Juegos de mesa) se muestran
-"en desarrollo" con aviso (D50, primera tarea de la fase). Pendiente del
-usuario para producción: `TRAKT_CLIENT_ID` en Render (AniList y Goodreads no
-requieren keys), migraciones 0003/0004/0005, env vars de Vercel y la
-verificación e2e — ver `por-revisar.md`.
+**Fase 4 cerrada (2026-07-06).** Las diez tareas completadas con commit por
+tarea (D50-D59); resumen en el histórico del roadmap. Siguiente fase por
+decidir (candidatas en los pendientes del roadmap: categorías diferidas con
+lista de interesados, caché de catálogos globales, retención del histórico).
+Pendiente del usuario para producción: migraciones 0005-0008, env vars nuevas
+del blueprint y verificaciones — ver `por-revisar.md`.
 
 Fase 0 completa (2026-07-02): Supabase real con migraciones aplicadas,
 servicio en Render (blueprint `render.yaml`), web en Vercel, keep-alive de
@@ -41,6 +41,17 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-06 (Fase 4 cerrada · cobertura y empaquetado, D59)
+
+- Última tarea de la fase. Gates de cobertura que bloquean el CI: api ≥88%
+  (`--cov-fail-under=88`; real 90,3%) y web por dimensión sobre todo `src`
+  (`@vitest/coverage-v8`, thresholds 53/60/52/56; real 57,0/63,5/55,4/59,7),
+  con `pnpm test` corriendo siempre con cobertura. Versión 0.2.0 en api y web
+  como corte de la fase; línea del contenedor en el README. La Fase 4 pasa al
+  histórico del roadmap; pendientes nuevos anotados (revocación OAuth por
+  cliente, entradas a mano sin proveedor conectado, diferidas con lista de
+  interesados).
 
 ### 2026-07-06 (Fase 4 · vía Cloud Run lista, D58)
 
