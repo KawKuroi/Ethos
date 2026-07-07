@@ -114,6 +114,17 @@ Marca `[x]` conforme lo revises.
   `mailto:hola@ethos.app` (placeholder). Cámbialo por tu correo real en
   `web/src/components/app/help/help.tsx`.
 
+## Fase 4 · Borrado de cuenta (D53)
+
+- [ ] **Aplicar la migración 0007** (`account_deletions`) en Supabase.
+- [ ] **Programar el job de purga**: ejecuta `python -m ethos_api.account.purge_job`
+  a diario (cron job de Render, o GitHub Actions con las env vars
+  `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`). Sin él, las cuentas vencidas
+  no se purgan (el deshacer funciona igual).
+- [ ] **Verifica el flujo** en Ajustes: "Eliminar datos" limpia las fuentes;
+  "Eliminar cuenta" muestra el banner con la fecha y "Deshacer" lo cancela.
+  El correo de aviso usa el mismo SMTP opcional de sugerencias (D52).
+
 ## Decisiones que tomé por delegación (2026-07-03) — revísalas
 
 - [ ] **D32** Wishlist de Steam sin títulos en v1 (solo conteo + appids por

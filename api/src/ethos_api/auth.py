@@ -107,5 +107,24 @@ def get_optional_user_id(
     return str(user_id) if user_id else None
 
 
+def get_current_user_email(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+) -> str | None:
+    """Devuelve el `email` del JWT si es válido y lo trae; None si no.
+
+    No exige el claim (algunos flujos no lo incluyen); se usa para avisos
+    best-effort, nunca como identidad.
+    """
+    if credentials is None:
+        return None
+    try:
+        payload = _decode(credentials.credentials)
+    except jwt.PyJWTError:
+        return None
+    email = payload.get("email")
+    return str(email) if email else None
+
+
 CurrentUserId = Annotated[str, Depends(get_current_user_id)]
 OptionalUserId = Annotated[str | None, Depends(get_optional_user_id)]
+CurrentUserEmail = Annotated[str | None, Depends(get_current_user_email)]

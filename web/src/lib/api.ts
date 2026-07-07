@@ -234,6 +234,32 @@ export type ImportResult = {
   items: number;
 };
 
+// ===== Cuenta: borrado de datos y de cuenta (D53) =====
+
+export type AccountDeletionStatus = {
+  scheduled: boolean;
+  purge_after: string | null;
+};
+
+// Borra el contexto de todas las fuentes; la cuenta se conserva.
+export function deleteAllData(): Promise<void> {
+  return apiFetch("/account/data", { method: "DELETE" }).then(() => undefined);
+}
+
+// Programa el borrado de la cuenta a 30 días (correo + deshacer).
+export function requestAccountDeletion(): Promise<AccountDeletionStatus> {
+  return apiJson<AccountDeletionStatus>("/account/deletion", { method: "POST" });
+}
+
+export function getAccountDeletion(): Promise<AccountDeletionStatus> {
+  return apiJson<AccountDeletionStatus>("/account/deletion");
+}
+
+// Deshace (cancela) el borrado programado.
+export function undoAccountDeletion(): Promise<void> {
+  return apiFetch("/account/deletion", { method: "DELETE" }).then(() => undefined);
+}
+
 // ===== Sugerencias y contacto (D52) =====
 
 export type FeedbackInput = {

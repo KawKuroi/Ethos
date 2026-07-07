@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import {
+  deleteAllData,
+  getAccountDeletion,
+  requestAccountDeletion,
+  undoAccountDeletion,
+} from "@/lib/api";
 import styles from "./settings.module.css";
 
 // El tema real solo se conoce en cliente; evita desajustes de hidratación
@@ -84,21 +90,78 @@ export function Settings() {
   const [saved, setSaved] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmKind>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [working, setWorking] = useState(false);
+  // Fecha de purga si el borrado de cuenta ya está programado (D53).
+  const [purgeAfter, setPurgeAfter] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getAccountDeletion()
+      .then((status) => {
+        if (active && status.scheduled) setPurgeAfter(status.purge_after);
+      })
+      .catch(() => {
+        // Sin sesión o backend no disponible: sin banner de borrado.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function save() {
-    // Persistencia real del perfil: Fase 4.
+    // Persistencia real del perfil: pendiente (fuera de la Fase 4).
     setSaved(true);
     setTimeout(() => setSaved(false), 1600);
   }
 
-  function runConfirm() {
-    // El borrado real (correo + purga diferida de 30 días) llega en Fase 4.
-    setConfirm(null);
-    setNotice(
-      "El borrado real llegará con el backend (correo + deshacer de 30 días).",
-    );
-    setTimeout(() => setNotice(null), 3200);
+  function flashNotice(text: string) {
+    setNotice(text);
+    setTimeout(() => setNotice(null), 4000);
   }
+
+  async function runConfirm() {
+    if (working || !confirm) return;
+    const kind = confirm;
+    setWorking(true);
+    try {
+      if (kind === "wipe") {
+        await deleteAllData();
+        flashNotice(
+          "Datos eliminados. Reconecta tus fuentes cuando quieras empezar de nuevo.",
+        );
+      } else {
+        const status = await requestAccountDeletion();
+        setPurgeAfter(status.purge_after);
+      }
+      setConfirm(null);
+    } catch {
+      flashNotice("No se pudo completar la acción. Reinténtalo.");
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  async function undoDeletion() {
+    if (working) return;
+    setWorking(true);
+    try {
+      await undoAccountDeletion();
+      setPurgeAfter(null);
+      flashNotice("Borrado cancelado. Tu cuenta sigue activa.");
+    } catch {
+      flashNotice("No se pudo deshacer. Reinténtalo.");
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  const purgeDate = purgeAfter
+    ? new Date(purgeAfter).toLocaleDateString("es-ES", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
 
   return (
     <div className={`eth-screen ${styles.screen}`}>
@@ -235,16 +298,29 @@ export function Settings() {
             <div className={styles.dangerRowBody}>
               <div className={styles.dangerRowTitle}>Eliminar cuenta</div>
               <div className={styles.dangerRowSub}>
-                Elimina tu perfil, fuentes y contexto de forma permanente.
+                {purgeDate
+                  ? `Borrado programado: se eliminará el ${purgeDate}.`
+                  : "Elimina tu perfil, fuentes y contexto de forma permanente."}
               </div>
             </div>
-            <button
-              type="button"
-              className={styles.dangerSolid}
-              onClick={() => setConfirm("delete")}
-            >
-              Eliminar cuenta
-            </button>
+            {purgeDate ? (
+              <button
+                type="button"
+                className={styles.dangerGhost}
+                onClick={undoDeletion}
+                disabled={working}
+              >
+                Deshacer
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={styles.dangerSolid}
+                onClick={() => setConfirm("delete")}
+              >
+                Eliminar cuenta
+              </button>
+            )}
           </div>
         </div>
         {notice && <div className={styles.notice}>{notice}</div>}
@@ -273,8 +349,9 @@ export function Settings() {
                 type="button"
                 className={styles.dangerSolid}
                 onClick={runConfirm}
+                disabled={working}
               >
-                {CONFIRM_COPY[confirm].label}
+                {working ? "Un momento…" : CONFIRM_COPY[confirm].label}
               </button>
             </div>
           </div>

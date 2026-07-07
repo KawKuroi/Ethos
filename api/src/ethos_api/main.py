@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from ethos_api.account.router import router as account_router
 from ethos_api.anime.router import router as anime_router
 from ethos_api.books.router import router as books_router
 from ethos_api.config import settings
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(interest_router)
     app.include_router(items_router)
     app.include_router(feedback_router)
+    app.include_router(account_router)
     app.include_router(mcp_token_router)
 
     @app.get("/health")

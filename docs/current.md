@@ -42,6 +42,17 @@ producción.
 
 ## Bitácora
 
+### 2026-07-06 (Fase 4 · borrado de cuenta con deshacer de 30 días, D53)
+
+- Zona de peligro de Ajustes real. Backend: módulo `account/` (service con
+  wipe/schedule/status/cancel/purge, mailer de aviso, auth_admin GoTrue, deps
+  503 sin Supabase, router `/account/*`), migración 0007 (`account_deletions`),
+  `CurrentUserEmail` en auth.py, job `python -m ethos_api.account.purge_job`
+  para el cron. 9 tests nuevos. api 201 tests, 91.3%.
+- Web: ops de cuenta en `lib/api.ts`; Ajustes cablea "Eliminar datos" y
+  "Eliminar cuenta" (banner con fecha de purga + "Deshacer", estado cargado al
+  entrar). Tests de Settings reescritos (4). web 70 tests, build en verde.
+
 ### 2026-07-06 (Fase 4 · sugerencias y contacto reales, D52)
 
 - Los formularios de sugerencias (landing y Ayuda) persisten de verdad. Backend:

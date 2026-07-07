@@ -1,37 +1,40 @@
-# ACTIVE_TASK — Fase 4 · Sugerencias y contacto reales (D52)
+# ACTIVE_TASK — Fase 4 · Borrado de cuenta con deshacer de 30 días (D53)
 
-Los formularios de sugerencias (landing y Ayuda) persisten de verdad y avisan
-al admin por correo (opcional).
+Zona de peligro de Ajustes real: borrar datos (conservando la cuenta) y borrar
+la cuenta con purga diferida a 30 días, correo de aviso y deshacer.
 
 ### 1. Contexto y Archivos Afectados
 
-Backend nuevo: `feedback/{__init__,models,repository,mailer,deps,router}.py`,
-migración `0006_feedback.sql`, `tests/feedback/test_feedback_api.py`. Editados:
-`config.py` (SMTP + feedback_to/from), `main.py` (router). Web editado:
-`lib/api.ts` (`submitFeedback`), `landing/suggestions.tsx`, `app/help/help.tsx`
-y sus CSS + tests.
+Backend nuevo: `account/{__init__,models,service,mailer,auth_admin,deps,
+router,purge_job}.py`, migración `0007_account_deletions.sql`,
+`tests/account/test_account_api.py`. Editados: `auth.py` (`CurrentUserEmail`),
+`main.py` (router). Web editado: `lib/api.ts` (ops de cuenta),
+`settings/settings.tsx` (acciones reales + banner con deshacer) y su test.
 
 ### 2. Evaluación Crítica
 
-Veredicto: **bueno**. Mismo patrón repositorio (memoria+Supabase) y endpoint
-público controlado (rate limit, `user_id` opcional, RLS sin acceso público).
-El aviso por correo usa `smtplib` de la stdlib (sin dependencia nueva), es
-opcional (gated por env) y best-effort en segundo plano: nunca bloquea ni
-tumba el formulario. Deuda: el contacto personal sigue siendo el `mailto:` del
-diseño (dirección real por configurar, por-revisar); no hay panel admin para
-leer el feedback (se revisa en Supabase).
+Veredicto: **bueno**. El borrado diferido con marca en tabla + job de purga es
+el patrón estándar; el deshacer es un simple delete de la marca. El borrado en
+GoTrue (admin API) cascada por FK, así que la purga es un solo punto. Riesgos
+controlados: las rutas exigen Supabase (503 sin él, nunca borran a medias); el
+correo es best-effort y no bloquea. Deuda: el job de purga requiere que el
+usuario lo programe (cron externo, por-revisar); el aviso depende del claim
+`email` del JWT (si falta, no hay correo, pero el banner de Ajustes siempre
+informa).
 
 ### 3. Plan de Acción Detallado
 
-- [x] Migración 0006 + módulo `feedback/` (models, repo, mailer, router).
-- [x] Config SMTP opcional; aviso best-effort en BackgroundTasks.
-- [x] `submitFeedback` + cableado de landing y Ayuda (estados y errores).
-- [x] Tests backend (8: persistencia, sesión, kind, validación, mailer) y web.
-- [x] Docs: D52, roadmap, current, por-revisar.
+- [x] Migración 0007 + servicio (wipe, schedule, status, cancel, purge).
+- [x] Router `/account/*` + deps (503 sin Supabase) + mailer + auth_admin.
+- [x] Job `python -m ethos_api.account.purge_job` para el cron.
+- [x] Web: ops en `lib/api.ts` + Ajustes real (banner fecha de purga, Deshacer).
+- [x] Tests backend (9) y web (Settings reescrito, 4).
+- [x] Docs: D53, roadmap, current, por-revisar.
 
 ### 4. Reporte de Pruebas
 
-**[APROBADO]** — api: ruff + mypy limpios (136 archivos), pytest 192/192
-(8 nuevos), cobertura 92.6%. web: tsc + eslint limpios, vitest 68/68, build en
-verde. Secretos: grep limpio (SMTP solo por env; tokens de prueba en tests).
-Idioma D19 correcto.
+**[APROBADO]** — api: ruff + mypy limpios (146 archivos), pytest 201/201
+(9 nuevos: wipe de tablas, programación con fecha, estado con/sin marca,
+deshacer, 401, 503 sin Supabase, purga de vencidos, email del JWT), cobertura
+91.3%. web: tsc + eslint limpios, vitest 70/70, build en verde. Secretos: grep
+limpio (service_role solo por env). Idioma D19 correcto.
