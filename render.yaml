@@ -23,6 +23,10 @@ services:
         value: https://ethos-steel.vercel.app
       - key: ALLOWED_HOSTS
         value: ethos-api-s10w.onrender.com
+      - key: PUBLIC_BASE_URL
+        value: https://ethos-api-s10w.onrender.com
+      - key: WEB_BASE_URL
+        value: https://ethos-steel.vercel.app
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
@@ -32,4 +36,18 @@ services:
       - key: ENCRYPTION_KEY
         sync: false
       - key: STEAM_API_KEY
+        sync: false
+      - key: TRAKT_CLIENT_ID
+        sync: false
+      # Aviso por correo de sugerencias y borrado de cuenta (D52/D53);
+      # opcionales: sin ellos se persiste igual, solo no se envía correo.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: FEEDBACK_FROM
+        sync: false
+      - key: FEEDBACK_TO
         sync: false

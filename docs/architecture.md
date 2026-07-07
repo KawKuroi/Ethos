@@ -132,7 +132,10 @@ Actividad física dejó de ser necesaria al retirarse la categoría (D23/D31).
 - Objetivo: 0 USD/mes.
 - Compromiso de Render (free): el servicio se duerme tras inactividad y arranca en 30-50 s. Se mitiga combinando backend+MCP en un solo servicio, keep-alive ping, warm-up al cargar la web, estados "despertando" y reintento con backoff.
 - Compromiso de Supabase (free): los proyectos se pausan tras 7 días de inactividad; se mitiga con el mismo ping.
-- Sin lock-in: el mismo contenedor se mueve a Cloud Run sin cambiar código si se necesita rapidez (requiere tarjeta con tope de gasto).
+- Sin lock-in: `api/Dockerfile` (D58) empaqueta el mismo servicio para Cloud
+  Run u otro host de contenedores sin cambiar código, si se necesita eliminar
+  los cold starts (requiere tarjeta con tope de gasto). Render sigue usando su
+  runtime python (`render.yaml`).
 
 ## 10. Repositorio y herramientas
 

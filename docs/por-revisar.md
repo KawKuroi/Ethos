@@ -139,6 +139,19 @@ Marca `[x]` conforme lo revises.
 - [ ] **Ojo**: `/mcp` ya no responde anónimo (antes el tool `ping` era
   público); si tenías algún monitor apuntando a `/mcp`, muévelo a `/health`.
 
+## Fase 4 · Dockerfile / Cloud Run (D58) y blueprint de Render
+
+- [ ] **Verificar la build de la imagen** (el daemon de Docker no estaba
+  corriendo en la máquina al crearla): `cd api && docker build -t ethos-api .`
+  y luego `docker run --rm -p 8080:8080 --env-file .env ethos-api` +
+  `curl http://localhost:8080/health`.
+- [ ] **Render**: el blueprint ahora declara `PUBLIC_BASE_URL`, `WEB_BASE_URL`,
+  `TRAKT_CLIENT_ID` y las SMTP opcionales — puebla en el dashboard las que
+  falten (los blueprints existentes no añaden env vars solos).
+- [ ] Migrar a Cloud Run solo si los cold starts molestan de verdad: requiere
+  tarjeta (con tope de gasto). Guía: build de la imagen → `gcloud run deploy`
+  con las mismas env vars.
+
 ## Decisiones que tomé por delegación (2026-07-03) — revísalas
 
 - [ ] **D32** Wishlist de Steam sin títulos en v1 (solo conteo + appids por

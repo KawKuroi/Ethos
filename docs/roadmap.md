@@ -16,7 +16,7 @@ catálogo (D27) activas de punta a punta. Queda la Fase 4.
 - [x] Migración del auth del MCP a OAuth 2.1.
 - [x] Enriquecimiento de géneros de juegos.
 - [x] Envelope encryption con KMS: no se requiere (D57; Fernet + secret manager cubre la amenaza actual).
-- [ ] Opción de mover el backend a Cloud Run para eliminar cold starts.
+- [x] Opción de mover el backend a Cloud Run para eliminar cold starts (D58: Dockerfile listo; migrar cuando se quiera pagar).
 - [ ] Empaquetado y distribución pulidos; objetivos de cobertura de tests.
 
 Diferidas fuera del catálogo (D27, revisión 2026-07-03): Lugares (Swarm),

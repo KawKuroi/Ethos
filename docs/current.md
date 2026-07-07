@@ -42,6 +42,15 @@ producción.
 
 ## Bitácora
 
+### 2026-07-06 (Fase 4 · vía Cloud Run lista, D58)
+
+- `api/Dockerfile` (python 3.12-slim + uv, lock congelado, PORT de plataforma,
+  proxy-headers) + `.dockerignore`: el mismo servicio se despliega en Cloud Run
+  u otro host de contenedores sin cambiar código. Render sigue igual;
+  `render.yaml` completado con las env vars de la Fase 4 (PUBLIC_BASE_URL,
+  WEB_BASE_URL, TRAKT_CLIENT_ID, SMTP opcionales). Build local pendiente de
+  verificar (daemon de Docker apagado) — por-revisar.
+
 ### 2026-07-06 (Fase 4 · KMS descartado por ahora, D57)
 
 - La condición "si se requiere" no se cumple: Fernet a nivel de app con la

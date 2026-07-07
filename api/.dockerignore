@@ -1,0 +1,10 @@
+# Fuera de la imagen: entornos, cachés, tests y secretos locales.
+.venv/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+tests/
+.env
+.env.*
