@@ -117,10 +117,9 @@ def download_anime_context(user_id: CurrentUserId, store: AnimeStoreDep) -> JSON
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Aún no hay contexto: conecta AniList y espera el refresco",
         )
-    summary = build_anime_summary(
-        store.items_for_user(user_id), synced_at=source.synced_at
-    )
+    items = store.items_for_user(user_id)
+    summary = build_anime_summary(items, synced_at=source.synced_at)
     return JSONResponse(
-        content=build_anime_context(summary),
+        content=build_anime_context(summary, items),
         headers={"Content-Disposition": 'attachment; filename="anime.context.json"'},
     )

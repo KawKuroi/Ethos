@@ -77,10 +77,9 @@ def download_books_context(user_id: CurrentUserId, store: BooksStoreDep) -> JSON
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Aún no hay contexto: sube tu export de Goodreads primero",
         )
-    summary = build_books_summary(
-        store.items_for_user(user_id), synced_at=source.synced_at
-    )
+    items = store.items_for_user(user_id)
+    summary = build_books_summary(items, synced_at=source.synced_at)
     return JSONResponse(
-        content=build_books_context(summary),
+        content=build_books_context(summary, items),
         headers={"Content-Disposition": 'attachment; filename="books.context.json"'},
     )

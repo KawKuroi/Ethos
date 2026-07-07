@@ -26,6 +26,11 @@ from ethos_api.books.context import build_books_context
 from ethos_api.books.deps import get_books_store
 from ethos_api.books.store import BooksStore
 from ethos_api.books.summary import build_books_summary
+from ethos_api.context_history import (
+    MAX_HISTORY_ENTRIES,
+    events_history,
+    items_history,
+)
 from ethos_api.film.context import build_film_context
 from ethos_api.film.deps import get_film_store
 from ethos_api.film.store import FilmStore
@@ -38,7 +43,7 @@ from ethos_api.mcp_auth import resolve_bearer_user
 from ethos_api.music.deps import get_event_store
 from ethos_api.music.store import EventStore
 from ethos_api.music.summary import build_music_summary
-from ethos_api.schema import NormalizedItem
+from ethos_api.schema import ItemStatus, NormalizedItem
 
 mcp: FastMCP = FastMCP(name="Ethos")
 
@@ -115,6 +120,19 @@ def games_recent_payload(user_id: str, store: GamesStore) -> dict[str, object]:
     return _served(payload, _games_context_kb(user_id, store))
 
 
+def games_history_payload(
+    user_id: str, store: GamesStore, limit: int
+) -> dict[str, object]:
+    """Biblioteca completa hasta el límite (la wishlist viaja aparte, D32/D60)."""
+    items = [
+        i
+        for i in store.items_for_user(user_id)
+        if i.status is not ItemStatus.wishlist
+    ]
+    payload: dict[str, object] = {"history": items_history(items, limit=limit)}
+    return _served(payload, _games_context_kb(user_id, store))
+
+
 def _search_result(item: NormalizedItem) -> dict[str, object]:
     result: dict[str, object] = {
         "category": item.category.value,
@@ -163,8 +181,9 @@ def _music_context_kb(user_id: str, store: EventStore) -> float:
     """Tamaño del contexto completo de Música, referencia de la métrica D28."""
     from ethos_api.music.context import build_music_context
 
-    summary = build_music_summary(store.events_for_user(user_id))
-    return _kb(build_music_context(summary))
+    events = store.events_for_user(user_id)
+    summary = build_music_summary(events)
+    return _kb(build_music_context(summary, events))
 
 
 def music_summary_payload(user_id: str, store: EventStore) -> dict[str, object]:
@@ -196,12 +215,21 @@ def music_recent_payload(
     return _served(payload, _music_context_kb(user_id, store))
 
 
+def music_history_payload(
+    user_id: str, store: EventStore, limit: int
+) -> dict[str, object]:
+    """Listens completos hasta el límite, con metadatos de uso (D60)."""
+    payload: dict[str, object] = {
+        "history": events_history(store.events_for_user(user_id), limit=limit)
+    }
+    return _served(payload, _music_context_kb(user_id, store))
+
+
 def _film_context_kb(user_id: str, store: FilmStore) -> float:
     """Tamaño del contexto completo de Cine y TV, referencia de la métrica D28."""
-    summary = build_film_summary(
-        store.items_for_user(user_id), store.stats_for_user(user_id)
-    )
-    return _kb(build_film_context(summary))
+    items = store.items_for_user(user_id)
+    summary = build_film_summary(items, store.stats_for_user(user_id))
+    return _kb(build_film_context(summary, items))
 
 
 def film_summary_payload(user_id: str, store: FilmStore) -> dict[str, object]:
@@ -237,10 +265,21 @@ def film_recent_payload(user_id: str, store: FilmStore, limit: int) -> dict[str,
     return _served(payload, _film_context_kb(user_id, store))
 
 
+def film_history_payload(
+    user_id: str, store: FilmStore, limit: int
+) -> dict[str, object]:
+    """Historial completo de Cine y TV hasta el límite (D60)."""
+    payload: dict[str, object] = {
+        "history": items_history(store.items_for_user(user_id), limit=limit)
+    }
+    return _served(payload, _film_context_kb(user_id, store))
+
+
 def _anime_context_kb(user_id: str, store: AnimeStore) -> float:
     """Tamaño del contexto completo de Anime, referencia de la métrica D28."""
-    summary = build_anime_summary(store.items_for_user(user_id))
-    return _kb(build_anime_context(summary))
+    items = store.items_for_user(user_id)
+    summary = build_anime_summary(items)
+    return _kb(build_anime_context(summary, items))
 
 
 def anime_summary_payload(user_id: str, store: AnimeStore) -> dict[str, object]:
@@ -271,10 +310,21 @@ def anime_current_payload(
     return _served(payload, _anime_context_kb(user_id, store))
 
 
+def anime_history_payload(
+    user_id: str, store: AnimeStore, limit: int
+) -> dict[str, object]:
+    """Lista completa de Anime y manga hasta el límite (D60)."""
+    payload: dict[str, object] = {
+        "history": items_history(store.items_for_user(user_id), limit=limit)
+    }
+    return _served(payload, _anime_context_kb(user_id, store))
+
+
 def _books_context_kb(user_id: str, store: BooksStore) -> float:
     """Tamaño del contexto completo de Libros, referencia de la métrica D28."""
-    summary = build_books_summary(store.items_for_user(user_id))
-    return _kb(build_books_context(summary))
+    items = store.items_for_user(user_id)
+    summary = build_books_summary(items)
+    return _kb(build_books_context(summary, items))
 
 
 def books_summary_payload(user_id: str, store: BooksStore) -> dict[str, object]:
@@ -307,6 +357,16 @@ def books_top_authors_payload(
     return _served(payload, _books_context_kb(user_id, store))
 
 
+def books_history_payload(
+    user_id: str, store: BooksStore, limit: int
+) -> dict[str, object]:
+    """Estanterías completas hasta el límite, con metadatos de uso (D60)."""
+    payload: dict[str, object] = {
+        "history": items_history(store.items_for_user(user_id), limit=limit)
+    }
+    return _served(payload, _books_context_kb(user_id, store))
+
+
 @mcp.tool
 def ping() -> str:
     """Tool de prueba para verificar la conexión con el servidor MCP."""
@@ -329,6 +389,12 @@ def games_top_by_hours(limit: int = 10) -> dict[str, object]:
 def games_recent() -> dict[str, object]:
     """Juegos con actividad en las últimas dos semanas."""
     return games_recent_payload(_require_user(), get_games_store())
+
+
+@mcp.tool(name="games.history")
+def games_history(limit: int = MAX_HISTORY_ENTRIES) -> dict[str, object]:
+    """Biblioteca completa de Juegos hasta el límite, con metadatos de uso."""
+    return games_history_payload(_require_user(), get_games_store(), limit)
 
 
 @mcp.tool(name="profile.search")
@@ -362,6 +428,12 @@ def music_recent(limit: int = 20) -> dict[str, object]:
     return music_recent_payload(_require_user(), get_event_store(), limit)
 
 
+@mcp.tool(name="music.history")
+def music_history(limit: int = MAX_HISTORY_ENTRIES) -> dict[str, object]:
+    """Listens completos hasta el límite, del más reciente al más antiguo."""
+    return music_history_payload(_require_user(), get_event_store(), limit)
+
+
 @mcp.tool(name="film.summary")
 def film_summary() -> dict[str, object]:
     """Resumen de Cine y TV: películas, series, episodios y horas vistas."""
@@ -378,6 +450,12 @@ def film_top_movies(limit: int = 10) -> dict[str, object]:
 def film_recent(limit: int = 10) -> dict[str, object]:
     """Películas y series vistas más recientemente."""
     return film_recent_payload(_require_user(), get_film_store(), limit)
+
+
+@mcp.tool(name="film.history")
+def film_history(limit: int = MAX_HISTORY_ENTRIES) -> dict[str, object]:
+    """Historial completo de Cine y TV hasta el límite, con metadatos de uso."""
+    return film_history_payload(_require_user(), get_film_store(), limit)
 
 
 @mcp.tool(name="anime.summary")
@@ -398,6 +476,12 @@ def anime_current(limit: int = 10) -> dict[str, object]:
     return anime_current_payload(_require_user(), get_anime_store(), limit)
 
 
+@mcp.tool(name="anime.history")
+def anime_history(limit: int = MAX_HISTORY_ENTRIES) -> dict[str, object]:
+    """Lista completa de Anime y manga hasta el límite, con metadatos de uso."""
+    return anime_history_payload(_require_user(), get_anime_store(), limit)
+
+
 @mcp.tool(name="books.summary")
 def books_summary() -> dict[str, object]:
     """Resumen de Libros: leídos, páginas, en curso, por leer y top autores."""
@@ -414,6 +498,12 @@ def books_currently_reading() -> dict[str, object]:
 def books_top_authors(limit: int = 10) -> dict[str, object]:
     """Autores con más libros leídos."""
     return books_top_authors_payload(_require_user(), get_books_store(), limit)
+
+
+@mcp.tool(name="books.history")
+def books_history(limit: int = MAX_HISTORY_ENTRIES) -> dict[str, object]:
+    """Estanterías completas de Libros hasta el límite, con metadatos de uso."""
+    return books_history_payload(_require_user(), get_books_store(), limit)
 
 
 @mcp.resource("ethos://games/summary")

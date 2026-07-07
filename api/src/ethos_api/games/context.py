@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from ethos_api.connectors.steam.connector import SteamProfile
+from ethos_api.context_history import items_history
 from ethos_api.games.summary import GamesSummary
 from ethos_api.schema import ItemStatus, NormalizedItem
 
@@ -68,4 +69,9 @@ def build_games_context(
             "count": summary.wishlisted,
             "top_priority_appids": top_priority_appids,
         },
+        # Biblioteca completa hasta el límite, con metadatos de uso (D60).
+        # La wishlist queda fuera: sin títulos (D32), ya viaja como appids.
+        "history": items_history(
+            [i for i in items if i.status is not ItemStatus.wishlist]
+        ),
     }

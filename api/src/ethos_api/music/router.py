@@ -115,8 +115,9 @@ def download_music_context(user_id: CurrentUserId, store: EventStoreDep) -> JSON
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Aún no hay contexto: conecta ListenBrainz y espera el refresco",
         )
-    summary = build_music_summary(store.events_for_user(user_id))
+    events = store.events_for_user(user_id)
+    summary = build_music_summary(events)
     return JSONResponse(
-        content=build_music_context(summary),
+        content=build_music_context(summary, events),
         headers={"Content-Disposition": 'attachment; filename="music.context.json"'},
     )

@@ -5,9 +5,13 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from ethos_api.anime.summary import AnimeSummary
+from ethos_api.context_history import items_history
+from ethos_api.schema import NormalizedItem
 
 
-def build_anime_context(summary: AnimeSummary) -> dict[str, object]:
+def build_anime_context(
+    summary: AnimeSummary, items: list[NormalizedItem]
+) -> dict[str, object]:
     """Arma el contexto de Anime y manga (misma información que sirve el MCP)."""
     return {
         "namespace": "anime.*",
@@ -25,4 +29,6 @@ def build_anime_context(summary: AnimeSummary) -> dict[str, object]:
         },
         "top_rated": [t.model_dump(mode="json") for t in summary.top_rated],
         "current": [c.model_dump(mode="json") for c in summary.current],
+        # Lista completa (anime y manga) hasta el límite, con metadatos (D60).
+        "history": items_history(items),
     }

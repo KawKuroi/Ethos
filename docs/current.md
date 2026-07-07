@@ -21,6 +21,12 @@ https://ethos-steel.vercel.app
 
 ## Activo
 
+**Historial completo en los contextos (2026-07-07, D60).** Los contextos
+descargables y el MCP (tools `<cat>.history` nuevas) sirven el detalle
+completo de cada categoría con límite claro (1000 entradas) y metadatos de
+uso (`usage_pct`, `truncated`); el modal de la web muestra el uso del límite,
+avisa al alcanzarlo y corrige su centrado (portal sobre `<body>`).
+
 **Fase 4 cerrada (2026-07-06).** Las diez tareas completadas con commit por
 tarea (D50-D59); resumen en el histórico del roadmap. Siguiente fase por
 decidir (candidatas en los pendientes del roadmap: categorías diferidas con
@@ -41,6 +47,19 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-07 (historial completo en los contextos, D60)
+
+- Los contextos dejan de ser solo el resumen: `history` con el detalle
+  completo (items/listens, del más reciente al más antiguo) hasta 1000
+  entradas (`context_history.py` compartido), con metadatos de uso (`limit`,
+  `total`, `included`, `usage_pct`, `truncated`, `note`). MCP: tools nuevas
+  `games/music/film/anime/books.history` (param `limit`); `kb_total` (D28)
+  referencia el contexto completo. Web: indicador de uso del límite en el
+  modal (barra + texto, ámbar al alcanzarlo) y fix de centrado del modal
+  (portal sobre `<body>`; el transform residual de `.eth-screen` anclaba el
+  `fixed` al contenido). api 218 tests (90,1%); web 78 tests, tsc, eslint y
+  build en verde.
 
 ### 2026-07-06 (Fase 4 cerrada · cobertura y empaquetado, D59)
 

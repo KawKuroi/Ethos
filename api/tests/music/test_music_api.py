@@ -86,6 +86,10 @@ def test_descarga_de_contexto_de_musica(
     contexto = respuesta.json()
     assert contexto["namespace"] == "music.*"
     assert contexto["provider"] == "listenbrainz"
+    # Historial completo con metadatos de uso del límite (D60).
+    historial = contexto["history"]
+    assert historial["truncated"] is False
+    assert historial["total"] == historial["included"] == len(historial["entries"])
 
 
 def test_los_listens_no_se_cruzan_entre_usuarios(

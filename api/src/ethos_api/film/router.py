@@ -120,12 +120,13 @@ def download_film_context(user_id: CurrentUserId, store: FilmStoreDep) -> JSONRe
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Aún no hay contexto: conecta Trakt y espera el refresco",
         )
+    items = store.items_for_user(user_id)
     summary = build_film_summary(
-        store.items_for_user(user_id),
+        items,
         store.stats_for_user(user_id),
         synced_at=source.synced_at,
     )
     return JSONResponse(
-        content=build_film_context(summary),
+        content=build_film_context(summary, items),
         headers={"Content-Disposition": 'attachment; filename="film.context.json"'},
     )

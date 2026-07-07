@@ -1,12 +1,41 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { downloadContext, getContextText } from "@/lib/api";
 import styles from "./category.module.css";
 
+// Metadatos del historial del contexto (D60): cuánto del límite se usa.
+type HistoryMeta = {
+  limit: number;
+  total: number;
+  included: number;
+  usage_pct: number;
+  truncated: boolean;
+};
+
+function parseHistoryMeta(text: string): HistoryMeta | null {
+  try {
+    const history = (JSON.parse(text) as { history?: Partial<HistoryMeta> }).history;
+    if (!history || typeof history.limit !== "number") return null;
+    return {
+      limit: history.limit,
+      total: history.total ?? 0,
+      included: history.included ?? 0,
+      usage_pct: history.usage_pct ?? 0,
+      truncated: history.truncated ?? false,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // Modal "Descargar contexto" compartido por los detalles de categoría:
 // vista previa JSON (real, del backend) / MCP (ilustrativa), copiar y
-// descargar `<slug>.context.json`.
+// descargar `<slug>.context.json`. Se monta en un portal sobre <body>:
+// `.eth-screen` conserva un transform (animación de entrada) que convertiría
+// a la pantalla en el contenedor del `position: fixed` y el modal se
+// centraría en el contenido, no en el viewport.
 export function ContextDownloadModal({
   slug,
   mcpPreview,
@@ -18,13 +47,18 @@ export function ContextDownloadModal({
 }) {
   const [tab, setTab] = useState<"json" | "mcp">("json");
   const [json, setJson] = useState<string | null>(null);
+  const [meta, setMeta] = useState<HistoryMeta | null>(null);
   const [copied, setCopied] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
 
   useEffect(() => {
     let active = true;
     getContextText(slug)
-      .then((text) => active && setJson(text))
+      .then((text) => {
+        if (!active) return;
+        setJson(text);
+        setMeta(parseHistoryMeta(text));
+      })
       .catch(() => active && setJson("// No se pudo cargar el contexto."));
     return () => {
       active = false;
@@ -32,6 +66,7 @@ export function ContextDownloadModal({
   }, [slug]);
 
   const code = tab === "mcp" ? mcpPreview : (json ?? "Cargando…");
+  const n = (value: number) => value.toLocaleString("es-ES");
 
   async function copy() {
     try {
@@ -49,7 +84,7 @@ export function ContextDownloadModal({
     setTimeout(() => setDownloaded(false), 1600);
   }
 
-  return (
+  return createPortal(
     <div
       className={styles.overlay}
       role="dialog"
@@ -78,6 +113,21 @@ export function ContextDownloadModal({
               </button>
             </div>
           </div>
+          {tab === "json" && meta && (
+            <div className={`${styles.limitRow} ${meta.truncated ? styles.limitRowWarn : ""}`}>
+              <div className={styles.limitBar} role="presentation">
+                <div
+                  className={styles.limitFill}
+                  style={{ width: `${Math.min(100, meta.usage_pct)}%` }}
+                />
+              </div>
+              <span className={styles.limitText}>
+                {meta.truncated
+                  ? `Límite alcanzado: el historial incluye las ${n(meta.included)} entradas más recientes de ${n(meta.total)}`
+                  : `Historial completo: ${n(meta.total)} entradas · ${meta.usage_pct} % del límite (${n(meta.limit)})`}
+              </span>
+            </div>
+          )}
           <pre className={styles.code}>{code}</pre>
           <div className={styles.modalActions}>
             <button type="button" className={styles.btnGhost} onClick={copy}>
@@ -89,6 +139,7 @@ export function ContextDownloadModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

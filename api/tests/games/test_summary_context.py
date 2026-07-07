@@ -67,6 +67,7 @@ def test_contexto_tiene_la_forma_d34() -> None:
         "recently_played",
         "top_genres",
         "wishlist",
+        "history",
     }
     resumen = context["summary"]
     assert isinstance(resumen, dict)
@@ -76,3 +77,10 @@ def test_contexto_tiene_la_forma_d34() -> None:
     assert wishlist["count"] == 3
     # Ordenada por prioridad ascendente (0 primero).
     assert wishlist["top_priority_appids"] == ["2379780", "1145360", "1030300"]
+    # Historial (D60): biblioteca completa sin la wishlist (sin títulos, D32).
+    history = context["history"]
+    assert isinstance(history, dict)
+    assert history["total"] == 2
+    assert history["truncated"] is False
+    titles = {e["title"] for e in history["entries"]}
+    assert titles == {"Team Fortress 2", "Dota 2"}

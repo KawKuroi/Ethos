@@ -4,10 +4,14 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+from ethos_api.context_history import items_history
 from ethos_api.film.summary import FilmSummary
+from ethos_api.schema import NormalizedItem
 
 
-def build_film_context(summary: FilmSummary) -> dict[str, object]:
+def build_film_context(
+    summary: FilmSummary, items: list[NormalizedItem]
+) -> dict[str, object]:
     """Arma el contexto de Cine y TV (misma información que sirve el MCP)."""
     return {
         "namespace": "film.*",
@@ -27,4 +31,6 @@ def build_film_context(summary: FilmSummary) -> dict[str, object]:
         "recently_watched": [
             r.model_dump(mode="json") for r in summary.recently_watched
         ],
+        # Detalle completo de lo visto hasta el límite, con metadatos (D60).
+        "history": items_history(items),
     }

@@ -5,9 +5,13 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from ethos_api.books.summary import BooksSummary
+from ethos_api.context_history import items_history
+from ethos_api.schema import NormalizedItem
 
 
-def build_books_context(summary: BooksSummary) -> dict[str, object]:
+def build_books_context(
+    summary: BooksSummary, items: list[NormalizedItem]
+) -> dict[str, object]:
     """Arma el contexto de Libros (misma información que sirve el MCP)."""
     return {
         "namespace": "books.*",
@@ -26,4 +30,6 @@ def build_books_context(summary: BooksSummary) -> dict[str, object]:
         ],
         "top_authors": [a.model_dump(mode="json") for a in summary.top_authors],
         "recent_reads": [r.model_dump(mode="json") for r in summary.recent_reads],
+        # Estanterías completas hasta el límite, con metadatos de uso (D60).
+        "history": items_history(items),
     }
