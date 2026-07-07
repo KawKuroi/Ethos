@@ -171,10 +171,15 @@ export function ConnectAi() {
       </div>
 
       <div className={styles.playHead}>
-        <div className={styles.playTitle}>Pruébalo: pregúntale a tu IA</div>
+        <div className={styles.playTitle}>Pruébalo: así consulta tu IA</div>
         <div className={styles.playSub}>
           Escríbele en el chat o toca una sugerencia. A la izquierda respondes en
           lenguaje natural; a la derecha ves lo que ocurre por detrás.
+        </div>
+        <div className={styles.playNotice} role="note">
+          Demostración con <strong>datos de ejemplo</strong>: este playground no
+          consulta tu perfil real ni usa un modelo de IA — enseña cómo fluye una
+          consulta cuando conectas tu propio cliente MCP.
         </div>
       </div>
 
@@ -191,9 +196,9 @@ export function ConnectAi() {
                 <div className={styles.aiRow}>
                   <StarAvatar />
                   <div className={styles.aiBubble}>
-                    Pregúntame lo que quieras sobre tu gusto. Consulto tus fuentes
-                    conectadas con una tool acotada y te respondo aquí. Prueba con
-                    una de estas — o escribe la tuya abajo:
+                    Soy un ejemplo: te enseño cómo respondería tu IA usando una
+                    tool acotada, con datos de muestra. Prueba con una de estas —
+                    o escribe la tuya abajo:
                   </div>
                 </div>
                 <div className={styles.chips}>

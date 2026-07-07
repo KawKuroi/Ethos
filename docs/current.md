@@ -42,6 +42,13 @@ producción.
 
 ## Bitácora
 
+### 2026-07-06 (Fase 4 · playground simulado con aviso, D54)
+
+- El playground de Conectar IA se queda simulado (LLM real descartado: costo y
+  abuso). Se añade el aviso "Demostración con datos de ejemplo — no consulta tu
+  perfil real ni usa un modelo de IA" y se corrige el copy del chat que decía
+  "consulto tus fuentes conectadas". Test del aviso. web 71 tests.
+
 ### 2026-07-06 (Fase 4 · borrado de cuenta con deshacer de 30 días, D53)
 
 - Zona de peligro de Ajustes real. Backend: módulo `account/` (service con

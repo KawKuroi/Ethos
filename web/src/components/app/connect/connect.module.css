@@ -181,6 +181,23 @@
   color: var(--muted);
   margin-top: 3px;
 }
+/* Aviso de que el playground es una demostración con datos de ejemplo (D54). */
+.playNotice {
+  margin-top: 10px;
+  display: inline-block;
+  font-family: var(--fb);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  background: color-mix(in oklab, var(--warn, #b98a2f) 10%, transparent);
+  border: var(--bw) solid color-mix(in oklab, var(--warn, #b98a2f) 30%, transparent);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.playNotice strong {
+  color: var(--ink);
+  font-weight: 600;
+}
 .playGrid {
   display: grid;
   grid-template-columns: 1.12fr 0.88fr;

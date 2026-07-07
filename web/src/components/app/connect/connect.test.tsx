@@ -39,6 +39,12 @@ describe("ConnectAi", () => {
     );
   });
 
+  it("avisa de que el playground usa datos de ejemplo", () => {
+    render(<ConnectAi />);
+    expect(screen.getByRole("note")).toHaveTextContent(/datos de ejemplo/i);
+    expect(screen.getByRole("note")).toHaveTextContent(/no consulta tu perfil real/i);
+  });
+
   it("responde a una consulta y muestra el panel técnico", () => {
     vi.useFakeTimers();
     render(<ConnectAi />);
