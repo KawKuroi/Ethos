@@ -21,6 +21,14 @@ https://ethos-steel.vercel.app
 
 ## Activo
 
+**Compatibilidad del MCP con conectores online (2026-07-07, D61).** El
+authorization server acepta redirect_uri de loopback con puerto efímero
+(RFC 8252), sirve los aliases de discovery que prueban los clientes MCP,
+anuncia `offline_access` (los conectores conservan el refresh token) y añade
+`POST /oauth/revoke` (RFC 7009). Con esto el MCP queda conectable desde
+Claude.ai (conector personalizado), Claude Code y cualquier cliente MCP
+remoto con OAuth estándar.
+
 **Historial completo en los contextos (2026-07-07, D60).** Los contextos
 descargables y el MCP (tools `<cat>.history` nuevas) sirven el detalle
 completo de cada categoría con límite claro (1000 entradas) y metadatos de
@@ -47,6 +55,18 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-07 (compatibilidad del MCP con conectores online, D61)
+
+- Revisión del sistema de conexión MCP contra los requisitos de los conectores
+  remotos (docs de Anthropic + spec MCP). Huecos corregidos: redirect_uri de
+  loopback ignorando el puerto (RFC 8252 — el match exacto rompía a Claude
+  Code), aliases de discovery (`oauth-authorization-server/mcp`,
+  `openid-configuration`), `offline_access` en `scopes_supported` (sin él los
+  conectores descartan el refresh token), refresh sin `scope` (RFC 6749 §5.1)
+  y revocación RFC 7009 (`POST /oauth/revoke` + `revocation_endpoint`).
+  Verificado: `/mcp` responde con y sin barra final. Sin CORS para `/mcp`
+  (conexión servidor-a-servidor). api 222 tests (90,1%) en verde.
 
 ### 2026-07-07 (historial completo en los contextos, D60)
 

@@ -19,7 +19,8 @@ con aviso (D50). Retirada (D31): Actividad física — sin fuente viable.
 - Política de retención del histórico inactivo (cuánto tiempo se conserva).
 - Estrategia de caché de catálogos globales (esquema de logros, metadatos de juegos, fichas de géneros D55) compartidos entre usuarios.
 - El ping de keep-alive golpea `/health`, que no toca Supabase: añadir un toque de BD (o cron) para evitar su pausa a los 7 días.
-- UI de revocación por cliente OAuth en Ajustes (hoy: revocar = borrar filas de `oauth_tokens`, D56).
+- UI de revocación por cliente OAuth en Ajustes (el cliente ya puede revocar por `POST /oauth/revoke`, D61; falta la vista del usuario).
+- CIMD (client_id como URL de metadata, spec MCP 2025-11) si el registro dinámico de clientes se vuelve ruidoso (D61).
 - Entradas a mano en categorías sin proveedor conectado (hoy solo en el detalle conectado, D51).
 
 ## Histórico de fases completadas

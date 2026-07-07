@@ -46,14 +46,40 @@ def _web_base() -> str:
     return first_origin.rstrip("/")
 
 
+_LOOPBACK_HOSTS = ("localhost", "127.0.0.1", "::1")
+
+
 def _valid_redirect(uri: str) -> bool:
     """OAuth 2.1: https, o http solo para loopback (localhost/127.0.0.1)."""
     parsed = urlparse(uri)
     if parsed.scheme == "https":
         return bool(parsed.netloc)
     if parsed.scheme == "http":
-        return parsed.hostname in ("localhost", "127.0.0.1")
+        return parsed.hostname in _LOOPBACK_HOSTS
     return False
+
+
+def _loopback_key(uri: str) -> tuple[str, str] | None:
+    """(host, path) de una redirect http loopback; None si no lo es."""
+    parsed = urlparse(uri)
+    if parsed.scheme == "http" and parsed.hostname in _LOOPBACK_HOSTS:
+        return (parsed.hostname or "", parsed.path)
+    return None
+
+
+def _redirect_registered(uri: str, client: OAuthClient) -> bool:
+    """Match exacto, o loopback ignorando el puerto (RFC 8252 §7.3).
+
+    Los clientes nativos (Claude Code y similares) registran
+    `http://localhost/callback` y abren un puerto efímero distinto en cada
+    sesión; el AS debe aceptar cualquier puerto en loopback.
+    """
+    if uri in client.redirect_uris:
+        return True
+    key = _loopback_key(uri)
+    if key is None:
+        return False
+    return any(_loopback_key(registered) == key for registered in client.redirect_uris)
 
 
 def _redirect_with(uri: str, params: dict[str, str]) -> str:
@@ -64,7 +90,12 @@ def _redirect_with(uri: str, params: dict[str, str]) -> str:
 # ===== Discovery (RFC 8414 + RFC 9728) =====
 
 
+# Los aliases con `/mcp` insertado y `openid-configuration` cubren los
+# fallbacks de discovery que prueban los clientes MCP (SDKs oficiales y
+# conectores de los chats online) cuando la ruta canónica no responde.
 @router.get("/.well-known/oauth-authorization-server")
+@router.get("/.well-known/oauth-authorization-server/mcp")
+@router.get("/.well-known/openid-configuration")
 def authorization_server_metadata(request: Request) -> dict[str, object]:
     """Metadata del authorization server (RFC 8414)."""
     issuer = _issuer(request)
@@ -73,11 +104,15 @@ def authorization_server_metadata(request: Request) -> dict[str, object]:
         "authorization_endpoint": f"{issuer}/oauth/authorize",
         "token_endpoint": f"{issuer}/oauth/token",
         "registration_endpoint": f"{issuer}/oauth/register",
+        "revocation_endpoint": f"{issuer}/oauth/revoke",
         "response_types_supported": ["code"],
         "grant_types_supported": ["authorization_code", "refresh_token"],
         "code_challenge_methods_supported": ["S256"],
         "token_endpoint_auth_methods_supported": ["none"],
-        "scopes_supported": [_DEFAULT_SCOPE],
+        "revocation_endpoint_auth_methods_supported": ["none"],
+        # offline_access: los conectores (p. ej. Claude.ai) solo conservan el
+        # refresh token si el servidor lo anuncia y lo devuelve en el scope.
+        "scopes_supported": [_DEFAULT_SCOPE, "offline_access"],
     }
 
 
@@ -89,7 +124,7 @@ def protected_resource_metadata(request: Request) -> dict[str, object]:
     return {
         "resource": f"{issuer}/mcp/",
         "authorization_servers": [issuer],
-        "scopes_supported": [_DEFAULT_SCOPE],
+        "scopes_supported": [_DEFAULT_SCOPE, "offline_access"],
         "bearer_methods_supported": ["header"],
     }
 
@@ -132,7 +167,7 @@ def authorize(request: Request, clients: ClientStoreDep) -> RedirectResponse:
     params = dict(request.query_params)
     client = clients.get(params.get("client_id", ""))
     redirect_uri = params.get("redirect_uri", "")
-    if client is None or redirect_uri not in client.redirect_uris:
+    if client is None or not _redirect_registered(redirect_uri, client):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="client_id desconocido o redirect_uri no registrada",
@@ -181,7 +216,7 @@ def approve(
 ) -> ApprovalOut:
     """Registra la decisión del usuario y devuelve a dónde navegar."""
     client = clients.get(body.client_id)
-    if client is None or body.redirect_uri not in client.redirect_uris:
+    if client is None or not _redirect_registered(body.redirect_uri, client):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="client_id desconocido o redirect_uri no registrada",
@@ -269,22 +304,36 @@ def _exchange_refresh(form: dict[str, str], tokens: TokenStoreDep) -> JSONRespon
         return _token_error("invalid_grant", "refresh token inválido o expirado")
     user_id, client_id = consumed
     access, refresh, expires_in = tokens.issue_pair(user_id, client_id)
-    return _token_response(access, refresh, expires_in, _DEFAULT_SCOPE)
+    # Sin `scope` en el refresh: RFC 6749 §5.1, omitido = idéntico al concedido.
+    return _token_response(access, refresh, expires_in, scope=None)
 
 
 def _token_response(
-    access: str, refresh: str, expires_in: int, scope: str
+    access: str, refresh: str, expires_in: int, scope: str | None
 ) -> JSONResponse:
-    return JSONResponse(
-        content={
-            "access_token": access,
-            "token_type": "Bearer",
-            "expires_in": expires_in,
-            "refresh_token": refresh,
-            "scope": scope,
-        },
-        headers={"Cache-Control": "no-store"},
-    )
+    content: dict[str, object] = {
+        "access_token": access,
+        "token_type": "Bearer",
+        "expires_in": expires_in,
+        "refresh_token": refresh,
+    }
+    if scope is not None:
+        content["scope"] = scope
+    return JSONResponse(content=content, headers={"Cache-Control": "no-store"})
+
+
+# ===== Revocación (RFC 7009) =====
+
+
+@router.post("/oauth/revoke")
+async def revoke(request: Request, tokens: TokenStoreDep) -> JSONResponse:
+    """Revoca un access o refresh token. Siempre 200 (RFC 7009 §2.2)."""
+    raw = (await request.body()).decode("utf-8", errors="replace")
+    form = {k: v[0] for k, v in parse_qs(raw).items()}
+    token = form.get("token", "")
+    if token:
+        tokens.revoke(token)
+    return JSONResponse(content={}, headers={"Cache-Control": "no-store"})
 
 
 __all__ = ["OAuthClient", "router"]

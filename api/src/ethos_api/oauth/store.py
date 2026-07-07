@@ -49,6 +49,8 @@ class OAuthTokenStore(Protocol):
 
     def consume_refresh(self, token: str) -> tuple[str, str] | None: ...
 
+    def revoke(self, token: str) -> None: ...
+
 
 class SupabaseOAuthClientStore:
     """Respaldo en la tabla `oauth_clients` (migración 0008)."""
@@ -175,6 +177,12 @@ class SupabaseOAuthTokenStore:
         self._rest.delete(self._TABLE, {"token_hash": f"eq.{_hash(token)}"})
         return row["user_id"], row["client_id"]
 
+    def revoke(self, token: str) -> None:
+        """Revocación RFC 7009: borra el token (access o refresh) si existe."""
+        if not token.startswith((ACCESS_PREFIX, REFRESH_PREFIX)):
+            return
+        self._rest.delete(self._TABLE, {"token_hash": f"eq.{_hash(token)}"})
+
 
 class InMemoryOAuthTokenStore:
     """Implementación en memoria (tests y desarrollo)."""
@@ -206,6 +214,10 @@ class InMemoryOAuthTokenStore:
         if entry is None or entry[2] != "refresh" or entry[3] < _now():
             return None
         return entry[0], entry[1]
+
+    def revoke(self, token: str) -> None:
+        """Revocación RFC 7009: borra el token (access o refresh) si existe."""
+        self._tokens.pop(_hash(token), None)
 
 
 class InMemoryCodeStore:

@@ -6,7 +6,7 @@ import base64
 import hashlib
 import secrets
 from collections.abc import Iterator
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 import pytest
 from fastapi.testclient import TestClient
@@ -252,10 +252,124 @@ def test_discovery_metadata(client: tuple[TestClient, InMemoryOAuthTokenStore]) 
     auth_server = test_client.get("/.well-known/oauth-authorization-server").json()
     assert auth_server["code_challenge_methods_supported"] == ["S256"]
     assert auth_server["authorization_endpoint"].endswith("/oauth/authorize")
+    assert auth_server["revocation_endpoint"].endswith("/oauth/revoke")
+    assert "offline_access" in auth_server["scopes_supported"]
 
     recurso = test_client.get("/.well-known/oauth-protected-resource/mcp").json()
     assert recurso["resource"].endswith("/mcp/")
     assert recurso["authorization_servers"] == [auth_server["issuer"]]
+
+    # Aliases que prueban los clientes MCP como fallback de discovery.
+    for alias in (
+        "/.well-known/oauth-authorization-server/mcp",
+        "/.well-known/openid-configuration",
+    ):
+        assert test_client.get(alias).json()["issuer"] == auth_server["issuer"]
+
+
+def test_redirect_loopback_acepta_cualquier_puerto(
+    client: tuple[TestClient, InMemoryOAuthTokenStore],
+) -> None:
+    """RFC 8252 §7.3: los clientes nativos abren un puerto efímero por sesión."""
+    test_client, _ = client
+    verifier, challenge = _pkce()
+    respuesta = test_client.post(
+        "/oauth/register",
+        json={
+            "client_name": "Claude Code",
+            "redirect_uris": ["http://localhost/callback", "http://127.0.0.1/callback"],
+        },
+    )
+    assert respuesta.status_code == 201
+    client_id = str(respuesta.json()["client_id"])
+    ported = "http://localhost:53211/callback"
+
+    autorizacion = test_client.get(
+        "/oauth/authorize",
+        params={
+            "response_type": "code",
+            "client_id": client_id,
+            "redirect_uri": ported,
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
+        },
+        follow_redirects=False,
+    )
+    assert autorizacion.status_code == 307
+
+    aprobacion = test_client.post(
+        "/oauth/approve",
+        json={
+            "client_id": client_id,
+            "redirect_uri": ported,
+            "code_challenge": challenge,
+            "approve": True,
+        },
+        headers=auth_headers("user-1"),
+    )
+    assert aprobacion.status_code == 200
+    code = parse_qs(urlparse(aprobacion.json()["redirect_to"]).query)["code"][0]
+
+    canje = test_client.post(
+        "/oauth/token",
+        content=(
+            f"grant_type=authorization_code&code={code}&client_id={client_id}"
+            f"&redirect_uri={quote(ported, safe='')}&code_verifier={verifier}"
+        ),
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert canje.status_code == 200
+
+
+def test_redirect_loopback_con_otro_path_rechazada(
+    client: tuple[TestClient, InMemoryOAuthTokenStore],
+) -> None:
+    test_client, _ = client
+    _, challenge = _pkce()
+    respuesta = test_client.post(
+        "/oauth/register",
+        json={"client_name": "Nativo", "redirect_uris": ["http://localhost/callback"]},
+    )
+    client_id = str(respuesta.json()["client_id"])
+    autorizacion = test_client.get(
+        "/oauth/authorize",
+        params={
+            "response_type": "code",
+            "client_id": client_id,
+            "redirect_uri": "http://localhost:53211/otro",
+            "code_challenge": challenge,
+        },
+        follow_redirects=False,
+    )
+    assert autorizacion.status_code == 400
+
+
+def test_revoke_invalida_el_token(
+    client: tuple[TestClient, InMemoryOAuthTokenStore],
+) -> None:
+    test_client, tokens = client
+    access, refresh, _ = tokens.issue_pair("user-1", "eth_client_x")
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+    respuesta = test_client.post("/oauth/revoke", content=f"token={access}", headers=headers)
+    assert respuesta.status_code == 200
+    assert tokens.resolve_access(access) is None
+    # El refresh sigue vivo hasta revocarlo o consumirlo.
+    assert tokens.consume_refresh(refresh) is not None
+
+    # Token desconocido: también 200 (RFC 7009 §2.2, sin fuga de existencia).
+    otro = test_client.post("/oauth/revoke", content="token=eth_oauth_x", headers=headers)
+    assert otro.status_code == 200
+
+
+def test_mcp_sin_barra_final_responde(
+    client: tuple[TestClient, InMemoryOAuthTokenStore],
+) -> None:
+    """Los usuarios pegan el endpoint con y sin barra final; ambos deben servir."""
+    test_client, tokens = client
+    access, _, _ = tokens.issue_pair("user-1", "eth_client_x")
+    respuesta = test_client.get("/mcp", headers={"Authorization": f"Bearer {access}"})
+    assert respuesta.status_code not in (401, 404)
 
 
 def test_mcp_sin_token_recibe_desafio_401(
