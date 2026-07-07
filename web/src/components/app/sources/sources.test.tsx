@@ -87,8 +87,7 @@ describe("Sources", () => {
 
   it("lista Juegos y Música en Activas con enlace al detalle", () => {
     render(<Sources />);
-    // "Juegos" (activa, CTA "Abrir") vs "Juegos de mesa" (en desarrollo): se
-    // desambigua por el CTA de la tarjeta activa.
+    // "Juegos" activa: se desambigua por el CTA "Abrir" de la tarjeta activa.
     expect(screen.getByRole("link", { name: /juegos.*abrir/i })).toHaveAttribute(
       "href",
       "/app/categoria/games",

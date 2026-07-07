@@ -30,52 +30,10 @@ export type ActiveSourceView = {
   countLabel: string;
 };
 
-// Categorías diferidas fuera del catálogo activo (D27/D31), mostradas "en
-// desarrollo" en el panorama con enlace a su pantalla de aviso (D50).
-const DEFERRED_VIEWS: ActiveSourceView[] = [
-  {
-    slug: "places",
-    name: "Lugares",
-    initial: "L",
-    accent: "#0ea5a4",
-    provider: "Swarm",
-    modeLabel: "API",
-    live: false,
-    syncing: false,
-    soon: true,
-    heroValue: 0,
-    heroLabel: "",
-    countLabel: "en desarrollo",
-  },
-  {
-    slug: "food",
-    name: "Comida",
-    initial: "C",
-    accent: "#e0663c",
-    provider: "Beli",
-    modeLabel: "API",
-    live: false,
-    syncing: false,
-    soon: true,
-    heroValue: 0,
-    heroLabel: "",
-    countLabel: "en desarrollo",
-  },
-  {
-    slug: "board",
-    name: "Juegos de mesa",
-    initial: "J",
-    accent: "#9a6b3f",
-    provider: "BoardGameGeek",
-    modeLabel: "API",
-    live: false,
-    syncing: false,
-    soon: true,
-    heroValue: 0,
-    heroLabel: "",
-    countLabel: "en desarrollo",
-  },
-];
+// Categorías "en desarrollo" mostradas en el panorama con enlace a su pantalla
+// de aviso (D50). Vacío por ahora; para volver a mostrar alguna, añade aquí una
+// vista con `soon: true`.
+const DEFERRED_VIEWS: ActiveSourceView[] = [];
 
 export type ActiveSourcesState = {
   loading: boolean;

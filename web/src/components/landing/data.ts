@@ -1,8 +1,7 @@
 // Datos de la landing, copiados del prototipo (Landing mockups.dc.html).
-// Catálogo activo: las 5 categorías de D27 ajustado por D31 (Lugares, Comida y
-// Juegos de mesa quedan diferidas; Actividad física retirada por falta de
-// fuente viable). Anime y manga toma sus valores del prototipo de la app
-// (misma fuente de verdad).
+// Catálogo activo: las 5 categorías de D27 ajustado por D31. No hay categorías
+// "en desarrollo" en la landing por ahora (DEFERRED_CATS vacío). Anime y manga
+// toma sus valores del prototipo de la app (misma fuente de verdad).
 
 export type LandingCategory = {
   name: string;
@@ -50,8 +49,9 @@ export const CATS: LandingCategory[] = [
   },
 ];
 
-// Categorías diferidas fuera del catálogo activo (D27/D31): visibles como "en
-// desarrollo" con opción de aviso (D50). El slug coincide con el id del backend.
+// Categorías "en desarrollo" para la landing: visibles con opción de aviso
+// (D50). El slug coincide con el id del backend. Vacío por ahora; para volver a
+// mostrar alguna, añádela a mano aquí.
 export type DeferredCategory = {
   slug: string;
   name: string;
@@ -60,29 +60,7 @@ export type DeferredCategory = {
   note: string;
 };
 
-export const DEFERRED_CATS: DeferredCategory[] = [
-  {
-    slug: "places",
-    name: "Lugares",
-    accent: "#0ea5a4",
-    provider: "Swarm",
-    note: "Sitios a los que vas, guardados desde Swarm.",
-  },
-  {
-    slug: "food",
-    name: "Comida",
-    accent: "#e0663c",
-    provider: "Beli",
-    note: "Restaurantes y platos que puntúas en Beli.",
-  },
-  {
-    slug: "board",
-    name: "Juegos de mesa",
-    accent: "#9a6b3f",
-    provider: "BoardGameGeek",
-    note: "Tu colección y partidas de BoardGameGeek.",
-  },
-];
+export const DEFERRED_CATS: DeferredCategory[] = [];
 
 export const HERO_SOURCES = [
   { name: "Steam", initial: "S", accent: "#3b82c4" },

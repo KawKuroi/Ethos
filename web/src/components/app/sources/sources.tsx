@@ -107,7 +107,10 @@ export function Sources() {
     { value: String(live.length), label: "activas" },
     { value: String(live.length), label: "expuestas por MCP" },
     { value: String(loading ? 0 : off.length), label: "apagadas" },
-    { value: String(SOON.length), label: "en desarrollo" },
+    // Solo cuando haya categorías "en desarrollo" (ninguna por ahora).
+    ...(SOON.length > 0
+      ? [{ value: String(SOON.length), label: "en desarrollo" }]
+      : []),
   ];
 
   return (

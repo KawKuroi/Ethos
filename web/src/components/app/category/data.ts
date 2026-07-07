@@ -118,55 +118,16 @@ const BOOKS: CategoryDetailData = {
   blurb: "Leídos, páginas, lecturas en curso y autores más leídos.",
 };
 
-// Categorías diferidas fuera del catálogo activo (D27/D31): se muestran "en
-// desarrollo" con opción de aviso (D50). El slug coincide con el id del backend.
-const PLACES: CategoryDetailData = {
-  slug: "places",
-  name: "Lugares",
-  accent: "#0ea5a4",
-  provider: "Swarm",
-  ns: "places.*",
-  state: "soon",
-  blurb: "Sitios a los que vas, guardados desde Swarm.",
-  soonNote: "Sitios a los que vas, guardados desde Swarm.",
-  soonEta: "en desarrollo",
-};
-
-const FOOD: CategoryDetailData = {
-  slug: "food",
-  name: "Comida",
-  accent: "#e0663c",
-  provider: "Beli",
-  ns: "food.*",
-  state: "soon",
-  blurb: "Restaurantes y platos que puntúas en Beli.",
-  soonNote: "Restaurantes y platos que puntúas en Beli.",
-  soonEta: "en desarrollo",
-};
-
-const BOARD: CategoryDetailData = {
-  slug: "board",
-  name: "Juegos de mesa",
-  accent: "#9a6b3f",
-  provider: "BoardGameGeek",
-  ns: "board.*",
-  state: "soon",
-  blurb: "Tu colección y partidas de BoardGameGeek.",
-  soonNote: "Tu colección y partidas de BoardGameGeek.",
-  soonEta: "en desarrollo",
-};
-
-// Las cinco categorías del catálogo están activas; las tres diferidas quedan
-// "en desarrollo" con aviso (D50).
+// Las cinco categorías del catálogo están activas. No hay ninguna "en
+// desarrollo" por ahora; para añadir una, define aquí una categoría con
+// `state: "soon"` (usa `soonNote`/`soonEta`) y regístrala en el mapa. El tipo y
+// la pantalla de aviso (SoonScreen) siguen soportándolo.
 export const CATEGORY_DETAIL: Record<string, CategoryDetailData> = {
   games: GAMES,
   music: MUSIC,
   film: FILM,
   anime: ANIME,
   books: BOOKS,
-  places: PLACES,
-  food: FOOD,
-  board: BOARD,
 };
 
 export function categoryBySlug(slug: string): CategoryDetailData | undefined {
