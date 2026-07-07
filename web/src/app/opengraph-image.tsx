@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { Logo } from "@/components/logo";
 
 // Tarjeta OG (1200×630) generada en build con los tokens del diseño
 // (paleta slate oscura y acentos por categoría de globals.css).
@@ -35,15 +36,8 @@ export default function OpengraphImage() {
           padding: "72px 80px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div
-            style={{
-              width: 18,
-              height: 18,
-              borderRadius: 9,
-              background: "#3b82c4",
-            }}
-          />
+        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+          <Logo width={52} height={46} />
           <div
             style={{
               fontSize: 34,
