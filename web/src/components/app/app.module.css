@@ -177,6 +177,7 @@
   letter-spacing: -0.02em;
   font-size: 24px;
   color: var(--ink);
+  margin: 0;
 }
 .headerSub {
   font-family: var(--fb);

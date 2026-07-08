@@ -65,6 +65,20 @@ producción.
 
 ## Bitácora
 
+### 2026-07-07 (favicon definitivo + SEO del panel)
+
+- Favicon: revertido el engrosado en los iconos de la app; `icon.svg` vuelve
+  al fondo negro fijo (#1b1e23) con glifo blanco regular, un poco más chico
+  (scale 1.68), sin inversión por tema; `favicon.ico` regenerado igual;
+  `icon.tsx`/`apple-icon.tsx` sin bold. La landing conserva la variante bold
+  (ahí sí hacía falta para que el punteado se viera).
+- SEO de `/app` (audit del usuario, 91/100): el título del header del panel
+  pasa a `<h1>` (único por pantalla; faltaba) y el segmento `/app` queda
+  `noindex, nofollow` (zona privada; el posicionamiento se concentra en la
+  landing — decidido con el usuario). `twitter:site` se omite: no hay cuenta
+  de X (sigue anotado en por-revisar). Verificado en el HTML prerenderizado.
+- web 81 tests, gates, tsc, eslint y build en verde.
+
 ### 2026-07-07 (iteración de iconos y OG tras revisión visual del usuario)
 
 - Logo con variante `bold` (trazo 2.2, punteado más denso) para tamaños
