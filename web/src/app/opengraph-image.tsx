@@ -1,8 +1,12 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { Logo } from "@/components/logo";
 
-// Tarjeta OG (1200×630) generada en build con los tokens del diseño
-// (paleta slate oscura y acentos por categoría de globals.css).
+// Tarjeta OG (1200×630) generada en build con los tokens del diseño y las
+// tipografías reales de la web (Bricolage Grotesque + Hanken Grotesk).
+// Las TTF viven en web/assets/og: instancias estáticas con subset latino
+// generadas desde las fuentes variables de Google Fonts.
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -21,7 +25,17 @@ const CATEGORY_ACCENTS = [
   "#3f8f8f",
 ];
 
-export default function OpengraphImage() {
+function font(file: string): Promise<Buffer> {
+  return readFile(join(process.cwd(), "assets", "og", file));
+}
+
+export default async function OpengraphImage() {
+  const [bricolage, hanken, hankenSemi] = await Promise.all([
+    font("bricolage-700.ttf"),
+    font("hanken-400.ttf"),
+    font("hanken-600.ttf"),
+  ]);
+
   return new ImageResponse(
     (
       <div
@@ -33,19 +47,35 @@ export default function OpengraphImage() {
           justifyContent: "space-between",
           background: "#141619",
           color: "#eef0f3",
-          padding: "72px 80px",
+          padding: "64px 80px 60px",
+          fontFamily: "Hanken Grotesk",
+          position: "relative",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <Logo width={52} height={46} />
+        {/* Marca de agua: la constelación grande, apenas visible */}
+        <div
+          style={{
+            position: "absolute",
+            right: -60,
+            top: 96,
+            opacity: 0.08,
+            display: "flex",
+          }}
+        >
+          <Logo width={560} height={494} bold />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <Logo width={58} height={51} bold />
           <div
             style={{
-              fontSize: 34,
+              fontFamily: "Bricolage Grotesque",
+              fontSize: 44,
               fontWeight: 700,
-              letterSpacing: "0.18em",
+              letterSpacing: "-0.02em",
             }}
           >
-            ETHOS
+            Ethos
           </div>
         </div>
 
@@ -53,21 +83,34 @@ export default function OpengraphImage() {
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 26,
-            maxWidth: 980,
+            gap: 28,
+            maxWidth: 920,
           }}
         >
           <div
             style={{
+              display: "flex",
+              flexDirection: "column",
+              fontFamily: "Bricolage Grotesque",
               fontSize: 76,
               fontWeight: 700,
               lineHeight: 1.08,
-              letterSpacing: "-0.02em",
+              letterSpacing: "-0.03em",
             }}
           >
-            Tu gusto, en un panel para ti y como contexto para tu IA.
+            {/* Cortes fijos: satori dejaba "IA." huérfano al envolver solo. */}
+            <div>Tu gusto, en un panel para ti</div>
+            <div>y como contexto para tu IA.</div>
           </div>
-          <div style={{ fontSize: 30, color: "#888d97", lineHeight: 1.35 }}>
+          <div
+            style={{
+              fontSize: 31,
+              fontWeight: 400,
+              color: "#9aa0aa",
+              lineHeight: 1.4,
+              maxWidth: 840,
+            }}
+          >
             Lo reunimos de las apps donde ya vive, lo normalizamos y lo
             entregamos como archivos o servidor MCP.
           </div>
@@ -80,25 +123,42 @@ export default function OpengraphImage() {
             justifyContent: "space-between",
           }}
         >
-          <div style={{ display: "flex", gap: 12 }}>
+          <div style={{ display: "flex", gap: 13 }}>
             {CATEGORY_ACCENTS.map((accent) => (
               <div
                 key={accent}
                 style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: 8,
+                  width: 17,
+                  height: 17,
+                  borderRadius: 9,
                   background: accent,
                 }}
               />
             ))}
           </div>
-          <div style={{ fontSize: 26, color: "#888d97" }}>
+          <div style={{ fontSize: 26, fontWeight: 600, color: "#9aa0aa" }}>
             ethos-steel.vercel.app
           </div>
         </div>
       </div>
     ),
-    size,
+    {
+      ...size,
+      fonts: [
+        {
+          name: "Bricolage Grotesque",
+          data: bricolage,
+          weight: 700,
+          style: "normal",
+        },
+        { name: "Hanken Grotesk", data: hanken, weight: 400, style: "normal" },
+        {
+          name: "Hanken Grotesk",
+          data: hankenSemi,
+          weight: 600,
+          style: "normal",
+        },
+      ],
+    },
   );
 }

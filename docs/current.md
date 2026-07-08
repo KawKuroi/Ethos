@@ -65,6 +65,25 @@ producción.
 
 ## Bitácora
 
+### 2026-07-07 (iteración de iconos y OG tras revisión visual del usuario)
+
+- Logo con variante `bold` (trazo 2.2, punteado más denso) para tamaños
+  pequeños; la landing dejaba el logo sin la trayectoria
+  (`withPath={false}` en hero, mcp-section, walkthrough y footer) y por eso
+  los iconos se veían incompletos — ahora los cinco usan `bold` con
+  trayectoria.
+- Icono de pestaña (`icon.svg`): sin fondo, glifo a sangre (bbox real,
+  scale 2.3) y grueso, tinta en pestañas claras / blanco en oscuras;
+  `favicon.ico` e `icon.tsx` (sin media query posible) quedan negro + glifo
+  blanco, regenerados más grandes; `apple-icon` en bold.
+- Tarjeta OG rediseñada con las tipografías reales (Bricolage Grotesque 700
+  + Hanken Grotesk 400/600, instancias estáticas con subset latino en
+  `web/assets/og/`, generadas con fonttools desde las variables de Google
+  Fonts): wordmark "Ethos" como en la web, titular en dos líneas fijas (el
+  autoajuste dejaba "IA." huérfano y espaciado irregular), marca de agua de
+  la constelación y pie con acentos + URL. `twitter-image` la reexporta.
+- web 81 tests, gates, tsc, eslint y build en verde.
+
 ### 2026-07-07 (pulido de UI: carga, tema, perfil, iconos y formularios)
 
 - Bug real de CSS Modules corregido: `animation: spin/pulse` referenciaba

@@ -71,7 +71,7 @@ export function Hero() {
 
         <div className={styles.aiRow}>
           <span className={styles.aiAvatar}>
-            <Logo width={16} height={16} withPath={false} />
+            <Logo width={16} height={16} bold />
           </span>
           <div className={styles.aiBubble}>
             <div className={styles.aiBubbleLabel}>

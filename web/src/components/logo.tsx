@@ -3,9 +3,17 @@ type LogoProps = {
   width?: number;
   height?: number;
   withPath?: boolean;
+  // Trazo más grueso y puntos más densos: para tamaños pequeños (avatares,
+  // favicons), donde el punteado fino desaparece.
+  bold?: boolean;
 };
 
-export function Logo({ width = 34, height = 30, withPath = true }: LogoProps) {
+export function Logo({
+  width = 34,
+  height = 30,
+  withPath = true,
+  bold = false,
+}: LogoProps) {
   return (
     <svg
       width={width}
@@ -21,9 +29,9 @@ export function Logo({ width = 34, height = 30, withPath = true }: LogoProps) {
           d="M8 17 L22 7.5 L26.5 21 L14.5 24.5"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.5"
+          strokeWidth={bold ? 2.2 : 1.5}
           strokeLinecap="round"
-          strokeDasharray="0.6 2.4"
+          strokeDasharray={bold ? "0.9 2.6" : "0.6 2.4"}
           opacity=".95"
         />
       )}

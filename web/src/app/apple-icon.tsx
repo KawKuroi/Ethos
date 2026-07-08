@@ -21,7 +21,7 @@ export default function AppleIcon() {
           color: "#eef0f3",
         }}
       >
-        <Logo width={148} height={131} />
+        <Logo width={148} height={131} bold />
       </div>
     ),
     size,

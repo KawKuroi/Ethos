@@ -6,7 +6,7 @@ export function LandingFooter() {
     <footer className={styles.footer}>
       <span className={styles.footerBrand}>
         <span className={styles.footerLogo}>
-          <Logo width={18} height={16} withPath={false} />
+          <Logo width={18} height={16} bold />
         </span>
         Ethos — tu gusto, ordenado.
       </span>

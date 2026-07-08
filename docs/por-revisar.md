@@ -143,9 +143,11 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 
 ### SEO y metadatos (2026-07-07)
 
-- [ ] **Imagen OG** — comparte la URL en X/WhatsApp/Discord (o usa
-  opengraph.xyz) y revisa que la tarjeta 1200×630 te convence; se genera en
-  build en `web/src/app/opengraph-image.tsx` (colores/textos editables ahí).
+- [ ] **Imagen OG** — rediseñada el 2026-07-07 con las tipografías reales
+  (preview aprobada en sesión): comparte la URL en X/WhatsApp/Discord (o usa
+  opengraph.xyz) y confirma que la tarjeta 1200×630 te convence; se genera
+  en build en `web/src/app/opengraph-image.tsx` (las TTF viven en
+  `web/assets/og/`).
 - [ ] **Cuenta de X/Twitter** — si el proyecto tiene @usuario, dilo para
   añadir `twitter:site` (quedó fuera por no inventar un handle).
 - [ ] **Dominio propio** — si algún día dejas `ethos-steel.vercel.app`,

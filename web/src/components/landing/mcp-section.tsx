@@ -24,7 +24,7 @@ export function McpSection() {
       <div className={styles.mcpDiagram}>
         <div className={styles.diagNode}>
           <span className={styles.diagIconAi}>
-            <Logo width={26} height={24} withPath={false} />
+            <Logo width={26} height={24} bold />
           </span>
           <div className={styles.diagTitle}>Tu IA</div>
           <div className={styles.diagMeta}>Claude · ChatGPT · etc.</div>
@@ -56,7 +56,7 @@ export function McpSection() {
 
         <div className={styles.diagNode}>
           <span className={styles.diagIconEthos}>
-            <Logo width={30} height={26} withPath={false} />
+            <Logo width={30} height={26} bold />
           </span>
           <div className={styles.diagTitle}>Ethos</div>
           <div className={styles.diagMeta}>tu perfil · servidor MCP</div>

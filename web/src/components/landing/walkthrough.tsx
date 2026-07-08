@@ -263,7 +263,7 @@ export function Walkthrough() {
             </div>
             <div className={styles.aiAnswerRow}>
               <span className={styles.aiAvatarSmall}>
-                <Logo width={15} height={15} withPath={false} />
+                <Logo width={15} height={15} bold />
               </span>
               <div className={styles.aiAnswer}>
                 Sobre todo <strong>Elden Ring</strong> (96 h). Después Hollow

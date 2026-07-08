@@ -1,27 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Favicon escalable con el logo constelación (components/logo.tsx) y
-       soporte de modo oscuro: fondo tinta con marca clara, invertido en dark. -->
+  <!-- Favicon escalable: el logo constelación sin fondo, a sangre y con el
+       trazo engrosado (a petición del usuario). El glifo es tinta sobre
+       pestaña clara y blanco sobre pestaña oscura; los formatos sin media
+       query (favicon.ico, icon.tsx) usan fondo negro con glifo blanco. -->
   <style>
-    .bg { fill: #1b1e23; }
-    .fg { fill: #eef0f3; }
-    .tr { stroke: #eef0f3; }
+    .fg { fill: #1b1e23; }
+    .tr { stroke: #1b1e23; }
     @media (prefers-color-scheme: dark) {
-      .bg { fill: #eef0f3; }
-      .fg { fill: #141619; }
-      .tr { stroke: #141619; }
+      .fg { fill: #eef0f3; }
+      .tr { stroke: #eef0f3; }
     }
   </style>
-  <rect class="bg" width="64" height="64" rx="14" />
-  <!-- Glifo casi a sangre (margen ~3): con más margen, a 16-32 px los
-       astros quedan en puntos ilegibles. -->
-  <g transform="translate(3.4 6.6) scale(1.68)">
+  <g transform="translate(-6.4 -3.3) scale(2.3)">
     <path
       class="tr"
       d="M8 17 L22 7.5 L26.5 21 L14.5 24.5"
       fill="none"
-      stroke-width="1.5"
+      stroke-width="2.2"
       stroke-linecap="round"
-      stroke-dasharray="0.6 2.4"
+      stroke-dasharray="0.9 2.6"
       opacity=".95"
     />
     <path class="fg" d="M5 18 C3.5 14 8 12 11 14 C14 16 12 20 8.5 20 C7 20 6 19.5 5 18 Z" />
