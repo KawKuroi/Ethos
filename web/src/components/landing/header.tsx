@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/logo";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { GITHUB_URL } from "./data";
 import styles from "./landing.module.css";
 
@@ -13,7 +12,6 @@ export function LandingHeader() {
         <span className={styles.brandName}>Ethos</span>
       </div>
       <nav className={styles.nav}>
-        <ThemeToggle className={styles.iconBtn} />
         <a
           href={GITHUB_URL}
           target="_blank"

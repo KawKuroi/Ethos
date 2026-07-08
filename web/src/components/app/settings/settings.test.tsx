@@ -8,12 +8,23 @@ const deleteAllData = vi.fn();
 const requestAccountDeletion = vi.fn();
 const getAccountDeletion = vi.fn();
 const undoAccountDeletion = vi.fn();
+const updateUser = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   deleteAllData: () => deleteAllData(),
   requestAccountDeletion: () => requestAccountDeletion(),
   getAccountDeletion: () => getAccountDeletion(),
   undoAccountDeletion: () => undoAccountDeletion(),
+}));
+
+vi.mock("@/lib/use-user", () => ({
+  useUser: () => ({ name: "Axel", email: "axel@correo.com" }),
+}));
+
+vi.mock("@/lib/supabase/client", () => ({
+  getBrowserClient: () => ({
+    auth: { updateUser: (body: unknown) => updateUser(body) },
+  }),
 }));
 
 function renderSettings() {
@@ -30,6 +41,7 @@ describe("Settings", () => {
     requestAccountDeletion.mockReset();
     getAccountDeletion.mockReset().mockResolvedValue({ scheduled: false, purge_after: null });
     undoAccountDeletion.mockReset();
+    updateUser.mockReset();
   });
 
   it("muestra las secciones de ajustes", () => {
@@ -42,6 +54,32 @@ describe("Settings", () => {
         screen.getByRole("button", { name: new RegExp(label, "i") }),
       ).toBeInTheDocument();
     }
+  });
+
+  it("muestra el nombre de la sesión y el correo en solo lectura", () => {
+    renderSettings();
+    expect(screen.getByLabelText("Nombre")).toHaveValue("Axel");
+    const email = screen.getByLabelText("Correo");
+    expect(email).toHaveValue("axel@correo.com");
+    expect(email).toBeDisabled();
+    expect(screen.queryByLabelText("Usuario")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Zona horaria")).not.toBeInTheDocument();
+  });
+
+  it("guarda el nombre editado en Supabase", async () => {
+    updateUser.mockResolvedValueOnce({ error: null });
+    renderSettings();
+    fireEvent.change(screen.getByLabelText("Nombre"), {
+      target: { value: "Axel HR" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() =>
+      expect(updateUser).toHaveBeenCalledWith({
+        data: { full_name: "Axel HR" },
+      }),
+    );
+    expect(await screen.findByText(/guardado/i)).toBeInTheDocument();
   });
 
   it("elimina los datos tras confirmar en el diálogo", async () => {

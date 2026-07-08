@@ -137,25 +137,6 @@
   justify-content: center;
   padding: 40px 32px;
 }
-.themeToggle {
-  position: absolute;
-  top: 24px;
-  right: 28px;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--pill);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--ink);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.themeToggle:hover {
-  border-color: var(--accent);
-}
-
 .card {
   width: 100%;
   max-width: 412px;
@@ -380,6 +361,13 @@
   border-top-color: var(--on-accent);
   animation: spin 0.7s linear infinite;
   display: inline-block;
+}
+/* Definido aquí y no en globals: CSS Modules localiza los nombres de
+   animation, así que un keyframe global nunca aplicaría. */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .switch {

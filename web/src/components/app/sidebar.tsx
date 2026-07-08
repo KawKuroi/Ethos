@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/logo";
+import { useUser } from "@/lib/use-user";
 import { NAV } from "./nav";
 import { NavIcon, GearIcon } from "./nav-icons";
 import styles from "./app.module.css";
@@ -12,6 +13,9 @@ const MCP_CONNECTED = false;
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { name, email } = useUser();
+  const displayName = name ?? "Tu perfil";
+  const initial = (name ?? email ?? "E").charAt(0).toUpperCase();
 
   function isActive(href: string): boolean {
     if (href === "/app") {
@@ -22,10 +26,11 @@ export function Sidebar() {
 
   return (
     <aside className={styles.aside}>
-      <div className={styles.brand}>
+      {/* El logo lleva a la landing; la sesión de Supabase persiste. */}
+      <Link href="/" className={styles.brand} title="Ir a la página principal">
         <Logo width={38} height={34} />
         <span className={styles.brandText}>Ethos</span>
-      </div>
+      </Link>
 
       <nav className={styles.nav} aria-label="Navegación principal">
         {NAV.map((item) => {
@@ -52,10 +57,10 @@ export function Sidebar() {
       <div className={styles.spacer} />
 
       <div className={styles.foot}>
-        <div className={styles.avatar}>E</div>
+        <div className={styles.avatar}>{initial}</div>
         <div className={styles.profile}>
-          <span className={styles.profileName}>Tu perfil</span>
-          <span className={styles.profileHandle}>@tu_gusto</span>
+          <span className={styles.profileName}>{displayName}</span>
+          {email && <span className={styles.profileHandle}>{email}</span>}
         </div>
         <Link
           href="/app/ajustes"

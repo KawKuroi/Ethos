@@ -38,8 +38,7 @@
   color: var(--muted);
   margin-bottom: 7px;
 }
-.input,
-.select {
+.input {
   width: 100%;
   background: var(--surface);
   border: var(--bw) solid var(--line);
@@ -49,49 +48,13 @@
   font-size: 14px;
   color: var(--ink);
 }
-.input:focus,
-.select:focus {
+.input:focus {
   border-color: var(--accent);
   outline: none;
 }
-.select {
-  cursor: pointer;
-}
-.handleBox {
-  display: flex;
-  align-items: center;
-  background: var(--surface);
-  border: var(--bw) solid var(--line);
-  border-radius: var(--rs);
-  padding: 0 14px;
-}
-.handleBox:focus-within {
-  border-color: var(--accent);
-}
-.handleAt {
-  font-family: var(--fm);
-  font-size: 14px;
+.input:disabled {
   color: var(--muted);
-}
-.handleInput {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  padding: 11px 6px;
-  font-family: var(--fm);
-  font-size: 14px;
-  color: var(--ink);
-  outline: none;
-}
-.fieldGap {
-  margin-top: 16px;
-}
-.hint {
-  font-family: var(--fb);
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 8px;
+  cursor: default;
 }
 .saveRow {
   margin-top: 20px;

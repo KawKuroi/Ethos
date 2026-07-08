@@ -9,21 +9,13 @@ import {
   requestAccountDeletion,
   undoAccountDeletion,
 } from "@/lib/api";
+import { getBrowserClient } from "@/lib/supabase/client";
+import { useUser } from "@/lib/use-user";
 import styles from "./settings.module.css";
 
 // El tema real solo se conoce en cliente; evita desajustes de hidratación
 // sin llamar a setState dentro de un efecto.
 const emptySubscribe = () => () => {};
-
-const TIMEZONES = [
-  "America/Bogota",
-  "America/Mexico_City",
-  "America/Argentina/Buenos_Aires",
-  "Europe/Madrid",
-  "America/New_York",
-  "America/Los_Angeles",
-  "UTC",
-];
 
 type ThemeMode = { id: string; label: string; icon: React.ReactNode };
 
@@ -84,10 +76,14 @@ export function Settings() {
     () => true,
     () => false,
   );
-  const [name, setName] = useState("Tu perfil");
-  const [handle, setHandle] = useState("tu_gusto");
-  const [timezone, setTimezone] = useState("America/Bogota");
+  const { name: sessionName, email } = useUser();
+  // Hasta que el usuario edita, el campo sigue al nombre de la sesión
+  // (que llega asíncrono desde Supabase); después manda el borrador.
+  const [draft, setDraft] = useState<string | null>(null);
+  const name = draft ?? sessionName ?? "";
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<ConfirmKind>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -108,10 +104,29 @@ export function Settings() {
     };
   }, []);
 
-  function save() {
-    // Persistencia real del perfil: pendiente (fuera de la Fase 4).
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1600);
+  async function save() {
+    if (saving) return;
+    const trimmed = name.trim();
+    if (trimmed.length === 0) {
+      setProfileError("Escribe un nombre antes de guardar.");
+      return;
+    }
+    setSaving(true);
+    setProfileError(null);
+    try {
+      // El nombre vive en user_metadata (lo fija el registro); el sidebar
+      // se actualiza solo vía onAuthStateChange (USER_UPDATED).
+      const { error } = await getBrowserClient().auth.updateUser({
+        data: { full_name: trimmed },
+      });
+      if (error) throw error;
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1600);
+    } catch {
+      setProfileError("No se pudo guardar el nombre. Reinténtalo.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function flashNotice(text: string) {
@@ -177,53 +192,44 @@ export function Settings() {
             <input
               className={styles.input}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setDraft(e.target.value)}
               aria-label="Nombre"
             />
           </div>
           <div>
-            <div className={styles.fieldLabel}>Usuario</div>
-            <div className={styles.handleBox}>
-              <span className={styles.handleAt}>@</span>
-              <input
-                className={styles.handleInput}
-                value={handle}
-                onChange={(e) => setHandle(e.target.value)}
-                aria-label="Usuario"
-              />
-            </div>
-          </div>
-        </div>
-        <div className={styles.fieldGap}>
-          <div className={styles.fieldLabel}>Zona horaria</div>
-          <select
-            className={styles.select}
-            value={timezone}
-            onChange={(e) => setTimezone(e.target.value)}
-            aria-label="Zona horaria"
-          >
-            {TIMEZONES.map((tz) => (
-              <option key={tz} value={tz}>
-                {tz}
-              </option>
-            ))}
-          </select>
-          <div className={styles.hint}>
-            Usada para fechar tus sincronizaciones y actividad.
+            <div className={styles.fieldLabel}>Correo</div>
+            <input
+              className={styles.input}
+              value={email ?? ""}
+              readOnly
+              disabled
+              aria-label="Correo"
+            />
           </div>
         </div>
         <div className={styles.saveRow}>
-          <button type="button" className={styles.saveBtn} onClick={save}>
-            {saved ? "Guardado ✓" : "Guardar cambios"}
+          <button
+            type="button"
+            className={styles.saveBtn}
+            onClick={save}
+            disabled={saving}
+          >
+            {saved ? "Guardado ✓" : saving ? "Guardando…" : "Guardar cambios"}
           </button>
         </div>
+        {profileError && (
+          <div className={styles.notice} role="alert">
+            {profileError}
+          </div>
+        )}
       </div>
 
       {/* Apariencia */}
       <div className={styles.section}>
         <div className={styles.sectionTitle}>Apariencia</div>
         <div className={styles.sectionSub}>
-          Tema de la interfaz. Se guarda en este dispositivo.
+          Tema de toda la interfaz (landing y panel). Se guarda en este
+          dispositivo.
         </div>
         <div className={styles.fieldLabel}>Tema</div>
         <div className={styles.themeGrid}>

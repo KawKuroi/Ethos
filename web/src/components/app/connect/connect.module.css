@@ -555,3 +555,15 @@
     animation: none;
   }
 }
+
+/* Definido aquí y no en globals: CSS Modules localiza los nombres de
+   animation, así que un keyframe global nunca aplicaría. */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}

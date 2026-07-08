@@ -25,11 +25,7 @@ export function Suggestions() {
     setSending(true);
     setError("");
     try {
-      await submitFeedback({
-        message,
-        name: String(data.get("name") ?? "").trim() || null,
-        email: String(data.get("email") ?? "").trim() || null,
-      });
+      await submitFeedback({ message });
       setSent(true);
       form.reset();
       setTimeout(() => setSent(false), 1600);
@@ -53,24 +49,11 @@ export function Suggestions() {
         </p>
       </div>
       <form className={styles.sugForm} onSubmit={handleSubmit}>
-        <input
-          className={styles.input}
-          placeholder="Tu nombre"
-          name="name"
-          aria-label="Tu nombre"
-        />
-        <input
-          className={styles.input}
-          placeholder="Tu correo"
-          name="email"
-          type="email"
-          aria-label="Tu correo"
-        />
         <textarea
           className={`${styles.input} ${styles.textarea}`}
           placeholder="Tu sugerencia"
           name="suggestion"
-          rows={3}
+          rows={5}
           aria-label="Tu sugerencia"
         />
         <button type="submit" className={styles.sendBtn} disabled={sending}>

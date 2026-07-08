@@ -9,6 +9,10 @@ vi.mock("next/navigation", () => ({
   usePathname: () => mocks.pathname,
 }));
 
+vi.mock("@/lib/use-user", () => ({
+  useUser: () => ({ name: "Axel", email: "axel@correo.com" }),
+}));
+
 describe("Sidebar", () => {
   beforeEach(() => {
     mocks.pathname = "/app";
@@ -32,6 +36,16 @@ describe("Sidebar", () => {
     );
     expect(screen.getByRole("link", { name: /inicio/i })).not.toHaveAttribute(
       "aria-current",
+    );
+  });
+
+  it("muestra el usuario de la sesión y enlaza el logo a la landing", () => {
+    render(<Sidebar />);
+    expect(screen.getByText("Axel")).toBeInTheDocument();
+    expect(screen.getByText("axel@correo.com")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ethos" })).toHaveAttribute(
+      "href",
+      "/",
     );
   });
 

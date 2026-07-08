@@ -12,7 +12,9 @@
     }
   </style>
   <rect class="bg" width="64" height="64" rx="14" />
-  <g transform="translate(7 10) scale(1.47)">
+  <!-- Glifo casi a sangre (margen ~3): con más margen, a 16-32 px los
+       astros quedan en puntos ilegibles. -->
+  <g transform="translate(3.4 6.6) scale(1.68)">
     <path
       class="tr"
       d="M8 17 L22 7.5 L26.5 21 L14.5 24.5"

@@ -111,6 +111,22 @@
   animation: spin 0.7s linear infinite;
   display: inline-block;
 }
+/* Definidos aquí y no en globals: CSS Modules localiza los nombres de
+   animation, así que un keyframe global nunca aplicaría. */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
 
 /* ===== Status strip ===== */
 .strip {

@@ -58,9 +58,6 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
   "Confirma tu correo · Ethos") y el de
   `supabase/templates/reset-password.html` en "Reset password" (asunto:
   "Elige una nueva contraseña · Ethos"); envía uno de prueba.
-- [ ] **Correo de contacto real** — el botón "Escribir" de Ayuda usa
-  `mailto:hola@ethos.app` (placeholder); cámbialo en
-  `web/src/components/app/help/help.tsx` (verificado 2026-07-07: sigue ahí).
 - [ ] **Docker / Cloud Run (D58)** — la build de la imagen sigue sin
   verificar (2026-07-07: el daemon de Docker seguía apagado y `api/.env` no
   existe para el `--env-file`): `cd api && docker build -t ethos-api .`,
@@ -116,8 +113,9 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 ### Verificación visual en producción
 
 - [ ] **Auth** — `/auth`: alternar login/registro, mostrar/ocultar
-  contraseña, validaciones (correo, mínimo 8), toggle de tema;
-  `/auth/recuperar` y `/auth/nueva-clave`.
+  contraseña, validaciones (correo, mínimo 8), spinner girando al enviar;
+  `/auth/recuperar` y `/auth/nueva-clave`. Ya no hay toggle de tema aquí
+  (se cambia en Ajustes).
 - [ ] **Shell de la app** — `/app`: barra lateral (Inicio · Fuentes ·
   Conectar IA · Ayuda), resaltado del activo, badge en "Conectar IA",
   engrane → Ajustes, header por pantalla y el responsivo (barra → top bar
@@ -133,8 +131,15 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 - [ ] **Conectar IA** — `/app/conectar-ia`: endpoint y token reales, tres
   pasos y el playground. Ojo: el playground es demostración con datos de
   ejemplo (D54, decidido así a propósito).
-- [ ] **Ayuda y Ajustes** — FAQ, envío de sugerencias real, Apariencia
-  cambia el tema de verdad, Perfil y Zona de peligro.
+- [ ] **Ayuda y Ajustes** — FAQ, envío de sugerencias real, Perfil con tu
+  nombre y correo de la cuenta (edítalo y confirma que el pie de la barra
+  lateral se actualiza), Apariencia cambia el tema también en la landing
+  (misma pestaña/dispositivo) y Zona de peligro.
+- [ ] **Pulido de UI (2026-07-07)** — spinners/badges animados (login,
+  refrescar categoría, badge de Conectar IA), logo del panel lleva a la
+  landing sin cerrar sesión, formulario de la landing solo con la
+  sugerencia. Si el icono de la pestaña sigue viéndose viejo, es caché:
+  fuerza recarga o abre en incógnito.
 
 ### SEO y metadatos (2026-07-07)
 
@@ -172,6 +177,10 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 
 ## Hecho
 
+- [x] **Correo de contacto de Ayuda** (2026-07-07) — resuelto eliminando la
+  tarjeta "¿Algo más personal?": el `mailto:hola@ethos.app` era un
+  placeholder sin canal real y el buzón anónimo de la misma pantalla cubre
+  el contacto. Si algún día hay correo real, se reintroduce.
 - [x] **Migraciones 0001–0008 aplicadas en Supabase** (confirmado
   2026-07-07). Los flujos que dependían de 0004–0008 (música, avisos,
   sugerencias, borrado de cuenta, OAuth del MCP) ya no están bloqueados

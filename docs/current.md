@@ -21,6 +21,15 @@ https://ethos-steel.vercel.app
 
 ## Activo
 
+**Pulido de UI (2026-07-07).** Spinners y badges vuelven a animarse
+(keyframes locales por módulo: CSS Modules hasheaba los globales), el tema se
+cambia solo desde Ajustes (aplica a landing + app), el perfil usa el nombre
+real de Supabase Auth (editable en Ajustes; fuera Usuario y Zona horaria),
+favicon.ico regenerado con el logo constelación (el viejo triángulo seguía
+desplegado) y glifo ampliado en icon.svg/apple-icon, el logo del panel enlaza
+a la landing, el formulario de la landing pide solo la sugerencia y la
+tarjeta "¿Algo más personal?" se elimina (correo inventado).
+
 **Compatibilidad del MCP con conectores online (2026-07-07, D61).** El
 authorization server acepta redirect_uri de loopback con puerto efímero
 (RFC 8252), sirve los aliases de discovery que prueban los clientes MCP,
@@ -55,6 +64,30 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-07 (pulido de UI: carga, tema, perfil, iconos y formularios)
+
+- Bug real de CSS Modules corregido: `animation: spin/pulse` referenciaba
+  keyframes de `globals.css`, pero CSS Modules localiza el nombre y la
+  animación nunca corría (el spinner del login no giraba). Keyframes locales
+  en `auth/category/sources/connect/overview/app.module.css`.
+- Tema único desde Ajustes: `ThemeToggle` eliminado de landing y pantallas de
+  auth (el `ThemeProvider` raíz ya hace global la elección); copy de
+  Apariencia aclarado.
+- Perfil real: hook `lib/use-user.ts` (sesión de Supabase, `full_name`/`name`
+  de `user_metadata`, actualizado por `onAuthStateChange`); sidebar muestra
+  nombre, correo e inicial reales y su logo enlaza a `/`; Ajustes deja solo
+  Nombre (guardado real con `auth.updateUser`) + Correo en solo lectura;
+  fuera Usuario y Zona horaria (las fechas ya usan la zona del navegador).
+- Iconos: `favicon.ico` regenerado con el logo constelación —el desplegado
+  era el triángulo del bootstrap— (script PIL, 16/32/48/256); glifo ampliado
+  en `icon.svg` (scale 1.68) y `apple-icon.tsx` (148×131).
+- Formularios: sugerencias de la landing solo con el textarea (sin
+  nombre/correo); tarjeta "¿Algo más personal?" de Ayuda eliminada (el
+  `mailto:hola@ethos.app` era un placeholder sin canal real).
+- `coverage/` añadido a los ignores de eslint (el reporte generado disparaba
+  un warning local). web 81 tests, gates de cobertura, tsc, eslint y build en
+  verde.
 
 ### 2026-07-07 (compatibilidad del MCP con conectores online, D61)
 

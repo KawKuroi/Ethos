@@ -128,6 +128,9 @@
   font-family: var(--fm);
   font-size: 9px;
   color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .gearBtn {
   width: 34px;
@@ -272,5 +275,17 @@
 @media (prefers-reduced-motion: reduce) {
   .badge {
     animation: none;
+  }
+}
+
+/* Definido aquí y no en globals: CSS Modules localiza los nombres de
+   animation, así que un keyframe global nunca aplicaría. */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
   }
 }
