@@ -7,41 +7,9 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 
 ## Bloqueantes — configuración que detiene el flujo
 
-### Supabase Auth (D26)
-
-- [ ] **OAuth Google** — crea la app OAuth en Google Cloud Console con
-  redirect URI `https://mcxmulwvcschucszxuxn.supabase.co/auth/v1/callback` y
-  habilita el proveedor Google (Authentication → Sign In / Providers) con su
-  client id/secret. Hasta entonces, "Continuar con Google" no completa el
-  login. (GitHub se retiró de la web. Guía paso a paso dada en sesión
-  2026-07-11.)
-
-### Jobs y monitores
-
-- [ ] **Secrets del job de purga (D53)** — el workflow
-  `.github/workflows/purga-cuentas.yml` ya existe (diario 06:00 UTC): añade
-  en GitHub → Settings → Secrets and variables → Actions los secrets
-  `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` (mismos valores que en
-  Render) y lánzalo una vez a mano desde la pestaña Actions ("Purga de
-  cuentas" → Run workflow) para comprobar que pasa en verde. Sin los
-  secrets, las cuentas vencidas no se purgan (el deshacer funciona igual).
-
-### Opcionales
-
-- [ ] **SMTP para avisos (D52/D53)** — en Render, con Gmail + contraseña de
-  aplicación (ver guía de la sesión 2026-07-11): `SMTP_HOST=smtp.gmail.com`,
-  `SMTP_PORT=587` (el API usa STARTTLS), `SMTP_USER` y `FEEDBACK_FROM` y
-  `FEEDBACK_TO` = tu Gmail, `SMTP_PASSWORD` = la contraseña de aplicación.
-  Sin ellas todo se guarda igual en Supabase (tabla `feedback`).
-- [ ] **SMTP de Supabase Auth (opcional)** — mismo Gmail en Supabase →
-  Authentication → SMTP Settings (ahí el puerto es 465); sube el límite de
-  correos de auth a 30/hora y los envía desde tu dirección.
-- [ ] **Plantillas de correo con el estilo de Ethos** — en Supabase →
-  Authentication → Emails, pega el HTML de
-  `supabase/templates/confirm-signup.html` en "Confirm signup" (asunto:
-  "Confirma tu correo · Ethos") y el de
-  `supabase/templates/reset-password.html` en "Reset password" (asunto:
-  "Elige una nueva contraseña · Ethos"); envía uno de prueba.
+Nada pendiente (2026-07-11): keys, env vars, auth, SMTP y el job de purga
+quedaron configurados — ver Hecho. Lo que sigue son verificaciones sin
+prisa.
 
 ## Para ir revisando — pruebas y decisiones
 
@@ -168,6 +136,18 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 
 ## Hecho
 
+- [x] **OAuth Google** (2026-07-11) — app creada en Google Cloud Console y
+  proveedor habilitado; verificado contra `/auth/v1/settings`
+  (`"google": true`). La prueba del botón en producción queda cubierta por
+  la verificación visual de Auth.
+- [x] **Job de purga de cuentas (D53)** (2026-07-11) — workflow
+  `purga-cuentas.yml` en main (diario 06:00 UTC), secrets creados y primera
+  ejecución manual completada en verde.
+- [x] **SMTP configurado** (2026-07-11) — Gmail con contraseña de
+  aplicación en Render (`SMTP_*`, `FEEDBACK_*`, puerto 587) y en Supabase
+  Auth (puerto 465); plantillas de Ethos pegadas en Confirm signup y Reset
+  password. Confirmado por el usuario; el aviso real se comprobará con la
+  prueba de sugerencias (D52).
 - [x] **`TRAKT_CLIENT_ID` en Render** (2026-07-11) — app de Trakt creada y
   key poblada; confirmado por el usuario.
 - [x] **Env vars del blueprint en Render** (2026-07-11) — `PUBLIC_BASE_URL`,
