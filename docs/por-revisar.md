@@ -7,63 +7,41 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 
 ## Bloqueantes — configuración que detiene el flujo
 
-### Keys y variables de entorno
-
-- [ ] **`TRAKT_CLIENT_ID` en Render** — crea una API app en Trakt (Settings →
-  Your API Apps) y copia su Client ID. Sin la key, el conector de Cine y TV no
-  puede leer datos. El perfil de Trakt que conectes debe ser público (si no,
-  el estado sale `private`).
-- [ ] **Supabase en la web** — `NEXT_PUBLIC_SUPABASE_URL` y
-  `NEXT_PUBLIC_SUPABASE_ANON_KEY` en Vercel y en `web/.env.local` para
-  desarrollo (verificado 2026-07-07: `web/.env.local` no existe todavía). Sin
-  ellas, `/auth` lanza el error de configuración. (D26)
-- [ ] **Env vars del blueprint en Render** — el blueprint ya declara
-  `PUBLIC_BASE_URL` y `WEB_BASE_URL` con sus valores (issuer OAuth del MCP y
-  página de consentimiento, D56), pero los blueprints existentes no añaden
-  env vars solos: revisa en el dashboard que estén pobladas, junto con
-  `TRAKT_CLIENT_ID` y las SMTP si las usas.
-
 ### Supabase Auth (D26)
 
 - [ ] **OAuth Google** — crea la app OAuth en Google Cloud Console con
-  redirect URI `https://<tu-proyecto>.supabase.co/auth/v1/callback` y
+  redirect URI `https://mcxmulwvcschucszxuxn.supabase.co/auth/v1/callback` y
   habilita el proveedor Google (Authentication → Sign In / Providers) con su
   client id/secret. Hasta entonces, "Continuar con Google" no completa el
-  login. (GitHub se retiró de la web.)
-- [ ] **URL Configuration** — Site URL = `https://<tu-web>` (hoy está en
-  localhost: por eso la confirmación te llevó a
-  `http://localhost:3000/?code=…`) y añade a Redirect URLs
-  `https://<tu-web>/auth` (confirmación de correo, va al login) y
-  `https://<tu-web>/auth/callback` (OAuth y recuperación); en desarrollo,
-  las mismas con `http://localhost:3000`.
+  login. (GitHub se retiró de la web. Guía paso a paso dada en sesión
+  2026-07-11.)
 
 ### Jobs y monitores
 
-- [ ] **Job de purga de cuentas (D53)** — programa
-  `python -m ethos_api.account.purge_job` a diario (cron job de Render, o
-  GitHub Actions con `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`). Sin él,
-  las cuentas vencidas no se purgan (el deshacer funciona igual).
-- [ ] **Monitores de `/mcp`** — `/mcp` ya no responde anónimo (D56); si
-  tenías algún monitor apuntándole, muévelo a `/health`.
+- [ ] **Secrets del job de purga (D53)** — el workflow
+  `.github/workflows/purga-cuentas.yml` ya existe (diario 06:00 UTC): añade
+  en GitHub → Settings → Secrets and variables → Actions los secrets
+  `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` (mismos valores que en
+  Render) y lánzalo una vez a mano desde la pestaña Actions ("Purga de
+  cuentas" → Run workflow) para comprobar que pasa en verde. Sin los
+  secrets, las cuentas vencidas no se purgan (el deshacer funciona igual).
 
 ### Opcionales
 
-- [ ] **SMTP para avisos (D52/D53)** — `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
-  `SMTP_PASSWORD`, `FEEDBACK_FROM` y `FEEDBACK_TO` en Render para recibir un
-  correo por sugerencia y el aviso de borrado de cuenta. Sin ellas todo se
-  guarda igual en Supabase (las sugerencias, en la tabla `feedback`).
+- [ ] **SMTP para avisos (D52/D53)** — en Render, con Gmail + contraseña de
+  aplicación (ver guía de la sesión 2026-07-11): `SMTP_HOST=smtp.gmail.com`,
+  `SMTP_PORT=587` (el API usa STARTTLS), `SMTP_USER` y `FEEDBACK_FROM` y
+  `FEEDBACK_TO` = tu Gmail, `SMTP_PASSWORD` = la contraseña de aplicación.
+  Sin ellas todo se guarda igual en Supabase (tabla `feedback`).
+- [ ] **SMTP de Supabase Auth (opcional)** — mismo Gmail en Supabase →
+  Authentication → SMTP Settings (ahí el puerto es 465); sube el límite de
+  correos de auth a 30/hora y los envía desde tu dirección.
 - [ ] **Plantillas de correo con el estilo de Ethos** — en Supabase →
   Authentication → Emails, pega el HTML de
   `supabase/templates/confirm-signup.html` en "Confirm signup" (asunto:
   "Confirma tu correo · Ethos") y el de
   `supabase/templates/reset-password.html` en "Reset password" (asunto:
   "Elige una nueva contraseña · Ethos"); envía uno de prueba.
-- [ ] **Docker / Cloud Run (D58)** — la build de la imagen sigue sin
-  verificar (2026-07-07: el daemon de Docker seguía apagado y `api/.env` no
-  existe para el `--env-file`): `cd api && docker build -t ethos-api .`,
-  `docker run --rm -p 8080:8080 --env-file .env ethos-api` y
-  `curl http://localhost:8080/health`. Migrar a Cloud Run solo si los cold
-  starts de Render molestan de verdad (requiere tarjeta con tope de gasto).
 
 ## Para ir revisando — pruebas y decisiones
 
@@ -78,9 +56,9 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
   días); comprueba que Inicio muestra la fila activa y Fuentes la lista en
   "Activas"; prueba `music.top_artists` por MCP y descarga
   `music.context.json`.
-- [ ] **Cine y TV / Trakt (Fase 3)** — necesita `TRAKT_CLIENT_ID` (ver
-  Bloqueantes): conecta tu usuario, revisa horas, tops y vistos recientes;
-  prueba `film.top_movies` por MCP y descarga `film.context.json`.
+- [ ] **Cine y TV / Trakt (Fase 3)** — la key ya está en Render: conecta tu
+  usuario (perfil público), revisa horas, tops y vistos recientes; prueba
+  `film.top_movies` por MCP y descarga `film.context.json`.
 - [ ] **Anime y manga / AniList (Fase 3)** — sin keys ni OAuth: escribe tu
   usuario de AniList (listas públicas) y revisa episodios, nota media, mejor
   puntuados y en curso; prueba `anime.top_rated` por MCP y descarga
@@ -177,8 +155,34 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
   (correo + categoría); el correo masivo desde `category_interest` se
   define cuando exista proveedor de correo (el SMTP de D52).
 
+### Aparcado (sin plazo)
+
+- [ ] **Docker / Cloud Run (D58)** — descartado a corto/medio plazo
+  (2026-07-11); Render sigue siendo el host. Si algún día molestan los cold
+  starts: verificar la build local (`cd api && docker build -t ethos-api .`,
+  `docker run --rm -p 8080:8080 --env-file .env ethos-api`,
+  `curl http://localhost:8080/health` — requiere el daemon de Docker
+  corriendo y un `api/.env` con las env vars) y migrar con
+  `gcloud run deploy` usando las mismas env vars (requiere tarjeta con tope
+  de gasto).
+
 ## Hecho
 
+- [x] **`TRAKT_CLIENT_ID` en Render** (2026-07-11) — app de Trakt creada y
+  key poblada; confirmado por el usuario.
+- [x] **Env vars del blueprint en Render** (2026-07-11) — `PUBLIC_BASE_URL`,
+  `WEB_BASE_URL` y compañía revisadas en el dashboard; confirmado por el
+  usuario.
+- [x] **URL Configuration de Supabase Auth** (2026-07-11) — Site URL =
+  `https://ethos-steel.vercel.app` y Redirect URLs `/auth` y `/auth/callback`
+  configuradas (captura revisada). Solo si desarrollas en local: añade
+  también `http://localhost:3000/auth` y `http://localhost:3000/auth/callback`.
+- [x] **Supabase en la web** (2026-07-11) — Vercel ya tenía las vars (el
+  auth de producción funciona) y `web/.env.local` quedó creado con
+  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y
+  `NEXT_PUBLIC_API_URL=http://localhost:8000` para desarrollo.
+- [x] **Monitores de `/mcp`** (2026-07-11) — nada que mover: el keep-alive
+  de UptimeRobot apunta a `/health` desde la Fase 0.
 - [x] **Correo de contacto de Ayuda** (2026-07-07) — resuelto eliminando la
   tarjeta "¿Algo más personal?": el `mailto:hola@ethos.app` era un
   placeholder sin canal real y el buzón anónimo de la misma pantalla cubre

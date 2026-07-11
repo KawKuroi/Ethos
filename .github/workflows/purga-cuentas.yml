@@ -1,0 +1,38 @@
+name: Purga de cuentas
+
+# Job diario de purga de cuentas vencidas (D53): borra las cuentas cuyo
+# periodo de deshacer (30 días) ya pasó. Requiere los secrets SUPABASE_URL y
+# SUPABASE_SERVICE_ROLE_KEY en Settings → Secrets and variables → Actions.
+
+on:
+  schedule:
+    # Diario a las 06:00 UTC (medianoche-madrugada en América).
+    - cron: "0 6 * * *"
+  # Permite lanzarlo a mano desde la pestaña Actions para probarlo.
+  workflow_dispatch:
+
+jobs:
+  purge:
+    name: Purgar cuentas vencidas
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: "api/uv.lock"
+
+      - name: Sincronizar dependencias
+        run: uv sync --frozen --no-dev
+
+      - name: Ejecutar purga
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: uv run python -m ethos_api.account.purge_job
