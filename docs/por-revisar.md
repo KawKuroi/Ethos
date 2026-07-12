@@ -7,6 +7,12 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 
 ## Bloqueantes — configuración que detiene el flujo
 
+- [ ] **Migración 0009 en Supabase (`mcp_usage`)** — aplica
+  `supabase/migrations/0009_mcp_usage.sql` en el SQL Editor. Sin ella,
+  `/mcp-status` responde 500 en producción y Conectar IA, el badge de la
+  sidebar y el banner de Inicio no pueden comprobar la conexión (las tools
+  del MCP siguen funcionando: el contador es best-effort).
+
 ## Para ir revisando — pruebas y decisiones
 
 ### Pruebas end-to-end por categoría
