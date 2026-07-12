@@ -55,7 +55,7 @@ def test_contexto_tiene_la_forma_d34() -> None:
     summary = build_games_summary(items, profile)  # type: ignore[arg-type]
     context = build_games_context(summary, items, profile)  # type: ignore[arg-type]
 
-    assert context["namespace"] == "games.*"
+    assert context["namespace"] == "games_*"
     assert context["provider"] == "steam"
     assert set(context) == {
         "namespace",

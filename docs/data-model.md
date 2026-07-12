@@ -82,16 +82,16 @@ Conexión: "Sign in through Steam" (OpenID); el servidor obtiene el SteamID64 y 
 ### Diseño del MCP para juegos (D28)
 
 - Resource `profile://games/summary`: resumen compacto (tamaño de biblioteca, total de horas, juegos top, completado medio, deseados destacados).
-- Tools (pocas y parametrizadas, namespace `games.*`):
-  - `games.summary()` — el resumen como tool
-  - `games.top_by_hours(limit)` y `games.top(by="playtime"|"recent", limit)`
-  - `games.recent(window)`
-  - `games.search(query)`
-  - `games.detail(juego)` — horas, completado, estado
-  - `games.wishlist(limit)`
-  - `games.by_completion(min_pct)`
+- Tools (pocas y parametrizadas, namespace `games_*`; separador `_` por D63):
+  - `games_summary()` — el resumen como tool
+  - `games_top_by_hours(limit)` y `games_top(by="playtime"|"recent", limit)`
+  - `games_recent(window)`
+  - `games_search(query)`
+  - `games_detail(juego)` — horas, completado, estado
+  - `games_wishlist(limit)`
+  - `games_by_completion(min_pct)`
 
-Global (transversal): `profile.search(q)` — localiza en qué categoría vive
+Global (transversal): `profile_search(q)` — localiza en qué categoría vive
 algo. Mantener el número total de tools bajo (la precisión del modelo al
 elegir herramienta cae pasadas ~25-30). Cada respuesta reporta los KB servidos
 frente al tamaño total del contexto de la categoría.

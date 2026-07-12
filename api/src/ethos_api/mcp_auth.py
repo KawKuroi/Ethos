@@ -32,6 +32,8 @@ class McpTokenStore(Protocol):
 
     def resolve(self, token: str) -> str | None: ...
 
+    def has_token(self, user_id: str) -> bool: ...
+
 
 def _new_token() -> str:
     return _TOKEN_PREFIX + secrets.token_urlsafe(24)
@@ -64,6 +66,13 @@ class SupabaseMcpTokenStore:
         )
         return rows[0]["user_id"] if rows else None
 
+    def has_token(self, user_id: str) -> bool:
+        rows = self._rest.select(
+            self._TABLE,
+            {"user_id": f"eq.{user_id}", "select": "user_id", "limit": "1"},
+        )
+        return bool(rows)
+
 
 class InMemoryMcpTokenStore:
     """Implementación en memoria, para tests y desarrollo."""
@@ -88,6 +97,9 @@ class InMemoryMcpTokenStore:
         if not token.startswith(_TOKEN_PREFIX):
             return None
         return self._user_by_hash.get(_hash(token))
+
+    def has_token(self, user_id: str) -> bool:
+        return user_id in self._hash_by_user
 
 
 _store: McpTokenStore | None = None
@@ -147,5 +159,27 @@ def issue_mcp_token(
     """Emite el token del MCP del usuario (rota el anterior)."""
     return McpTokenOut(
         token=store.issue(user_id),
+        endpoint=str(request.base_url) + "mcp/",
+    )
+
+
+class McpStatusOut(BaseModel):
+    """Estado real de la conexión del MCP del usuario (para la web)."""
+
+    oauth_connected: bool
+    token_issued: bool
+    endpoint: str
+
+
+@router.get("/mcp-status", response_model=McpStatusOut)
+def mcp_status(
+    user_id: CurrentUserId, store: McpStoreDep, request: Request
+) -> McpStatusOut:
+    """¿Hay clientes autorizados vía OAuth o un token legacy emitido?"""
+    from ethos_api.oauth.deps import get_oauth_token_store
+
+    return McpStatusOut(
+        oauth_connected=get_oauth_token_store().has_active_access(user_id),
+        token_issued=store.has_token(user_id),
         endpoint=str(request.base_url) + "mcp/",
     )

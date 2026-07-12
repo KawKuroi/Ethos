@@ -1,26 +1,60 @@
 // Datos del playground de Conectar IA (simulado, sin LLM en v1). El endpoint y
-// el token reales los aporta el API (`lib/api`); aquí solo viven los pasos y las
-// consultas de ejemplo del playground.
+// el token reales los aporta el API (`lib/api`); aquí viven las guías de
+// conexión por cliente y las consultas de ejemplo del playground.
 
-export type Step = { n: number; title: string; body: string };
+export type ClientGuide = {
+  id: string;
+  name: string;
+  steps: string[];
+  command?: string; // bloque copiable (comando de terminal o JSON de config)
+  note?: string;
+};
 
-export const STEPS: Step[] = [
-  {
-    n: 1,
-    title: "Abre tu cliente de IA",
-    body: "En un cliente con soporte MCP (Claude u otro), añade un servidor nuevo.",
-  },
-  {
-    n: 2,
-    title: "Pega el endpoint y el token",
-    body: "Usa los datos de arriba para autenticar la conexión con tu perfil.",
-  },
-  {
-    n: 3,
-    title: "Pregúntale",
-    body: "Tu IA ya puede consultar tu gusto con tools acotadas, sin volcarlo entero.",
-  },
-];
+// Guías por cliente. La vía principal es OAuth: el usuario pega la URL y su
+// cliente lo trae a Ethos a autorizar; el token manual queda como avanzado.
+export function clientGuides(endpoint: string): ClientGuide[] {
+  return [
+    {
+      id: "claude",
+      name: "Claude",
+      steps: [
+        "En claude.ai o en la app de escritorio, abre Ajustes → Conectores.",
+        "Pulsa «Añadir conector personalizado», ponle nombre (p. ej. Ethos) y pega la URL del paso 1.",
+        "Pulsa Conectar: se abrirá Ethos para que inicies sesión y autorices el acceso.",
+        "En un chat nuevo, activa Ethos desde el botón + → Conectores, y pregúntale por tu gusto.",
+      ],
+      note: "Funciona en todos los planes de Claude; el gratuito admite un conector.",
+    },
+    {
+      id: "claude-code",
+      name: "Claude Code",
+      steps: [
+        "En tu terminal, ejecuta el comando de abajo.",
+        "Dentro de Claude Code escribe /mcp, elige ethos y sigue el enlace para autorizar en el navegador.",
+      ],
+      command: `claude mcp add --transport http ethos ${endpoint}`,
+    },
+    {
+      id: "cursor",
+      name: "Cursor",
+      steps: [
+        "Abre Settings → MCP y pulsa «Add new MCP server» (o edita ~/.cursor/mcp.json).",
+        "Pega el bloque de abajo y guarda.",
+        "Cuando el servidor aparezca como «Needs login», pulsa para autorizar en el navegador.",
+      ],
+      command: `{\n  "mcpServers": {\n    "ethos": { "url": "${endpoint}" }\n  }\n}`,
+    },
+    {
+      id: "otros",
+      name: "Otros clientes",
+      steps: [
+        "Añade un servidor MCP remoto (transporte HTTP estándar) con la URL del paso 1.",
+        "Si tu cliente soporta OAuth, te llevará a Ethos para autorizar: no necesitas token.",
+        "Si solo admite cabeceras, genera el token manual de abajo y envíalo como «Authorization: Bearer …».",
+      ],
+    },
+  ];
+}
 
 export type McpItem = {
   label: string;
@@ -47,7 +81,7 @@ export const MCP_QUERIES: McpQuery[] = [
   {
     id: "top",
     q: "¿Mis juegos con más horas?",
-    tool: "games.top_by_hours",
+    tool: "games_top_by_hours",
     args: "limit: 3",
     ctx: "0,4 KB",
     full: "84 KB",
@@ -70,7 +104,7 @@ export const MCP_QUERIES: McpQuery[] = [
   {
     id: "recent",
     q: "¿Qué jugué esta semana?",
-    tool: "games.recent",
+    tool: "games_recent",
     args: "days: 7",
     ctx: "0,3 KB",
     full: "84 KB",
@@ -93,7 +127,7 @@ export const MCP_QUERIES: McpQuery[] = [
   {
     id: "summary",
     q: "¿Cuántos juegos tengo?",
-    tool: "games.summary",
+    tool: "games_summary",
     args: "",
     ctx: "0,2 KB",
     full: "84 KB",
@@ -117,7 +151,7 @@ export const MCP_QUERIES: McpQuery[] = [
   {
     id: "music-top",
     q: "¿Mis artistas más escuchados?",
-    tool: "music.top_artists",
+    tool: "music_top_artists",
     args: "limit: 3",
     ctx: "0,3 KB",
     full: "56 KB",
@@ -140,7 +174,7 @@ export const MCP_QUERIES: McpQuery[] = [
   {
     id: "film-top",
     q: "¿Mis películas más vistas?",
-    tool: "film.top_movies",
+    tool: "film_top_movies",
     args: "limit: 3",
     ctx: "0,3 KB",
     full: "41 KB",
@@ -163,7 +197,7 @@ export const MCP_QUERIES: McpQuery[] = [
   {
     id: "anime-top",
     q: "¿Mis animes mejor puntuados?",
-    tool: "anime.top_rated",
+    tool: "anime_top_rated",
     args: "limit: 3",
     ctx: "0,3 KB",
     full: "38 KB",
@@ -186,7 +220,7 @@ export const MCP_QUERIES: McpQuery[] = [
   {
     id: "books-current",
     q: "¿Qué estoy leyendo?",
-    tool: "books.currently_reading",
+    tool: "books_currently_reading",
     args: "",
     ctx: "0,2 KB",
     full: "33 KB",
@@ -215,7 +249,7 @@ export function missQuery(text: string): McpQuery {
   return {
     id: "miss",
     q: text,
-    tool: "profile.search",
+    tool: "profile_search",
     args: `q: "${text.slice(0, 16).replace(/"/g, "")}…"`,
     ctx: "0,2 KB",
     full: "84 KB",

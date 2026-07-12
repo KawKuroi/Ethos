@@ -22,7 +22,7 @@ describe("CategoryDetail", () => {
     );
     const dialog = screen.getByRole("dialog");
     const pre = dialog.querySelector("pre");
-    expect(pre?.textContent).toContain('"namespace": "games.*"');
+    expect(pre?.textContent).toContain('"namespace": "games_*"');
 
     fireEvent.click(within(dialog).getByRole("button", { name: "MCP" }));
     expect(dialog.querySelector("pre")?.textContent).toContain(

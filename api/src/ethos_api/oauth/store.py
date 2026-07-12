@@ -51,6 +51,8 @@ class OAuthTokenStore(Protocol):
 
     def revoke(self, token: str) -> None: ...
 
+    def has_active_access(self, user_id: str) -> bool: ...
+
 
 class SupabaseOAuthClientStore:
     """Respaldo en la tabla `oauth_clients` (migración 0008)."""
@@ -183,6 +185,20 @@ class SupabaseOAuthTokenStore:
             return
         self._rest.delete(self._TABLE, {"token_hash": f"eq.{_hash(token)}"})
 
+    def has_active_access(self, user_id: str) -> bool:
+        """¿El usuario tiene algún access token OAuth vigente? (estado de la web)."""
+        rows = self._rest.select(
+            self._TABLE,
+            {
+                "user_id": f"eq.{user_id}",
+                "kind": "eq.access",
+                "expires_at": f"gt.{_now().isoformat()}",
+                "select": "token_hash",
+                "limit": "1",
+            },
+        )
+        return bool(rows)
+
 
 class InMemoryOAuthTokenStore:
     """Implementación en memoria (tests y desarrollo)."""
@@ -218,6 +234,14 @@ class InMemoryOAuthTokenStore:
     def revoke(self, token: str) -> None:
         """Revocación RFC 7009: borra el token (access o refresh) si existe."""
         self._tokens.pop(_hash(token), None)
+
+    def has_active_access(self, user_id: str) -> bool:
+        """¿El usuario tiene algún access token OAuth vigente? (estado de la web)."""
+        now = _now()
+        return any(
+            uid == user_id and kind == "access" and expires_at > now
+            for uid, _client_id, kind, expires_at in self._tokens.values()
+        )
 
 
 class InMemoryCodeStore:

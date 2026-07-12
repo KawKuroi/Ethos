@@ -165,7 +165,7 @@ def profile_search_payload(
     if not matches:
         payload["hint"] = (
             "busca por título entre Juegos, Cine y TV, Anime y manga y Libros; "
-            "Música se consulta con music.*"
+            "Música se consulta con las tools music_*"
         )
     kb_total = round(
         _games_context_kb(user_id, games)
@@ -367,37 +367,41 @@ def books_history_payload(
     return _served(payload, _books_context_kb(user_id, store))
 
 
+# Nombres de tool solo con [a-zA-Z0-9_-]: los clientes de Claude (y otros)
+# validan contra ^[a-zA-Z0-9_-]{1,64}$ y rechazan el punto (D63).
+
+
 @mcp.tool
 def ping() -> str:
     """Tool de prueba para verificar la conexión con el servidor MCP."""
     return "pong"
 
 
-@mcp.tool(name="games.summary")
+@mcp.tool(name="games_summary")
 def games_summary() -> dict[str, object]:
     """Resumen agregado de Juegos: biblioteca, horas, deseados y completado."""
     return games_summary_payload(_require_user(), get_games_store())
 
 
-@mcp.tool(name="games.top_by_hours")
+@mcp.tool(name="games_top_by_hours")
 def games_top_by_hours(limit: int = 10) -> dict[str, object]:
     """Top de juegos por horas jugadas (con completado si está calculado)."""
     return games_top_payload(_require_user(), get_games_store(), limit)
 
 
-@mcp.tool(name="games.recent")
+@mcp.tool(name="games_recent")
 def games_recent() -> dict[str, object]:
     """Juegos con actividad en las últimas dos semanas."""
     return games_recent_payload(_require_user(), get_games_store())
 
 
-@mcp.tool(name="games.history")
+@mcp.tool(name="games_history")
 def games_history(limit: int = MAX_HISTORY_ENTRIES) -> dict[str, object]:
     """Biblioteca completa de Juegos hasta el límite, con metadatos de uso."""
     return games_history_payload(_require_user(), get_games_store(), limit)
 
 
-@mcp.tool(name="profile.search")
+@mcp.tool(name="profile_search")
 def profile_search(query: str) -> dict[str, object]:
     """Busca una obra por título en el perfil (Juegos, Cine y TV, Anime, Libros)."""
     return profile_search_payload(
@@ -410,97 +414,97 @@ def profile_search(query: str) -> dict[str, object]:
     )
 
 
-@mcp.tool(name="music.summary")
+@mcp.tool(name="music_summary")
 def music_summary() -> dict[str, object]:
     """Resumen de Música: scrobbles, top artistas y top tracks de la ventana."""
     return music_summary_payload(_require_user(), get_event_store())
 
 
-@mcp.tool(name="music.top_artists")
+@mcp.tool(name="music_top_artists")
 def music_top_artists(limit: int = 10) -> dict[str, object]:
     """Artistas más escuchados en los últimos 30 días."""
     return music_top_artists_payload(_require_user(), get_event_store(), limit)
 
 
-@mcp.tool(name="music.recent")
+@mcp.tool(name="music_recent")
 def music_recent(limit: int = 20) -> dict[str, object]:
     """Últimos listens registrados, del más reciente al más antiguo."""
     return music_recent_payload(_require_user(), get_event_store(), limit)
 
 
-@mcp.tool(name="music.history")
+@mcp.tool(name="music_history")
 def music_history(limit: int = MAX_HISTORY_ENTRIES) -> dict[str, object]:
     """Listens completos hasta el límite, del más reciente al más antiguo."""
     return music_history_payload(_require_user(), get_event_store(), limit)
 
 
-@mcp.tool(name="film.summary")
+@mcp.tool(name="film_summary")
 def film_summary() -> dict[str, object]:
     """Resumen de Cine y TV: películas, series, episodios y horas vistas."""
     return film_summary_payload(_require_user(), get_film_store())
 
 
-@mcp.tool(name="film.top_movies")
+@mcp.tool(name="film_top_movies")
 def film_top_movies(limit: int = 10) -> dict[str, object]:
     """Películas más vistas por número de reproducciones."""
     return film_top_movies_payload(_require_user(), get_film_store(), limit)
 
 
-@mcp.tool(name="film.recent")
+@mcp.tool(name="film_recent")
 def film_recent(limit: int = 10) -> dict[str, object]:
     """Películas y series vistas más recientemente."""
     return film_recent_payload(_require_user(), get_film_store(), limit)
 
 
-@mcp.tool(name="film.history")
+@mcp.tool(name="film_history")
 def film_history(limit: int = MAX_HISTORY_ENTRIES) -> dict[str, object]:
     """Historial completo de Cine y TV hasta el límite, con metadatos de uso."""
     return film_history_payload(_require_user(), get_film_store(), limit)
 
 
-@mcp.tool(name="anime.summary")
+@mcp.tool(name="anime_summary")
 def anime_summary() -> dict[str, object]:
     """Resumen de Anime y manga: vistos, leídos, episodios, capítulos y nota media."""
     return anime_summary_payload(_require_user(), get_anime_store())
 
 
-@mcp.tool(name="anime.top_rated")
+@mcp.tool(name="anime_top_rated")
 def anime_top_rated(limit: int = 10) -> dict[str, object]:
     """Animes y mangas mejor puntuados por el usuario (nota 0-100)."""
     return anime_top_rated_payload(_require_user(), get_anime_store(), limit)
 
 
-@mcp.tool(name="anime.current")
+@mcp.tool(name="anime_current")
 def anime_current(limit: int = 10) -> dict[str, object]:
     """Animes y mangas en curso (viéndose o leyéndose), con su progreso."""
     return anime_current_payload(_require_user(), get_anime_store(), limit)
 
 
-@mcp.tool(name="anime.history")
+@mcp.tool(name="anime_history")
 def anime_history(limit: int = MAX_HISTORY_ENTRIES) -> dict[str, object]:
     """Lista completa de Anime y manga hasta el límite, con metadatos de uso."""
     return anime_history_payload(_require_user(), get_anime_store(), limit)
 
 
-@mcp.tool(name="books.summary")
+@mcp.tool(name="books_summary")
 def books_summary() -> dict[str, object]:
     """Resumen de Libros: leídos, páginas, en curso, por leer y top autores."""
     return books_summary_payload(_require_user(), get_books_store())
 
 
-@mcp.tool(name="books.currently_reading")
+@mcp.tool(name="books_currently_reading")
 def books_currently_reading() -> dict[str, object]:
     """Libros en curso de lectura."""
     return books_currently_reading_payload(_require_user(), get_books_store())
 
 
-@mcp.tool(name="books.top_authors")
+@mcp.tool(name="books_top_authors")
 def books_top_authors(limit: int = 10) -> dict[str, object]:
     """Autores con más libros leídos."""
     return books_top_authors_payload(_require_user(), get_books_store(), limit)
 
 
-@mcp.tool(name="books.history")
+@mcp.tool(name="books_history")
 def books_history(limit: int = MAX_HISTORY_ENTRIES) -> dict[str, object]:
     """Estanterías completas de Libros hasta el límite, con metadatos de uso."""
     return books_history_payload(_require_user(), get_books_store(), limit)

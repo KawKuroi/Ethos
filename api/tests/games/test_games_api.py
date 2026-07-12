@@ -102,7 +102,7 @@ def test_descarga_de_contexto_d24(
         == 'attachment; filename="games.context.json"'
     )
     contexto = respuesta.json()
-    assert contexto["namespace"] == "games.*"
+    assert contexto["namespace"] == "games_*"
     assert contexto["summary"]["games"] == 2
     assert contexto["wishlist"]["count"] == 3
 

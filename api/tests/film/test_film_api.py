@@ -85,7 +85,7 @@ def test_descarga_de_contexto_de_cine(
         == 'attachment; filename="film.context.json"'
     )
     contexto = respuesta.json()
-    assert contexto["namespace"] == "film.*"
+    assert contexto["namespace"] == "film_*"
     assert contexto["provider"] == "trakt"
 
 

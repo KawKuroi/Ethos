@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { issueMcpToken, mcpEndpoint } from "@/lib/api";
-import { MCP_QUERIES, STEPS, matchQuery, type McpQuery } from "./data";
+import { getMcpStatus, issueMcpToken, mcpEndpoint } from "@/lib/api";
+import { useSource } from "@/lib/use-source";
+import { MCP_QUERIES, clientGuides, matchQuery, type McpQuery } from "./data";
 import styles from "./connect.module.css";
 
 function StarAvatar() {
@@ -16,8 +17,15 @@ function StarAvatar() {
 }
 
 export function ConnectAi() {
-  const [connected, setConnected] = useState(false);
-  const [copied, setCopied] = useState<"endpoint" | "token" | null>(null);
+  // Estado real de la conexión (¿hay clientes OAuth autorizados?).
+  const {
+    loading: checking,
+    data: status,
+    error: statusError,
+    reload: checkStatus,
+  } = useSource(getMcpStatus);
+  const [activeGuide, setActiveGuide] = useState("claude");
+  const [copied, setCopied] = useState<"endpoint" | "token" | "command" | null>(null);
   const [current, setCurrent] = useState<McpQuery | null>(null);
   const [running, setRunning] = useState(false);
   const [input, setInput] = useState("");
@@ -61,11 +69,15 @@ export function ConnectAi() {
     setInput("");
   }
 
-  function copy(field: "endpoint" | "token", value: string) {
+  function copy(field: "endpoint" | "token" | "command", value: string) {
     navigator.clipboard?.writeText(value).catch(() => {});
     setCopied(field);
     setTimeout(() => setCopied(null), 1500);
   }
+
+  const connected = status?.oauth_connected ?? false;
+  const guides = clientGuides(endpoint);
+  const guide = guides.find((g) => g.id === activeGuide) ?? guides[0];
 
   return (
     <div className="eth-screen">
@@ -79,94 +91,167 @@ export function ConnectAi() {
           </div>
           <div className={styles.statusDesc}>
             {connected
-              ? "Tu perfil está disponible para consultas acotadas vía MCP."
-              : "Conecta tu cliente para que la IA pueda leer tu perfil."}
+              ? "Hay al menos un cliente autorizado que puede consultar tu perfil vía MCP."
+              : statusError
+                ? "No se pudo comprobar el estado. Inténtalo de nuevo en unos segundos."
+                : status?.token_issued
+                  ? "Tienes un token manual generado. Si tu cliente soporta OAuth, los dos pasos de abajo son más simples."
+                  : "Sigue los dos pasos de abajo: conectar tarda menos de un minuto."}
           </div>
         </div>
         <button
           type="button"
           className={styles.statusBtn}
-          onClick={() => setConnected((v) => !v)}
+          onClick={checkStatus}
+          disabled={checking}
         >
-          {connected ? "Desconectar" : "Conectar IA"}
+          {checking ? "Comprobando…" : "Comprobar conexión"}
         </button>
       </div>
 
-      <div className={styles.grid2}>
-        <div className={styles.card}>
-          <div className={styles.eyebrow}>Conexión del servidor</div>
-          <div className={styles.fieldGap}>
-            <div className={styles.fieldLabel}>Endpoint</div>
-            <div className={styles.fieldBox}>
-              <code className={styles.fieldCode}>{endpoint}</code>
-              {copied === "endpoint" ? (
+      <div className={`${styles.card} ${styles.connectCard}`}>
+        <div className={styles.eyebrow}>Conecta tu cliente</div>
+        <div className={styles.fieldGap}>
+          <div className={styles.fieldLabel}>1 · Copia la URL del servidor MCP</div>
+          <div className={styles.fieldBox}>
+            <code className={styles.fieldCode}>{endpoint}</code>
+            {copied === "endpoint" ? (
+              <span className={styles.copied}>copiado ✓</span>
+            ) : (
+              <button
+                type="button"
+                className={styles.copyBtn}
+                onClick={() => copy("endpoint", endpoint)}
+              >
+                copiar
+              </button>
+            )}
+          </div>
+        </div>
+        <div>
+          <div className={styles.fieldLabel}>
+            2 · Añádela en tu cliente y autoriza el acceso
+          </div>
+          <div className={styles.tabs} role="tablist" aria-label="Elige tu cliente">
+            {guides.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                role="tab"
+                aria-selected={g.id === guide.id}
+                className={`${styles.tab} ${g.id === guide.id ? styles.tabActive : ""}`}
+                onClick={() => setActiveGuide(g.id)}
+              >
+                {g.name}
+              </button>
+            ))}
+          </div>
+          <div>
+            {guide.steps.map((text, index) => (
+              <div key={text} className={styles.step}>
+                <span className={styles.stepNum}>{index + 1}</span>
+                <div className={styles.stepText}>{text}</div>
+              </div>
+            ))}
+          </div>
+          {guide.command && (
+            <div className={styles.cmdBox}>
+              <pre className={styles.cmdCode}>{guide.command}</pre>
+              {copied === "command" ? (
                 <span className={styles.copied}>copiado ✓</span>
               ) : (
                 <button
                   type="button"
                   className={styles.copyBtn}
-                  onClick={() => copy("endpoint", endpoint)}
+                  onClick={() => copy("command", guide.command ?? "")}
                 >
                   copiar
                 </button>
               )}
             </div>
+          )}
+          {guide.note && <div className={styles.note}>{guide.note}</div>}
+          <div className={styles.note}>
+            Al conectar, tu cliente te traerá a una página de Ethos para autorizar
+            el acceso con tu cuenta — sin tokens ni configuración extra. Cuando
+            termines, vuelve aquí y pulsa «Comprobar conexión».
           </div>
-          <div>
-            <div className={styles.fieldLabel}>Token de acceso</div>
-            {token ? (
-              <>
-                <div className={styles.fieldBox}>
-                  <code className={styles.fieldCode}>{token}</code>
-                  {copied === "token" ? (
-                    <span className={styles.copied}>copiado ✓</span>
-                  ) : (
-                    <button
-                      type="button"
-                      className={styles.copyBtn}
-                      onClick={() => copy("token", token)}
-                    >
-                      copiar
-                    </button>
-                  )}
-                </div>
-                <div className={styles.note}>
-                  Guárdalo ahora: por seguridad no se vuelve a mostrar. Cifrado en
-                  reposo; nunca se reenvía a las APIs de origen.
-                </div>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className={styles.copyBtn}
-                  style={{ padding: "9px 14px" }}
-                  onClick={generateToken}
-                  disabled={issuing}
-                >
-                  {issuing ? "Generando…" : "Generar token"}
-                </button>
-                <div className={styles.note}>
-                  {tokenError
-                    ? "No se pudo generar el token. Inténtalo de nuevo."
-                    : "Genera un token para autenticar tu IA. Cifrado en reposo; nunca se reenvía a las APIs de origen."}
-                </div>
-              </>
-            )}
+        </div>
+      </div>
+
+      <div className={styles.grid2}>
+        <div className={styles.card}>
+          <div className={styles.eyebrow}>Qué puede hacer tu IA</div>
+          <div className={styles.step}>
+            <span className={styles.stepNum}>✓</span>
+            <div className={styles.stepText}>
+              Solo lectura: consulta tu gusto con tools acotadas (
+              <code className={styles.inlineCode}>games_summary</code>,{" "}
+              <code className={styles.inlineCode}>music_top_artists</code>…), nunca
+              modifica nada.
+            </div>
+          </div>
+          <div className={styles.step}>
+            <span className={styles.stepNum}>✓</span>
+            <div className={styles.stepText}>
+              Solo viaja lo necesario: cada respuesta reporta los KB servidos frente
+              al contexto total de tu perfil.
+            </div>
+          </div>
+          <div className={styles.step}>
+            <span className={styles.stepNum}>✓</span>
+            <div className={styles.stepText}>
+              Revocable cuando quieras: desconecta el conector desde tu cliente o
+              regenera el token manual para invalidar el anterior.
+            </div>
           </div>
         </div>
 
         <div className={styles.card}>
-          <div className={styles.eyebrow}>Tres pasos</div>
-          {STEPS.map((step) => (
-            <div key={step.n} className={styles.step}>
-              <span className={styles.stepNum}>{step.n}</span>
-              <div>
-                <div className={styles.stepTitle}>{step.title}</div>
-                <div className={styles.stepBody}>{step.body}</div>
+          <div className={styles.eyebrow}>Avanzado · token manual</div>
+          <div className={styles.note} style={{ marginTop: 0, marginBottom: 12 }}>
+            Solo para clientes sin soporte OAuth: genera un token y envíalo en la
+            cabecera <code className={styles.inlineCode}>Authorization: Bearer …</code>.
+          </div>
+          {token ? (
+            <>
+              <div className={styles.fieldBox}>
+                <code className={styles.fieldCode}>{token}</code>
+                {copied === "token" ? (
+                  <span className={styles.copied}>copiado ✓</span>
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.copyBtn}
+                    onClick={() => copy("token", token)}
+                  >
+                    copiar
+                  </button>
+                )}
               </div>
-            </div>
-          ))}
+              <div className={styles.note}>
+                Guárdalo ahora: por seguridad no se vuelve a mostrar. Cifrado en
+                reposo; nunca se reenvía a las APIs de origen.
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={styles.copyBtn}
+                style={{ padding: "9px 14px" }}
+                onClick={generateToken}
+                disabled={issuing}
+              >
+                {issuing ? "Generando…" : "Generar token"}
+              </button>
+              <div className={styles.note}>
+                {tokenError
+                  ? "No se pudo generar el token. Inténtalo de nuevo."
+                  : "Generar uno nuevo invalida el anterior. Cifrado en reposo; nunca se reenvía a las APIs de origen."}
+              </div>
+            </>
+          )}
         </div>
       </div>
 

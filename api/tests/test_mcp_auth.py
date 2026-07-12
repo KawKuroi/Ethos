@@ -71,6 +71,31 @@ def test_endpoint_requiere_sesion(api_client: TestClient) -> None:
     assert api_client.post("/mcp-token").status_code == 401
 
 
+def test_mcp_status_requiere_sesion(api_client: TestClient) -> None:
+    assert api_client.get("/mcp-status").status_code == 401
+
+
+def test_mcp_status_refleja_token_y_oauth(api_client: TestClient) -> None:
+    """El estado pasa a real conforme el usuario emite token o autoriza vía OAuth."""
+    from ethos_api.oauth.deps import get_oauth_token_store
+
+    headers = auth_headers("user-status")
+
+    inicial = api_client.get("/mcp-status", headers=headers).json()
+    assert inicial["oauth_connected"] is False
+    assert inicial["token_issued"] is False
+    assert inicial["endpoint"].endswith("/mcp/")
+
+    api_client.post("/mcp-token", headers=headers)
+    con_token = api_client.get("/mcp-status", headers=headers).json()
+    assert con_token["token_issued"] is True
+    assert con_token["oauth_connected"] is False
+
+    get_oauth_token_store().issue_pair("user-status", "client-x")
+    con_oauth = api_client.get("/mcp-status", headers=headers).json()
+    assert con_oauth["oauth_connected"] is True
+
+
 def _store_poblado(user: str = "user-1") -> InMemoryGamesStore:
     from ethos_api.games.service import refresh_user_games
 
@@ -139,7 +164,7 @@ async def test_tools_de_datos_exigen_token() -> None:
 
     async with Client(mcp) as client:
         with pytest.raises(ToolError, match="No autenticado"):
-            await client.call_tool("games.summary", {})
+            await client.call_tool("games_summary", {})
 
 
 @pytest.mark.anyio
@@ -197,7 +222,7 @@ async def test_music_summary_tool_exige_token() -> None:
 
     async with Client(mcp) as client:
         with pytest.raises(ToolError, match="No autenticado"):
-            await client.call_tool("music.summary", {})
+            await client.call_tool("music_summary", {})
 
 
 def _film_store_poblado(user: str = "user-1") -> InMemoryFilmStore:
@@ -245,7 +270,7 @@ async def test_film_summary_tool_exige_token() -> None:
 
     async with Client(mcp) as client:
         with pytest.raises(ToolError, match="No autenticado"):
-            await client.call_tool("film.summary", {})
+            await client.call_tool("film_summary", {})
 
 
 def _anime_store_poblado(user: str = "user-1") -> InMemoryAnimeStore:
@@ -327,6 +352,6 @@ async def test_anime_y_books_tools_exigen_token() -> None:
 
     async with Client(mcp) as client:
         with pytest.raises(ToolError, match="No autenticado"):
-            await client.call_tool("anime.summary", {})
+            await client.call_tool("anime_summary", {})
         with pytest.raises(ToolError, match="No autenticado"):
-            await client.call_tool("books.summary", {})
+            await client.call_tool("books_summary", {})
