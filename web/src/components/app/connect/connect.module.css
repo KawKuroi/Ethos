@@ -56,6 +56,161 @@
 .statusBtn:hover {
   filter: brightness(1.06);
 }
+/* Variante discreta del botón de estado: la IA ya está conectada y comprobar
+   deja de ser la acción principal de la pantalla. */
+.statusGhostBtn {
+  padding: 11px 18px;
+  border-radius: var(--pill);
+  border: var(--bw) solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--fb);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.statusGhostBtn:hover {
+  border-color: var(--accent);
+}
+
+/* ===== Actividad de la conexión (IA conectada) ===== */
+.activityCard {
+  margin-bottom: 18px;
+}
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.statBox {
+  background: var(--soft);
+  border-radius: var(--rs);
+  padding: 15px 18px;
+}
+.statValue {
+  font-family: var(--fm);
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.statLabel {
+  font-family: var(--fb);
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.clientChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.clientChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px;
+  border-radius: var(--pill);
+  border: var(--bw) solid var(--line);
+  background: var(--surface);
+  font-family: var(--fb);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.clientChipDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+  flex: 0 0 auto;
+}
+.clientChipMeta {
+  color: var(--muted);
+  font-weight: 500;
+}
+.clientChipRevoke {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin-left: 2px;
+  font-family: var(--fb);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--error);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.clientChipRevoke:hover {
+  opacity: 0.8;
+}
+.clientChipRevoke:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.toolUsage {
+  margin-top: 16px;
+}
+.toolUsageLabel {
+  font-family: var(--fm);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.toolTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.toolTag {
+  font-family: var(--code);
+  font-size: 11px;
+  color: var(--ink);
+  background: var(--chip);
+  border-radius: var(--rs);
+  padding: 5px 10px;
+}
+.toolTag strong {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ===== Conectar otro cliente (plegado al estar conectada) ===== */
+.detailsSummary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--fb);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.detailsSummary::-webkit-details-marker {
+  display: none;
+}
+.detailsSummary::before {
+  content: "▸";
+  font-size: 12px;
+  color: var(--muted);
+}
+details[open] .detailsSummary::before {
+  content: "▾";
+}
+.detailsHint {
+  font-family: var(--fb);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.detailsBody {
+  margin-top: 16px;
+}
 
 .grid2 {
   display: grid;
@@ -614,6 +769,9 @@
 @media (max-width: 860px) {
   .grid2,
   .playGrid {
+    grid-template-columns: 1fr;
+  }
+  .statsGrid {
     grid-template-columns: 1fr;
   }
 }

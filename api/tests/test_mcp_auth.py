@@ -85,6 +85,7 @@ def test_mcp_status_refleja_token_y_oauth(api_client: TestClient) -> None:
     assert inicial["oauth_connected"] is False
     assert inicial["token_issued"] is False
     assert inicial["endpoint"].endswith("/mcp/")
+    assert inicial["clients"] == []
 
     api_client.post("/mcp-token", headers=headers)
     con_token = api_client.get("/mcp-status", headers=headers).json()
@@ -94,6 +95,95 @@ def test_mcp_status_refleja_token_y_oauth(api_client: TestClient) -> None:
     get_oauth_token_store().issue_pair("user-status", "client-x")
     con_oauth = api_client.get("/mcp-status", headers=headers).json()
     assert con_oauth["oauth_connected"] is True
+    # Cliente no registrado: nombre de cortesía, con fecha de conexión.
+    assert len(con_oauth["clients"]) == 1
+    assert con_oauth["clients"][0]["name"] == "Cliente MCP"
+    assert con_oauth["clients"][0]["connected_at"] is not None
+
+
+def test_mcp_status_reporta_el_uso(api_client: TestClient) -> None:
+    """Las llamadas contadas por tool aparecen agregadas en /mcp-status."""
+    from ethos_api.mcp_usage import get_mcp_usage_store
+
+    store = get_mcp_usage_store()
+    store.record("user-uso", "games_summary")
+    store.record("user-uso", "games_summary")
+    store.record("user-uso", "music_recent")
+
+    usage = api_client.get("/mcp-status", headers=auth_headers("user-uso")).json()[
+        "usage"
+    ]
+    assert usage["total_calls"] == 3
+    assert usage["last_called_at"] is not None
+    assert usage["top_tools"][0] == {"tool": "games_summary", "calls": 2}
+
+
+def test_usage_store_en_memoria_agrega_por_usuario() -> None:
+    from ethos_api.mcp_usage import InMemoryMcpUsageStore
+
+    store = InMemoryMcpUsageStore()
+    store.record("user-1", "games_summary")
+    store.record("user-1", "books_summary")
+    store.record("user-2", "music_recent")
+
+    stats = store.stats_for_user("user-1")
+    assert stats.total_calls == 2
+    assert {t.tool for t in stats.top_tools} == {"games_summary", "books_summary"}
+    assert store.stats_for_user("user-3").total_calls == 0
+
+
+def test_revocar_cliente_requiere_sesion(api_client: TestClient) -> None:
+    assert api_client.delete("/mcp-clients/client-x").status_code == 401
+
+
+def test_revocar_cliente_borra_sus_tokens(api_client: TestClient) -> None:
+    """Revocar deja fuera al cliente (access y refresh) sin tocar a los demás."""
+    from ethos_api.oauth.deps import get_oauth_token_store
+
+    tokens = get_oauth_token_store()
+    access_a, refresh_a, _ = tokens.issue_pair("user-revoca", "client-a")
+    access_b, _, _ = tokens.issue_pair("user-revoca", "client-b")
+    headers = auth_headers("user-revoca")
+
+    antes = api_client.get("/mcp-status", headers=headers).json()
+    assert {c["client_id"] for c in antes["clients"]} == {"client-a", "client-b"}
+
+    respuesta = api_client.delete("/mcp-clients/client-a", headers=headers)
+    assert respuesta.status_code == 204
+
+    assert tokens.resolve_access(access_a) is None
+    assert tokens.consume_refresh(refresh_a) is None
+    assert tokens.resolve_access(access_b) == "user-revoca"
+    despues = api_client.get("/mcp-status", headers=headers).json()
+    assert {c["client_id"] for c in despues["clients"]} == {"client-b"}
+
+
+def test_revocar_cliente_no_toca_a_otros_usuarios(api_client: TestClient) -> None:
+    from ethos_api.oauth.deps import get_oauth_token_store
+
+    tokens = get_oauth_token_store()
+    access_ajeno, _, _ = tokens.issue_pair("user-otro", "client-a")
+
+    respuesta = api_client.delete(
+        "/mcp-clients/client-a", headers=auth_headers("user-revoca-2")
+    )
+    assert respuesta.status_code == 204
+    assert tokens.resolve_access(access_ajeno) == "user-otro"
+
+
+def test_active_clients_dedupe_y_orden() -> None:
+    """Varios access del mismo cliente cuentan una vez, con la fecha más antigua."""
+    from ethos_api.oauth.store import InMemoryOAuthTokenStore
+
+    store = InMemoryOAuthTokenStore()
+    store.issue_pair("user-1", "client-a")
+    store.issue_pair("user-1", "client-a")
+    store.issue_pair("user-1", "client-b")
+    store.issue_pair("user-2", "client-c")
+
+    clients = store.active_clients("user-1")
+    assert [client_id for client_id, _ in clients] == ["client-a", "client-b"]
+    assert all(connected_at is not None for _, connected_at in clients)
 
 
 def _store_poblado(user: str = "user-1") -> InMemoryGamesStore:

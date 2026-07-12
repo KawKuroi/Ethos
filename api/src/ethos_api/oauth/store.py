@@ -51,7 +51,11 @@ class OAuthTokenStore(Protocol):
 
     def revoke(self, token: str) -> None: ...
 
+    def revoke_client(self, user_id: str, client_id: str) -> None: ...
+
     def has_active_access(self, user_id: str) -> bool: ...
+
+    def active_clients(self, user_id: str) -> list[tuple[str, str | None]]: ...
 
 
 class SupabaseOAuthClientStore:
@@ -185,6 +189,17 @@ class SupabaseOAuthTokenStore:
             return
         self._rest.delete(self._TABLE, {"token_hash": f"eq.{_hash(token)}"})
 
+    def revoke_client(self, user_id: str, client_id: str) -> None:
+        """Revoca desde la web todos los tokens (access y refresh) del par.
+
+        El registro DCR del cliente se conserva: podrá volver a pedir
+        autorización con un flujo OAuth nuevo.
+        """
+        self._rest.delete(
+            self._TABLE,
+            {"user_id": f"eq.{user_id}", "client_id": f"eq.{client_id}"},
+        )
+
     def has_active_access(self, user_id: str) -> bool:
         """¿El usuario tiene algún access token OAuth vigente? (estado de la web)."""
         rows = self._rest.select(
@@ -199,20 +214,51 @@ class SupabaseOAuthTokenStore:
         )
         return bool(rows)
 
+    def active_clients(self, user_id: str) -> list[tuple[str, str | None]]:
+        """Clientes con access token vigente y desde cuándo (para la web)."""
+        rows = self._rest.select(
+            self._TABLE,
+            {
+                "user_id": f"eq.{user_id}",
+                "kind": "eq.access",
+                "expires_at": f"gt.{_now().isoformat()}",
+                "select": "client_id,created_at",
+                "order": "created_at.asc",
+            },
+        )
+        # Un cliente puede tener varios access vigentes (refresh rota tokens):
+        # se conserva el más antiguo como fecha de conexión.
+        seen: dict[str, str | None] = {}
+        for row in rows:
+            seen.setdefault(str(row["client_id"]), row.get("created_at"))
+        return list(seen.items())
+
 
 class InMemoryOAuthTokenStore:
     """Implementación en memoria (tests y desarrollo)."""
 
     def __init__(self) -> None:
-        # hash → (user_id, client_id, kind, expires_at)
-        self._tokens: dict[str, tuple[str, str, str, datetime]] = {}
+        # hash → (user_id, client_id, kind, expires_at, created_at)
+        self._tokens: dict[str, tuple[str, str, str, datetime, datetime]] = {}
 
     def issue_pair(self, user_id: str, client_id: str) -> tuple[str, str, int]:
         access = ACCESS_PREFIX + secrets.token_urlsafe(24)
         refresh = REFRESH_PREFIX + secrets.token_urlsafe(24)
         now = _now()
-        self._tokens[_hash(access)] = (user_id, client_id, "access", now + ACCESS_TTL)
-        self._tokens[_hash(refresh)] = (user_id, client_id, "refresh", now + REFRESH_TTL)
+        self._tokens[_hash(access)] = (
+            user_id,
+            client_id,
+            "access",
+            now + ACCESS_TTL,
+            now,
+        )
+        self._tokens[_hash(refresh)] = (
+            user_id,
+            client_id,
+            "refresh",
+            now + REFRESH_TTL,
+            now,
+        )
         return access, refresh, int(ACCESS_TTL.total_seconds())
 
     def resolve_access(self, token: str) -> str | None:
@@ -235,13 +281,35 @@ class InMemoryOAuthTokenStore:
         """Revocación RFC 7009: borra el token (access o refresh) si existe."""
         self._tokens.pop(_hash(token), None)
 
+    def revoke_client(self, user_id: str, client_id: str) -> None:
+        """Revoca desde la web todos los tokens (access y refresh) del par."""
+        self._tokens = {
+            digest: entry
+            for digest, entry in self._tokens.items()
+            if not (entry[0] == user_id and entry[1] == client_id)
+        }
+
     def has_active_access(self, user_id: str) -> bool:
         """¿El usuario tiene algún access token OAuth vigente? (estado de la web)."""
         now = _now()
         return any(
             uid == user_id and kind == "access" and expires_at > now
-            for uid, _client_id, kind, expires_at in self._tokens.values()
+            for uid, _client_id, kind, expires_at, _created in self._tokens.values()
         )
+
+    def active_clients(self, user_id: str) -> list[tuple[str, str | None]]:
+        """Clientes con access token vigente y desde cuándo (para la web)."""
+        now = _now()
+        seen: dict[str, datetime] = {}
+        for uid, client_id, kind, expires_at, created_at in self._tokens.values():
+            if uid != user_id or kind != "access" or expires_at < now:
+                continue
+            if client_id not in seen or created_at < seen[client_id]:
+                seen[client_id] = created_at
+        return [
+            (client_id, created.isoformat())
+            for client_id, created in sorted(seen.items(), key=lambda e: e[1])
+        ]
 
 
 class InMemoryCodeStore:

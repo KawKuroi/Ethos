@@ -1,23 +1,31 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { invalidateSourceCache } from "@/lib/use-source";
 import { ConnectAi } from "./connect";
 
 const mocks = vi.hoisted(() => ({
   issueMcpToken: vi.fn(),
   mcpEndpoint: vi.fn(() => "https://api.test/mcp/"),
   getMcpStatus: vi.fn(),
+  revokeMcpClient: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
   issueMcpToken: mocks.issueMcpToken,
   mcpEndpoint: mocks.mcpEndpoint,
   getMcpStatus: mocks.getMcpStatus,
+  revokeMcpClient: mocks.revokeMcpClient,
 }));
+
+const NO_USAGE = { total_calls: 0, last_called_at: null, top_tools: [] };
 
 describe("ConnectAi", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // El estado del MCP se cachea entre montajes (useSource): cada test
+    // parte de una caché limpia para que su mock mande.
+    invalidateSourceCache();
     mocks.mcpEndpoint.mockReturnValue("https://api.test/mcp/");
     mocks.issueMcpToken.mockResolvedValue({
       token: "eth_live_secreto123",
@@ -27,6 +35,8 @@ describe("ConnectAi", () => {
       oauth_connected: false,
       token_issued: false,
       endpoint: "https://api.test/mcp/",
+      clients: [],
+      usage: NO_USAGE,
     });
   });
   afterEach(() => {
@@ -51,11 +61,14 @@ describe("ConnectAi", () => {
       await screen.findByText("Tu IA aún no está conectada"),
     ).toBeInTheDocument();
     unmount();
+    invalidateSourceCache();
 
     mocks.getMcpStatus.mockResolvedValue({
       oauth_connected: true,
       token_issued: false,
       endpoint: "https://api.test/mcp/",
+      clients: [],
+      usage: NO_USAGE,
     });
     render(<ConnectAi />);
     expect(await screen.findByText("Tu IA está conectada")).toBeInTheDocument();
@@ -70,10 +83,97 @@ describe("ConnectAi", () => {
       oauth_connected: true,
       token_issued: false,
       endpoint: "https://api.test/mcp/",
+      clients: [],
+      usage: NO_USAGE,
     });
     fireEvent.click(boton);
     expect(await screen.findByText("Tu IA está conectada")).toBeInTheDocument();
     expect(mocks.getMcpStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it("conectada: muestra la actividad y pliega la guía de conexión", async () => {
+    mocks.getMcpStatus.mockResolvedValue({
+      oauth_connected: true,
+      token_issued: false,
+      endpoint: "https://api.test/mcp/",
+      clients: [{ name: "Claude", connected_at: "2026-07-10T00:00:00Z" }],
+      usage: {
+        total_calls: 12,
+        last_called_at: "2026-07-11T00:00:00Z",
+        top_tools: [{ tool: "games_summary", calls: 8 }],
+      },
+    });
+    render(<ConnectAi />);
+
+    expect(await screen.findByText("Tu IA está conectada")).toBeInTheDocument();
+    expect(screen.getByText(/autorizada para claude/i)).toBeInTheDocument();
+    expect(screen.getByText("consultas atendidas")).toBeInTheDocument();
+    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(screen.getByText("×8")).toBeInTheDocument();
+    // La guía queda plegada como "Conectar otro cliente".
+    expect(screen.getByText("Conectar otro cliente")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /comprobar conexión/i }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /actualizar estado/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("revoca un cliente desde su chip y recarga el estado", async () => {
+    mocks.getMcpStatus.mockResolvedValue({
+      oauth_connected: true,
+      token_issued: false,
+      endpoint: "https://api.test/mcp/",
+      clients: [
+        {
+          client_id: "eth_client_abc",
+          name: "Claude",
+          connected_at: "2026-07-10T00:00:00Z",
+        },
+      ],
+      usage: NO_USAGE,
+    });
+    mocks.revokeMcpClient.mockResolvedValue(undefined);
+    render(<ConnectAi />);
+
+    const boton = await screen.findByRole("button", {
+      name: /revocar el acceso de claude/i,
+    });
+    fireEvent.click(boton);
+
+    await waitFor(() =>
+      expect(mocks.revokeMcpClient).toHaveBeenCalledWith("eth_client_abc"),
+    );
+    // Tras revocar se vuelve a consultar el estado (carga inicial + recarga).
+    await waitFor(() => expect(mocks.getMcpStatus).toHaveBeenCalledTimes(2));
+  });
+
+  it("un cliente sin client_id no ofrece revocación", async () => {
+    mocks.getMcpStatus.mockResolvedValue({
+      oauth_connected: true,
+      token_issued: false,
+      endpoint: "https://api.test/mcp/",
+      clients: [{ name: "Claude", connected_at: null }],
+      usage: NO_USAGE,
+    });
+    render(<ConnectAi />);
+    expect(await screen.findByText("Tu IA está conectada")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /revocar/i })).toBeNull();
+  });
+
+  it("conectada sin consultas: invita a hacer la primera", async () => {
+    mocks.getMcpStatus.mockResolvedValue({
+      oauth_connected: false,
+      token_issued: true,
+      endpoint: "https://api.test/mcp/",
+      clients: [],
+      usage: NO_USAGE,
+    });
+    render(<ConnectAi />);
+    expect(await screen.findByText("Tu IA está conectada")).toBeInTheDocument();
+    expect(screen.getByText(/aún no ha hecho consultas/i)).toBeInTheDocument();
+    expect(screen.getByText("Token manual")).toBeInTheDocument();
   });
 
   it("ofrece guías por cliente en pestañas, con Claude por defecto", async () => {

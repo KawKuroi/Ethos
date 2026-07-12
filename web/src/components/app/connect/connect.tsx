@@ -1,8 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { getMcpStatus, issueMcpToken, mcpEndpoint } from "@/lib/api";
-import { useSource } from "@/lib/use-source";
+import {
+  issueMcpToken,
+  mcpEndpoint,
+  revokeMcpClient,
+  type McpClient,
+  type McpStatus,
+} from "@/lib/api";
+import { fmtInt, relativeTime } from "@/lib/format";
+import { isMcpConnected, useMcpStatus } from "@/lib/use-mcp-status";
 import { MCP_QUERIES, clientGuides, matchQuery, type McpQuery } from "./data";
 import styles from "./connect.module.css";
 
@@ -16,16 +23,236 @@ function StarAvatar() {
   );
 }
 
+type CopiedField = "endpoint" | "token" | "command" | null;
+
+function statusDescription(
+  status: McpStatus | null,
+  hadError: boolean,
+): string {
+  if (hadError)
+    return "No se pudo comprobar el estado. Inténtalo de nuevo en unos segundos.";
+  if (!status) return "Comprobando el estado de la conexión…";
+  const clients = status.clients ?? [];
+  if (status.oauth_connected) {
+    return clients.length > 0
+      ? `Autorizada para ${clients.map((c) => c.name).join(", ")}. Puede consultar tu perfil vía MCP cuando se lo pidas.`
+      : "Hay al menos un cliente autorizado que puede consultar tu perfil vía MCP.";
+  }
+  if (status.token_issued)
+    return "Conectada con token manual. Si tu cliente soporta OAuth, conectar con la URL es aún más simple.";
+  return "Conecta tu cliente con los dos pasos de abajo: tarda menos de un minuto.";
+}
+
+// Actividad real de la conexión: consultas atendidas, última consulta y
+// clientes autorizados (revocables). Sustituye a la guía cuando la IA ya
+// está conectada.
+function ConnectionActivity({
+  status,
+  onRevoked,
+}: {
+  status: McpStatus;
+  onRevoked: () => void;
+}) {
+  const usage = status.usage ?? null;
+  const clients = status.clients ?? [];
+  const totalClients = clients.length + (status.token_issued ? 1 : 0);
+  const [revoking, setRevoking] = useState<string | null>(null);
+  const [revokeError, setRevokeError] = useState(false);
+
+  async function revoke(client: McpClient) {
+    if (!client.client_id || revoking) return;
+    setRevokeError(false);
+    setRevoking(client.client_id);
+    try {
+      await revokeMcpClient(client.client_id);
+      onRevoked();
+    } catch {
+      setRevokeError(true);
+    } finally {
+      setRevoking(null);
+    }
+  }
+
+  return (
+    <div className={`${styles.card} ${styles.activityCard}`}>
+      <div className={styles.eyebrow}>Actividad de la conexión</div>
+      <div className={styles.statsGrid}>
+        <div className={styles.statBox}>
+          <div className={styles.statValue}>{fmtInt(usage?.total_calls ?? 0)}</div>
+          <div className={styles.statLabel}>consultas atendidas</div>
+        </div>
+        <div className={styles.statBox}>
+          <div className={styles.statValue}>
+            {usage?.last_called_at ? relativeTime(usage.last_called_at) : "—"}
+          </div>
+          <div className={styles.statLabel}>última consulta</div>
+        </div>
+        <div className={styles.statBox}>
+          <div className={styles.statValue}>{totalClients}</div>
+          <div className={styles.statLabel}>
+            {totalClients === 1 ? "cliente autorizado" : "clientes autorizados"}
+          </div>
+        </div>
+      </div>
+
+      {(clients.length > 0 || status.token_issued) && (
+        <div className={styles.clientChips}>
+          {clients.map((client) => (
+            <span
+              key={client.client_id ?? client.name}
+              className={styles.clientChip}
+            >
+              <span className={styles.clientChipDot} aria-hidden="true" />
+              {client.name}
+              {client.connected_at && (
+                <span className={styles.clientChipMeta}>
+                  · desde {relativeTime(client.connected_at)}
+                </span>
+              )}
+              {client.client_id && (
+                <button
+                  type="button"
+                  className={styles.clientChipRevoke}
+                  onClick={() => revoke(client)}
+                  disabled={revoking !== null}
+                  aria-label={`Revocar el acceso de ${client.name}`}
+                >
+                  {revoking === client.client_id ? "revocando…" : "revocar"}
+                </button>
+              )}
+            </span>
+          ))}
+          {status.token_issued && (
+            <span className={styles.clientChip}>
+              <span className={styles.clientChipDot} aria-hidden="true" />
+              Token manual
+            </span>
+          )}
+        </div>
+      )}
+
+      {revokeError && (
+        <div className={styles.note}>
+          No se pudo revocar el acceso. Inténtalo de nuevo en unos segundos.
+        </div>
+      )}
+
+      {usage && usage.top_tools.length > 0 ? (
+        <div className={styles.toolUsage}>
+          <div className={styles.toolUsageLabel}>Tools más consultadas</div>
+          <div className={styles.toolTags}>
+            {usage.top_tools.slice(0, 4).map((entry) => (
+              <span key={entry.tool} className={styles.toolTag}>
+                {entry.tool} <strong>×{fmtInt(entry.calls)}</strong>
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className={styles.note}>
+          Tu IA aún no ha hecho consultas. Pídele en un chat que te recomiende
+          algo según tu gusto y verás aquí la actividad.
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Pasos de conexión por cliente (URL + guía). Es la pieza central cuando la
+// IA no está conectada; conectada, queda plegada como "conectar otro cliente".
+function ConnectSteps({
+  endpoint,
+  copied,
+  onCopy,
+}: {
+  endpoint: string;
+  copied: CopiedField;
+  onCopy: (field: "endpoint" | "command", value: string) => void;
+}) {
+  const [activeGuide, setActiveGuide] = useState("claude");
+  const guides = clientGuides(endpoint);
+  const guide = guides.find((g) => g.id === activeGuide) ?? guides[0];
+
+  return (
+    <>
+      <div className={styles.fieldGap}>
+        <div className={styles.fieldLabel}>1 · Copia la URL del servidor MCP</div>
+        <div className={styles.fieldBox}>
+          <code className={styles.fieldCode}>{endpoint}</code>
+          {copied === "endpoint" ? (
+            <span className={styles.copied}>copiado ✓</span>
+          ) : (
+            <button
+              type="button"
+              className={styles.copyBtn}
+              onClick={() => onCopy("endpoint", endpoint)}
+            >
+              copiar
+            </button>
+          )}
+        </div>
+      </div>
+      <div>
+        <div className={styles.fieldLabel}>
+          2 · Añádela en tu cliente y autoriza el acceso
+        </div>
+        <div className={styles.tabs} role="tablist" aria-label="Elige tu cliente">
+          {guides.map((g) => (
+            <button
+              key={g.id}
+              type="button"
+              role="tab"
+              aria-selected={g.id === guide.id}
+              className={`${styles.tab} ${g.id === guide.id ? styles.tabActive : ""}`}
+              onClick={() => setActiveGuide(g.id)}
+            >
+              {g.name}
+            </button>
+          ))}
+        </div>
+        <div>
+          {guide.steps.map((text, index) => (
+            <div key={text} className={styles.step}>
+              <span className={styles.stepNum}>{index + 1}</span>
+              <div className={styles.stepText}>{text}</div>
+            </div>
+          ))}
+        </div>
+        {guide.command && (
+          <div className={styles.cmdBox}>
+            <pre className={styles.cmdCode}>{guide.command}</pre>
+            {copied === "command" ? (
+              <span className={styles.copied}>copiado ✓</span>
+            ) : (
+              <button
+                type="button"
+                className={styles.copyBtn}
+                onClick={() => onCopy("command", guide.command ?? "")}
+              >
+                copiar
+              </button>
+            )}
+          </div>
+        )}
+        {guide.note && <div className={styles.note}>{guide.note}</div>}
+        <div className={styles.note}>
+          Al conectar, tu cliente te traerá a Ethos para autorizar el acceso con
+          tu cuenta. Cuando termines, vuelve aquí y pulsa «Comprobar conexión».
+        </div>
+      </div>
+    </>
+  );
+}
+
 export function ConnectAi() {
-  // Estado real de la conexión (¿hay clientes OAuth autorizados?).
+  // Estado real de la conexión (clientes OAuth autorizados, token y uso).
   const {
     loading: checking,
-    data: status,
+    status,
     error: statusError,
     reload: checkStatus,
-  } = useSource(getMcpStatus);
-  const [activeGuide, setActiveGuide] = useState("claude");
-  const [copied, setCopied] = useState<"endpoint" | "token" | "command" | null>(null);
+  } = useMcpStatus();
+  const [copied, setCopied] = useState<CopiedField>(null);
   const [current, setCurrent] = useState<McpQuery | null>(null);
   const [running, setRunning] = useState(false);
   const [input, setInput] = useState("");
@@ -75,9 +302,7 @@ export function ConnectAi() {
     setTimeout(() => setCopied(null), 1500);
   }
 
-  const connected = status?.oauth_connected ?? false;
-  const guides = clientGuides(endpoint);
-  const guide = guides.find((g) => g.id === activeGuide) ?? guides[0];
+  const connected = isMcpConnected(status);
 
   return (
     <div className="eth-screen">
@@ -90,94 +315,43 @@ export function ConnectAi() {
             {connected ? "Tu IA está conectada" : "Tu IA aún no está conectada"}
           </div>
           <div className={styles.statusDesc}>
-            {connected
-              ? "Hay al menos un cliente autorizado que puede consultar tu perfil vía MCP."
-              : statusError
-                ? "No se pudo comprobar el estado. Inténtalo de nuevo en unos segundos."
-                : status?.token_issued
-                  ? "Tienes un token manual generado. Si tu cliente soporta OAuth, los dos pasos de abajo son más simples."
-                  : "Sigue los dos pasos de abajo: conectar tarda menos de un minuto."}
+            {statusDescription(status, statusError)}
           </div>
         </div>
         <button
           type="button"
-          className={styles.statusBtn}
+          className={connected ? styles.statusGhostBtn : styles.statusBtn}
           onClick={checkStatus}
           disabled={checking}
         >
-          {checking ? "Comprobando…" : "Comprobar conexión"}
+          {checking
+            ? "Comprobando…"
+            : connected
+              ? "Actualizar estado"
+              : "Comprobar conexión"}
         </button>
       </div>
 
-      <div className={`${styles.card} ${styles.connectCard}`}>
-        <div className={styles.eyebrow}>Conecta tu cliente</div>
-        <div className={styles.fieldGap}>
-          <div className={styles.fieldLabel}>1 · Copia la URL del servidor MCP</div>
-          <div className={styles.fieldBox}>
-            <code className={styles.fieldCode}>{endpoint}</code>
-            {copied === "endpoint" ? (
-              <span className={styles.copied}>copiado ✓</span>
-            ) : (
-              <button
-                type="button"
-                className={styles.copyBtn}
-                onClick={() => copy("endpoint", endpoint)}
-              >
-                copiar
-              </button>
-            )}
+      {connected && status && (
+        <ConnectionActivity status={status} onRevoked={checkStatus} />
+      )}
+
+      {connected ? (
+        <details className={`${styles.card} ${styles.connectCard}`}>
+          <summary className={styles.detailsSummary}>
+            Conectar otro cliente
+            <span className={styles.detailsHint}>ver los pasos</span>
+          </summary>
+          <div className={styles.detailsBody}>
+            <ConnectSteps endpoint={endpoint} copied={copied} onCopy={copy} />
           </div>
+        </details>
+      ) : (
+        <div className={`${styles.card} ${styles.connectCard}`}>
+          <div className={styles.eyebrow}>Conecta tu cliente</div>
+          <ConnectSteps endpoint={endpoint} copied={copied} onCopy={copy} />
         </div>
-        <div>
-          <div className={styles.fieldLabel}>
-            2 · Añádela en tu cliente y autoriza el acceso
-          </div>
-          <div className={styles.tabs} role="tablist" aria-label="Elige tu cliente">
-            {guides.map((g) => (
-              <button
-                key={g.id}
-                type="button"
-                role="tab"
-                aria-selected={g.id === guide.id}
-                className={`${styles.tab} ${g.id === guide.id ? styles.tabActive : ""}`}
-                onClick={() => setActiveGuide(g.id)}
-              >
-                {g.name}
-              </button>
-            ))}
-          </div>
-          <div>
-            {guide.steps.map((text, index) => (
-              <div key={text} className={styles.step}>
-                <span className={styles.stepNum}>{index + 1}</span>
-                <div className={styles.stepText}>{text}</div>
-              </div>
-            ))}
-          </div>
-          {guide.command && (
-            <div className={styles.cmdBox}>
-              <pre className={styles.cmdCode}>{guide.command}</pre>
-              {copied === "command" ? (
-                <span className={styles.copied}>copiado ✓</span>
-              ) : (
-                <button
-                  type="button"
-                  className={styles.copyBtn}
-                  onClick={() => copy("command", guide.command ?? "")}
-                >
-                  copiar
-                </button>
-              )}
-            </div>
-          )}
-          {guide.note && <div className={styles.note}>{guide.note}</div>}
-          <div className={styles.note}>
-            Al conectar, tu cliente te traerá a una página de Ethos para autorizar
-            el acceso con tu cuenta — sin tokens ni configuración extra. Cuando
-            termines, vuelve aquí y pulsa «Comprobar conexión».
-          </div>
-        </div>
-      </div>
+      )}
 
       <div className={styles.grid2}>
         <div className={styles.card}>
@@ -201,8 +375,9 @@ export function ConnectAi() {
           <div className={styles.step}>
             <span className={styles.stepNum}>✓</span>
             <div className={styles.stepText}>
-              Revocable cuando quieras: desconecta el conector desde tu cliente o
-              regenera el token manual para invalidar el anterior.
+              Revocable cuando quieras: revoca cada cliente desde esta pantalla
+              (o desconéctalo en tu cliente) y regenera el token manual para
+              invalidar el anterior.
             </div>
           </div>
         </div>
