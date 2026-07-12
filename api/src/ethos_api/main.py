@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import BackgroundTasks, FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -17,6 +17,7 @@ from ethos_api.games.router import router as games_router
 from ethos_api.imports.router import router as imports_router
 from ethos_api.interest.router import router as interest_router
 from ethos_api.items.router import router as items_router
+from ethos_api.keepalive import db_keepalive
 from ethos_api.mcp_auth import resolve_bearer_user
 from ethos_api.mcp_auth import router as mcp_token_router
 from ethos_api.mcp_server import mcp
@@ -74,8 +75,13 @@ def create_app() -> FastAPI:
     app.include_router(oauth_router)
 
     @app.get("/health")
-    def health() -> dict[str, str]:
-        """Sonda de salud para keep-alive y monitores de despliegue."""
+    def health(background: BackgroundTasks) -> dict[str, str]:
+        """Sonda de salud para keep-alive y monitores de despliegue.
+
+        Además del ok inmediato, programa un toque espaciado a la BD para
+        que Supabase (free) no se pause por inactividad a los 7 días.
+        """
+        background.add_task(db_keepalive.touch_if_due)
         return {"status": "ok", "environment": settings.environment}
 
     # Pila de protección, de fuera hacia adentro:

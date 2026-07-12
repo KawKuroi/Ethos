@@ -21,6 +21,14 @@ https://ethos-steel.vercel.app
 
 ## Activo
 
+**Keep-alive de Supabase desde /health (2026-07-12).** `/health` programa en
+segundo plano (`BackgroundTasks`) un toque mínimo a la BD vía PostgREST
+(`keepalive.py`: select `limit=1` sobre `source_state`), a lo sumo una vez
+cada 6 h y best-effort (un fallo de Supabase nunca tumba la sonda). Como
+UptimeRobot pinga `/health` cada pocos minutos, Supabase (free) deja de correr
+riesgo de pausa a los 7 días sin depender del cron diario de purga (que GitHub
+puede deshabilitar en repos inactivos). Pendiente del roadmap resuelto.
+
 **Catálogo de proveedores alternativos integrado (2026-07-11, D62).** Diez
 proveedores nuevos sobre el registry (D21): Last.fm, MyAnimeList, Kitsu,
 Open Library (API por username), Hardcover (API por token) y los imports con
@@ -85,7 +93,17 @@ producción.
 
 ## Bitácora
 
-### 2026-07-11 (catálogo de proveedores alternativos, D62)
+### 2026-07-12 (keep-alive de Supabase desde /health)
+
+- Cierra el pendiente del roadmap: el ping de UptimeRobot golpeaba `/health`
+  sin tocar la BD, con riesgo de pausa de Supabase free a los 7 días. Nuevo
+  `keepalive.py` (`DbKeepalive` con reloj y cliente inyectables): toque mínimo
+  vía PostgREST (`source_state`, `limit=1`) con throttle en memoria de 6 h,
+  marcado antes de consultar (sin ráfagas de reintento si Supabase falla) y
+  excepciones tragadas y logueadas. `/health` lo programa con
+  `BackgroundTasks` sin cambiar su respuesta. El cron diario de purga (D53)
+  queda como respaldo, no como garantía (GitHub deshabilita crons en repos
+  inactivos). 7 tests nuevos; api 287 tests (90,86%), ruff y mypy en verde.
 
 - Investigación de viabilidad de los proveedores alternativos de D27 (estado
   2026): conectables por API Last.fm (key de app), MyAnimeList (client id),
