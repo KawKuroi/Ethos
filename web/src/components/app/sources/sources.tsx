@@ -14,6 +14,20 @@ function accentVar(accent: string): CSSProperties {
 // Categorías del catálogo aún sin conector (ninguna con la Fase 3 completa).
 const SOON = Object.values(CATEGORY_DETAIL).filter((c) => c.state === "soon");
 
+// Aviso de que la categoría admite más proveedores además del mostrado, sin
+// tener que abrir el detalle.
+function MoreProviders({ names }: { names: string[] }) {
+  if (names.length <= 1) return null;
+  return (
+    <span
+      className={styles.cardMore}
+      title={`${names.length} proveedores disponibles: ${names.join(", ")}`}
+    >
+      +{names.length - 1}
+    </span>
+  );
+}
+
 function LiveCard({ view }: { view: ActiveSourceView }) {
   return (
     <Link
@@ -28,7 +42,8 @@ function LiveCard({ view }: { view: ActiveSourceView }) {
           <span className={`${styles.healthDot} ${styles.healthOk}`} />
         </div>
         <div className={styles.cardMeta}>
-          {view.provider} · {view.modeLabel} ·{" "}
+          {view.provider}
+          <MoreProviders names={view.providerNames} /> · {view.modeLabel} ·{" "}
           {view.syncing ? "sincronizando…" : view.countLabel}
         </div>
       </div>
@@ -57,8 +72,18 @@ function OffCard({ view }: { view: ActiveSourceView }) {
           </span>
           <span className={styles.groupDotOff} />
         </div>
-        <div className={styles.cardMeta}>
-          {view.provider} · {view.modeLabel} · sin empezar
+        <div
+          className={styles.cardMeta}
+          title={
+            view.providerNames.length > 1
+              ? `Proveedores: ${view.providerNames.join(", ")}`
+              : undefined
+          }
+        >
+          {view.providerNames.length > 1
+            ? `${view.providerNames.length} proveedores disponibles`
+            : `${view.provider} · ${view.modeLabel}`}{" "}
+          · sin empezar
         </div>
       </div>
       <span className={`${styles.cardCta} ${styles.cardCtaAccent}`}>Empezar →</span>

@@ -3,17 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/logo";
+import { isMcpConnected, useMcpStatus } from "@/lib/use-mcp-status";
 import { useUser } from "@/lib/use-user";
 import { NAV } from "./nav";
 import { NavIcon, GearIcon } from "./nav-icons";
 import styles from "./app.module.css";
 
-// TODO: sustituir por el estado real de conexión del MCP (tarea Conectar IA).
-const MCP_CONNECTED = false;
-
 export function Sidebar() {
   const pathname = usePathname();
   const { name, email } = useUser();
+  // El badge de "IA sin conectar" se apaga solo cuando el estado confirma
+  // la conexión (OAuth o token manual).
+  const { status } = useMcpStatus();
   const displayName = name ?? "Tu perfil";
   const initial = (name ?? email ?? "E").charAt(0).toUpperCase();
 
@@ -46,7 +47,7 @@ export function Sidebar() {
                 <NavIcon name={item.icon} />
               </span>
               <span className={styles.navLabel}>{item.label}</span>
-              {item.id === "mcp" && !MCP_CONNECTED && (
+              {item.id === "mcp" && !isMcpConnected(status) && (
                 <span className={styles.badge} aria-label="IA sin conectar" />
               )}
             </Link>

@@ -156,6 +156,20 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Señal de que la categoría admite más proveedores además del conectado. */
+.cardMore {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 0 5px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--chip);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.5;
+  cursor: help;
+}
 .healthDot {
   width: 8px;
   height: 8px;

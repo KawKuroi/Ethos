@@ -1,9 +1,6 @@
-// Datos de la pantalla Inicio que aún no aporta el backend. El panorama y las
-// cifras salen de los hooks de fuentes (use-active-sources); aquí quedan el
-// estado del MCP y las alertas agregadas.
-
-// TODO: sustituir por el estado real de conexión del MCP (tarea Conectar IA).
-export const MCP_CONNECTED = false;
+// Datos de la pantalla Inicio que aún no aporta el backend. El panorama, las
+// cifras y el estado del MCP salen de sus hooks (use-active-sources,
+// use-mcp-status); aquí quedan las alertas agregadas.
 
 export type AlertLevel = "warn" | "error";
 

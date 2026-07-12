@@ -9,6 +9,8 @@ const requestAccountDeletion = vi.fn();
 const getAccountDeletion = vi.fn();
 const undoAccountDeletion = vi.fn();
 const updateUser = vi.fn();
+const signOut = vi.fn();
+const goToLanding = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   deleteAllData: () => deleteAllData(),
@@ -21,9 +23,28 @@ vi.mock("@/lib/use-user", () => ({
   useUser: () => ({ name: "Axel", email: "axel@correo.com" }),
 }));
 
+vi.mock("@/lib/navigation", () => ({
+  goToLanding: () => goToLanding(),
+}));
+
+vi.mock("@/lib/use-active-sources", () => ({
+  useActiveSources: () => ({
+    loading: false,
+    gamesSummary: null,
+    views: [
+      { slug: "games", live: true, records: 312 },
+      { slug: "music", live: true, records: 5210 },
+      { slug: "books", live: false, records: 0 },
+    ],
+  }),
+}));
+
 vi.mock("@/lib/supabase/client", () => ({
   getBrowserClient: () => ({
-    auth: { updateUser: (body: unknown) => updateUser(body) },
+    auth: {
+      updateUser: (body: unknown) => updateUser(body),
+      signOut: () => signOut(),
+    },
   }),
 }));
 
@@ -42,6 +63,8 @@ describe("Settings", () => {
     getAccountDeletion.mockReset().mockResolvedValue({ scheduled: false, purge_after: null });
     undoAccountDeletion.mockReset();
     updateUser.mockReset();
+    signOut.mockReset().mockResolvedValue(undefined);
+    goToLanding.mockReset();
   });
 
   it("muestra las secciones de ajustes", () => {
@@ -93,18 +116,29 @@ describe("Settings", () => {
     expect(await screen.findByText(/datos eliminados/i)).toBeInTheDocument();
   });
 
-  it("programa el borrado de cuenta y permite deshacerlo", async () => {
+  it("programa el borrado de cuenta, cierra la sesión y vuelve a la landing", async () => {
     requestAccountDeletion.mockResolvedValueOnce({
       scheduled: true,
       purge_after: "2026-08-05T00:00:00Z",
     });
-    undoAccountDeletion.mockResolvedValueOnce(undefined);
     renderSettings();
 
     fireEvent.click(screen.getByRole("button", { name: "Eliminar cuenta" }));
     const dialog = screen.getByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Eliminar cuenta" }));
 
+    await waitFor(() => expect(requestAccountDeletion).toHaveBeenCalled());
+    await waitFor(() => expect(goToLanding).toHaveBeenCalled());
+    expect(signOut).toHaveBeenCalled();
+  });
+
+  it("muestra el borrado ya programado al cargar y permite deshacerlo", async () => {
+    getAccountDeletion.mockResolvedValue({
+      scheduled: true,
+      purge_after: "2026-08-05T00:00:00Z",
+    });
+    undoAccountDeletion.mockResolvedValueOnce(undefined);
+    renderSettings();
     expect(await screen.findByText(/borrado programado/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Deshacer" }));
@@ -112,13 +146,19 @@ describe("Settings", () => {
     expect(await screen.findByText(/borrado cancelado/i)).toBeInTheDocument();
   });
 
-  it("muestra el borrado ya programado al cargar", async () => {
-    getAccountDeletion.mockResolvedValue({
-      scheduled: true,
-      purge_after: "2026-08-05T00:00:00Z",
-    });
+  it("muestra las cifras reales de fuentes y registros", () => {
     renderSettings();
-    expect(await screen.findByText(/borrado programado/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Deshacer" })).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("fuentes activas")).toBeInTheDocument();
+    // es-ES no agrupa los números de 4 cifras (312 + 5210 = 5522).
+    expect(screen.getByText("5522")).toBeInTheDocument();
+    expect(screen.getByText("registros de contexto")).toBeInTheDocument();
+  });
+
+  it("cierra la sesión y redirige a la landing", async () => {
+    renderSettings();
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar sesión" }));
+    await waitFor(() => expect(signOut).toHaveBeenCalled());
+    await waitFor(() => expect(goToLanding).toHaveBeenCalled());
   });
 });

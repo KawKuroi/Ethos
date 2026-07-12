@@ -9,7 +9,11 @@ import {
   requestAccountDeletion,
   undoAccountDeletion,
 } from "@/lib/api";
+import { fmtInt } from "@/lib/format";
+import { goToLanding } from "@/lib/navigation";
 import { getBrowserClient } from "@/lib/supabase/client";
+import { useActiveSources } from "@/lib/use-active-sources";
+import { invalidateSourceCache } from "@/lib/use-source";
 import { useUser } from "@/lib/use-user";
 import styles from "./settings.module.css";
 
@@ -64,7 +68,7 @@ const CONFIRM_COPY: Record<
   },
   delete: {
     title: "Eliminar tu cuenta",
-    body: "Se eliminan tu perfil, tus fuentes y todo tu contexto de forma permanente. Recibirás un correo con 30 días para deshacerlo.",
+    body: "Se eliminan tu perfil, tus fuentes y todo tu contexto de forma permanente. Se cerrará tu sesión y recibirás un correo con 30 días para deshacerlo (inicia sesión de nuevo para cancelarlo).",
     label: "Eliminar cuenta",
   },
 };
@@ -89,6 +93,9 @@ export function Settings() {
   const [working, setWorking] = useState(false);
   // Fecha de purga si el borrado de cuenta ya está programado (D53).
   const [purgeAfter, setPurgeAfter] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+  // Fuentes reales del usuario para las cifras de "Datos y contexto".
+  const { loading: sourcesLoading, views } = useActiveSources();
 
   useEffect(() => {
     let active = true;
@@ -134,6 +141,19 @@ export function Settings() {
     setTimeout(() => setNotice(null), 4000);
   }
 
+  async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await getBrowserClient().auth.signOut();
+      invalidateSourceCache();
+      goToLanding();
+    } catch {
+      setSigningOut(false);
+      flashNotice("No se pudo cerrar la sesión. Reinténtalo.");
+    }
+  }
+
   async function runConfirm() {
     if (working || !confirm) return;
     const kind = confirm;
@@ -141,14 +161,26 @@ export function Settings() {
     try {
       if (kind === "wipe") {
         await deleteAllData();
+        // Las pantallas cacheadas (Inicio, Fuentes…) deben volver a pedir
+        // el estado: ya no hay contexto que mostrar.
+        invalidateSourceCache();
         flashNotice(
           "Datos eliminados. Reconecta tus fuentes cuando quieras empezar de nuevo.",
         );
+        setConfirm(null);
       } else {
-        const status = await requestAccountDeletion();
-        setPurgeAfter(status.purge_after);
+        await requestAccountDeletion();
+        // Cuenta programada para purga: se cierra la sesión y se vuelve a la
+        // landing. Al iniciar sesión de nuevo, Ajustes ofrece deshacer.
+        await getBrowserClient()
+          .auth.signOut()
+          .catch(() => {
+            // La purga ya está programada; la sesión caduca sola.
+          });
+        invalidateSourceCache();
+        goToLanding();
+        return;
       }
-      setConfirm(null);
     } catch {
       flashNotice("No se pudo completar la acción. Reinténtalo.");
     } finally {
@@ -177,6 +209,9 @@ export function Settings() {
         year: "numeric",
       })
     : null;
+
+  const liveViews = views.filter((view) => view.live);
+  const totalRecords = liveViews.reduce((sum, view) => sum + view.records, 0);
 
   return (
     <div className={`eth-screen ${styles.screen}`}>
@@ -259,11 +294,17 @@ export function Settings() {
         </div>
         <div className={styles.statsGrid}>
           <div className={styles.statBox}>
-            <div className={styles.statValue}>1</div>
-            <div className={styles.statLabel}>fuentes activas</div>
+            <div className={styles.statValue}>
+              {sourcesLoading ? "—" : liveViews.length}
+            </div>
+            <div className={styles.statLabel}>
+              {liveViews.length === 1 ? "fuente activa" : "fuentes activas"}
+            </div>
           </div>
           <div className={styles.statBox}>
-            <div className={styles.statValue}>312</div>
+            <div className={styles.statValue}>
+              {sourcesLoading ? "—" : fmtInt(totalRecords)}
+            </div>
             <div className={styles.statLabel}>registros de contexto</div>
           </div>
         </div>
@@ -275,6 +316,23 @@ export function Settings() {
             Conexión con la IA →
           </Link>
         </div>
+      </div>
+
+      {/* Sesión */}
+      <div className={styles.section}>
+        <div className={styles.sectionTitle}>Sesión</div>
+        <div className={styles.sectionSub}>
+          Cierra tu sesión en este dispositivo. Tus fuentes y tu contexto se
+          conservan.
+        </div>
+        <button
+          type="button"
+          className={styles.linkBtn}
+          onClick={signOut}
+          disabled={signingOut}
+        >
+          {signingOut ? "Cerrando sesión…" : "Cerrar sesión"}
+        </button>
       </div>
 
       {/* Zona de peligro */}

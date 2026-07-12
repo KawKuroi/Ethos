@@ -17,12 +17,24 @@ export type SourceState<T> = {
   silentReload: () => void;
 };
 
+// Último resultado por cargador (stale-while-revalidate): al volver a montar
+// una pantalla, pinta al instante el dato de la visita anterior y lo revalida
+// en silencio, en vez de volver a pasar por "cargando…" en cada navegación.
+const cache = new Map<() => Promise<unknown>, unknown>();
+
+// Vacía la caché de fuentes: al cerrar sesión o borrar los datos, el próximo
+// montaje vuelve a pedir todo al backend.
+export function invalidateSourceCache(): void {
+  cache.clear();
+}
+
 // Carga perezosa del estado de una fuente del usuario con recarga bajo demanda.
 // Parametrizado por el cargador (`load`) para compartirlo entre categorías.
 // `load` debe ser una referencia estable (una función de módulo), no un inline.
 export function useSource<T>(load: () => Promise<T>): SourceState<T> {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<T | null>(null);
+  const cached = cache.get(load) as T | undefined;
+  const [loading, setLoading] = useState(cached === undefined);
+  const [data, setData] = useState<T | null>(cached ?? null);
   const [error, setError] = useState(false);
   const [tick, setTick] = useState(0);
 
@@ -42,13 +54,16 @@ export function useSource<T>(load: () => Promise<T>): SourceState<T> {
     let active = true;
     load()
       .then((result) => {
+        cache.set(load, result);
         if (!active) return;
         setData(result);
         setLoading(false);
       })
       .catch(() => {
         if (!active) return;
-        setError(true);
+        // Con dato previo en pantalla la revalidación fallida no lo pisa;
+        // solo se marca error cuando no hay nada que mostrar.
+        if (!cache.has(load)) setError(true);
         setLoading(false);
       });
     return () => {

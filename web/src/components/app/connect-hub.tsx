@@ -40,7 +40,7 @@ const chipStyle: CSSProperties = {
   padding: "1.5px 7px",
   borderRadius: "999px",
   border: "1px solid var(--line)",
-  color: "var(--soft)",
+  color: "var(--muted)",
   textTransform: "uppercase",
   letterSpacing: "0.04em",
 };
@@ -50,7 +50,7 @@ const stepsStyle: CSSProperties = {
   paddingLeft: "18px",
   maxWidth: "460px",
   textAlign: "left",
-  color: "var(--soft)",
+  color: "var(--muted)",
   fontSize: "12.5px",
   lineHeight: 1.65,
 };
@@ -134,7 +134,7 @@ export function ConnectHub({
           style={{ display: "flex", flexDirection: "column", gap: "12px" }}
           aria-label={`Conectar ${selected.name}`}
         >
-          <p style={{ margin: 0, color: "var(--soft)", fontSize: "13px" }}>
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: "13px" }}>
             {selected.description}
           </p>
           <Steps provider={selected} />

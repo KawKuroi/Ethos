@@ -1,6 +1,6 @@
 "use client";
 
-import { providerName } from "@/components/app/category/providers";
+import { providerName, providersFor } from "@/components/app/category/providers";
 import type { GamesSummary } from "@/lib/api";
 import { useAnimeSource } from "@/lib/use-anime-source";
 import { useBooksSource } from "@/lib/use-books-source";
@@ -29,6 +29,11 @@ export type ActiveSourceView = {
   heroLabel: string;
   // Cifra corta de la tarjeta de Fuentes ("312 juegos").
   countLabel: string;
+  // Registros normalizados de la categoría (para "Datos y contexto").
+  records: number;
+  // Proveedores del catálogo de la categoría (D62), para señalar que hay
+  // más de uno antes de abrir el detalle.
+  providerNames: string[];
 };
 
 // Categorías "en desarrollo" mostradas en el panorama con enlace a su pantalla
@@ -64,6 +69,10 @@ function modeLabel(mode: string | null | undefined, fallback: "API" | "Import") 
   return fallback;
 }
 
+function providerNames(slug: string): string[] {
+  return providersFor(slug).map((provider) => provider.name);
+}
+
 export function useActiveSources(): ActiveSourcesState {
   const games = useGamesSource();
   const music = useMusicSource();
@@ -90,6 +99,8 @@ export function useActiveSources(): ActiveSourcesState {
       heroValue: gamesSummary?.hours ?? 0,
       heroLabel: "horas jugadas",
       countLabel: `${fmt(gamesSummary?.games ?? 0)} juegos`,
+      records: gamesSummary?.games ?? 0,
+      providerNames: providerNames("games"),
     },
     {
       slug: "music",
@@ -103,6 +114,8 @@ export function useActiveSources(): ActiveSourcesState {
       heroValue: musicSummary?.scrobbles_total ?? 0,
       heroLabel: "escuchas",
       countLabel: `${fmt(musicSummary?.scrobbles_total ?? 0)} escuchas`,
+      records: musicSummary?.scrobbles_total ?? 0,
+      providerNames: providerNames("music"),
     },
     {
       slug: "film",
@@ -118,6 +131,9 @@ export function useActiveSources(): ActiveSourcesState {
       countLabel: `${fmt(
         (filmSummary?.movies_watched ?? 0) + (filmSummary?.shows_watched ?? 0),
       )} títulos`,
+      records:
+        (filmSummary?.movies_watched ?? 0) + (filmSummary?.shows_watched ?? 0),
+      providerNames: providerNames("film"),
     },
     {
       slug: "anime",
@@ -133,6 +149,9 @@ export function useActiveSources(): ActiveSourcesState {
       countLabel: `${fmt(
         (animeSummary?.anime_watched ?? 0) + (animeSummary?.manga_read ?? 0),
       )} títulos`,
+      records:
+        (animeSummary?.anime_watched ?? 0) + (animeSummary?.manga_read ?? 0),
+      providerNames: providerNames("anime"),
     },
     {
       slug: "books",
@@ -146,6 +165,8 @@ export function useActiveSources(): ActiveSourcesState {
       heroValue: booksSummary?.books_read ?? 0,
       heroLabel: "libros leídos",
       countLabel: `${fmt(booksSummary?.books_read ?? 0)} leídos`,
+      records: booksSummary?.books_read ?? 0,
+      providerNames: providerNames("books"),
     },
   ];
 

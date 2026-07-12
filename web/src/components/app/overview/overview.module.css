@@ -307,6 +307,20 @@
   white-space: nowrap;
   margin-top: 2px;
 }
+/* Señal de que la categoría admite más proveedores además del mostrado. */
+.rowProviderMore {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--chip);
+  color: var(--muted);
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  cursor: help;
+}
 .bar {
   flex: 1;
   min-width: 60px;

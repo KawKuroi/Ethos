@@ -116,10 +116,31 @@ export type McpToken = {
   endpoint: string;
 };
 
+export type McpClient = {
+  name: string;
+  connected_at: string | null;
+  // Opcional para tolerar un backend aún sin la revocación por cliente.
+  client_id?: string;
+};
+
+export type McpToolCalls = {
+  tool: string;
+  calls: number;
+};
+
+export type McpUsage = {
+  total_calls: number;
+  last_called_at: string | null;
+  top_tools: McpToolCalls[];
+};
+
 export type McpStatus = {
   oauth_connected: boolean;
   token_issued: boolean;
   endpoint: string;
+  // Opcionales para tolerar un backend aún sin la ampliación de /mcp-status.
+  clients?: McpClient[];
+  usage?: McpUsage | null;
 };
 
 export type MusicTopEntry = {
@@ -451,6 +472,14 @@ export function issueMcpToken(): Promise<McpToken> {
 // Estado real de la conexión del MCP: clientes OAuth autorizados y token emitido.
 export function getMcpStatus(): Promise<McpStatus> {
   return apiJson<McpStatus>("/mcp-status");
+}
+
+// Revoca todos los tokens OAuth de un cliente autorizado; deberá volver a
+// pedir autorización para reconectarse.
+export function revokeMcpClient(clientId: string): Promise<void> {
+  return apiFetch(`/mcp-clients/${encodeURIComponent(clientId)}`, {
+    method: "DELETE",
+  }).then(() => undefined);
 }
 
 // Endpoint del MCP por usuario, construido sin llamar al API.

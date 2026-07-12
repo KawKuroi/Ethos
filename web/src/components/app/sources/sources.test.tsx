@@ -112,8 +112,22 @@ describe("Sources", () => {
     expect(screen.getAllByText("Empezar →")).toHaveLength(3);
   });
 
-  it("cuenta el import de Goodreads como método de Libros", () => {
+  it("señala que las categorías apagadas tienen varios proveedores", () => {
     render(<Sources />);
-    expect(screen.getByText(/goodreads · import/i)).toBeInTheDocument();
+    // Libros (apagada) ofrece 4 proveedores (Goodreads, StoryGraph, Hardcover,
+    // Open Library); la tarjeta lo anuncia sin abrir el detalle.
+    expect(screen.getAllByText(/4 proveedores disponibles/i).length).toBeGreaterThan(0);
+    const meta = screen
+      .getAllByTitle(/proveedores:/i)
+      .find((node) => node.title.includes("Goodreads"));
+    expect(meta).toBeDefined();
+  });
+
+  it("marca en las activas cuántos proveedores alternativos hay", () => {
+    render(<Sources />);
+    // Juegos activa con Steam: el catálogo tiene 3 proveedores → "+2".
+    expect(
+      screen.getByTitle(/3 proveedores disponibles: Steam, Xbox, PlayStation/i),
+    ).toHaveTextContent("+2");
   });
 });

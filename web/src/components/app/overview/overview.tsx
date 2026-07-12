@@ -5,8 +5,9 @@ import type { CSSProperties } from "react";
 import type { GamesSummary } from "@/lib/api";
 import { fmtInt } from "@/lib/format";
 import { useActiveSources, type ActiveSourceView } from "@/lib/use-active-sources";
+import { isMcpConnected, useMcpStatus } from "@/lib/use-mcp-status";
 import { LoadingState } from "../loading-state";
-import { GLOBAL_ALERTS, type GlobalAlert, MCP_CONNECTED } from "./data";
+import { GLOBAL_ALERTS, type GlobalAlert } from "./data";
 import styles from "./overview.module.css";
 
 const ALERT_COLOR: Record<GlobalAlert["level"], string> = {
@@ -137,6 +138,14 @@ function SourceRow({ view, maxHero }: { view: ActiveSourceView; maxHero: number 
         </div>
         <div className={styles.rowProvider}>
           {view.provider} · {view.modeLabel}
+          {view.providerNames.length > 1 && (
+            <span
+              className={styles.rowProviderMore}
+              title={`${view.providerNames.length} proveedores disponibles: ${view.providerNames.join(", ")}`}
+            >
+              +{view.providerNames.length - 1}
+            </span>
+          )}
         </div>
       </div>
 
@@ -243,10 +252,13 @@ function activeMeta(views: ActiveSourceView[]): string {
 
 export function Overview() {
   const { loading, views, gamesSummary } = useActiveSources();
+  // El banner solo aparece cuando el estado del MCP confirma que no hay
+  // conexión: ni mientras carga ni si la consulta falla.
+  const { status: mcpStatus } = useMcpStatus();
 
   return (
     <div className="eth-screen">
-      {!MCP_CONNECTED && <McpBanner />}
+      {mcpStatus && !isMcpConnected(mcpStatus) && <McpBanner />}
       <GlobalAlerts />
       {loading ? (
         <LoadingState label="Cargando tu perfil…" />

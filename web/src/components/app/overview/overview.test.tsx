@@ -3,6 +3,27 @@ import { describe, expect, it, vi } from "vitest";
 
 import { Overview } from "./overview";
 
+const mcp = vi.hoisted(() => ({
+  status: {
+    oauth_connected: false,
+    token_issued: false,
+    endpoint: "https://api.test/mcp/",
+  } as { oauth_connected: boolean; token_issued: boolean; endpoint: string } | null,
+}));
+
+vi.mock("@/lib/use-mcp-status", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/use-mcp-status")>();
+  return {
+    isMcpConnected: original.isMcpConnected,
+    useMcpStatus: () => ({
+      loading: false,
+      status: mcp.status,
+      error: false,
+      reload: () => {},
+    }),
+  };
+});
+
 vi.mock("@/lib/use-games-source", () => ({
   useGamesSource: () => ({
     loading: false,
@@ -96,6 +117,21 @@ describe("Overview", () => {
   it("muestra el banner de IA sin conectar", () => {
     render(<Overview />);
     expect(screen.getByText(/tu ia aún no está conectada/i)).toBeInTheDocument();
+  });
+
+  it("oculta el banner cuando la IA ya está conectada", () => {
+    mcp.status = {
+      oauth_connected: true,
+      token_issued: false,
+      endpoint: "https://api.test/mcp/",
+    };
+    render(<Overview />);
+    expect(screen.queryByText(/tu ia aún no está conectada/i)).toBeNull();
+    mcp.status = {
+      oauth_connected: false,
+      token_issued: false,
+      endpoint: "https://api.test/mcp/",
+    };
   });
 
   it("muestra el stat band con las cifras reales", () => {
