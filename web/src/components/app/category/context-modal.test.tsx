@@ -26,7 +26,7 @@ describe("ContextDownloadModal", () => {
       truncated: false,
       entries: [],
     });
-    render(<ContextDownloadModal slug="music" mcpPreview="" onClose={() => {}} />);
+    render(<ContextDownloadModal slug="music" onClose={() => {}} />);
 
     expect(
       await screen.findByText(/historial completo: 320 entradas · 32 % del límite/i),
@@ -42,7 +42,7 @@ describe("ContextDownloadModal", () => {
       truncated: true,
       entries: [],
     });
-    render(<ContextDownloadModal slug="music" mcpPreview="" onClose={() => {}} />);
+    render(<ContextDownloadModal slug="music" onClose={() => {}} />);
 
     expect(
       await screen.findByText(
@@ -53,7 +53,7 @@ describe("ContextDownloadModal", () => {
 
   it("no muestra el indicador si el contexto no trae historial", async () => {
     mocks.contextText = JSON.stringify({ namespace: "music.*" });
-    render(<ContextDownloadModal slug="music" mcpPreview="" onClose={() => {}} />);
+    render(<ContextDownloadModal slug="music" onClose={() => {}} />);
 
     expect(await screen.findByText(/"music\.\*"/)).toBeInTheDocument();
     expect(screen.queryByText(/límite/i)).not.toBeInTheDocument();

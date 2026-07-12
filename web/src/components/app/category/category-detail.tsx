@@ -6,7 +6,7 @@ import type { CSSProperties } from "react";
 import { NotifyForm } from "@/components/notify-form";
 import { getBrowserClient } from "@/lib/supabase/client";
 import type { CategoryDetailData } from "./data";
-import { contextJson, contextMcp } from "./context";
+import { contextJson } from "./context";
 import { sparkPoints } from "./sparkline";
 import styles from "./category.module.css";
 
@@ -27,17 +27,14 @@ function DownloadModal({
   category: CategoryDetailData;
   onClose: () => void;
 }) {
-  const [tab, setTab] = useState<"json" | "mcp">("json");
   const [copied, setCopied] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
 
   const json = contextJson(category);
-  const mcp = contextMcp(category);
-  const code = tab === "mcp" ? mcp : json;
 
   async function copy() {
     try {
-      await navigator.clipboard?.writeText(code);
+      await navigator.clipboard?.writeText(json);
     } catch {
       // El portapapeles puede no estar disponible; el efímero igual confirma.
     }
@@ -82,24 +79,8 @@ function DownloadModal({
         <div className={styles.modalBody}>
           <div className={styles.tabsRow}>
             <span className={styles.tabsLabel}>Vista previa</span>
-            <div className={styles.tabs}>
-              <button
-                type="button"
-                className={`${styles.tab} ${tab === "json" ? styles.tabActive : ""}`}
-                onClick={() => setTab("json")}
-              >
-                JSON
-              </button>
-              <button
-                type="button"
-                className={`${styles.tab} ${tab === "mcp" ? styles.tabActive : ""}`}
-                onClick={() => setTab("mcp")}
-              >
-                MCP
-              </button>
-            </div>
           </div>
-          <pre className={styles.code}>{code}</pre>
+          <pre className={styles.code}>{json}</pre>
           <div className={styles.modalActions}>
             <button type="button" className={styles.btnGhost} onClick={copy}>
               {copied ? "Copiado ✓" : "Copiar"}

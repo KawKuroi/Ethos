@@ -42,17 +42,3 @@ export function contextJson(c: CategoryDetailData): string {
     "}",
   ].join("\n");
 }
-
-// Preview de la llamada equivalente por MCP, como `ctxMcp` del prototipo.
-export function contextMcp(c: CategoryDetailData): string {
-  return [
-    "// Tu IA descubre y llama la herramienta",
-    "ethos.context({",
-    `  tool: ${JSON.stringify(c.ns)},`,
-    `  ask:  "resumen reciente"`,
-    "})",
-    "",
-    `→ 200 OK · ${c.ctxKb ?? ""} servidos en vivo`,
-    `  { provider, summary, ${slugify(c.topTitle ?? "top")}, tags }`,
-  ].join("\n");
-}

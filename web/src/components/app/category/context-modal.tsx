@@ -31,21 +31,18 @@ function parseHistoryMeta(text: string): HistoryMeta | null {
 }
 
 // Modal "Descargar contexto" compartido por los detalles de categoría:
-// vista previa JSON (real, del backend) / MCP (ilustrativa), copiar y
-// descargar `<slug>.context.json`. Se monta en un portal sobre <body>:
+// vista previa del JSON real del backend, copiar y descargar
+// `<slug>.context.json`. Se monta en un portal sobre <body>:
 // `.eth-screen` conserva un transform (animación de entrada) que convertiría
 // a la pantalla en el contenedor del `position: fixed` y el modal se
 // centraría en el contenido, no en el viewport.
 export function ContextDownloadModal({
   slug,
-  mcpPreview,
   onClose,
 }: {
   slug: string;
-  mcpPreview: string;
   onClose: () => void;
 }) {
-  const [tab, setTab] = useState<"json" | "mcp">("json");
   const [json, setJson] = useState<string | null>(null);
   const [meta, setMeta] = useState<HistoryMeta | null>(null);
   const [copied, setCopied] = useState(false);
@@ -65,7 +62,7 @@ export function ContextDownloadModal({
     };
   }, [slug]);
 
-  const code = tab === "mcp" ? mcpPreview : (json ?? "Cargando…");
+  const code = json ?? "Cargando…";
   const n = (value: number) => value.toLocaleString("es-ES");
 
   async function copy() {
@@ -104,16 +101,8 @@ export function ContextDownloadModal({
         <div className={styles.modalBody}>
           <div className={styles.tabsRow}>
             <span className={styles.tabsLabel}>Vista previa</span>
-            <div className={styles.tabs}>
-              <button type="button" className={`${styles.tab} ${tab === "json" ? styles.tabActive : ""}`} onClick={() => setTab("json")}>
-                JSON
-              </button>
-              <button type="button" className={`${styles.tab} ${tab === "mcp" ? styles.tabActive : ""}`} onClick={() => setTab("mcp")}>
-                MCP
-              </button>
-            </div>
           </div>
-          {tab === "json" && meta && (
+          {meta && (
             <div className={`${styles.limitRow} ${meta.truncated ? styles.limitRowWarn : ""}`}>
               <div className={styles.limitBar} role="presentation">
                 <div

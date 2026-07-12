@@ -15,7 +15,7 @@ describe("CategoryDetail", () => {
     expect(screen.getByText("Operativa")).toBeInTheDocument();
   });
 
-  it("abre el modal de descarga y alterna JSON/MCP", () => {
+  it("abre el modal de descarga con la vista previa JSON", () => {
     render(<CategoryDetail category={CATEGORY_DETAIL.games} />);
     fireEvent.click(
       screen.getByRole("button", { name: /descargar contexto/i }),
@@ -23,11 +23,8 @@ describe("CategoryDetail", () => {
     const dialog = screen.getByRole("dialog");
     const pre = dialog.querySelector("pre");
     expect(pre?.textContent).toContain('"namespace": "games_*"');
-
-    fireEvent.click(within(dialog).getByRole("button", { name: "MCP" }));
-    expect(dialog.querySelector("pre")?.textContent).toContain(
-      "ethos.context(",
-    );
+    // La pestaña MCP se retiró: era estática y redundante.
+    expect(within(dialog).queryByRole("button", { name: "MCP" })).toBeNull();
   });
 
   it("muestra el estado en desarrollo para una categoría soon", () => {
