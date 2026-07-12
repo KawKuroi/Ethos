@@ -36,6 +36,12 @@ class AnimeSummary(BaseModel):
     mean_score: float | None
     top_rated: list[TopRatedEntry]
     current: list[CurrentEntry]
+    # Horas de anime estimadas (episodios x ~20 min); la web lo marca con ≈.
+    hours_estimated: float | None = None
+    # La tasa de drop describe el criterio tanto como las notas altas.
+    dropped: int = 0
+    # En la lista de pendientes (planning).
+    planned: int = 0
     last_synced_at: datetime | None = None
 
 
@@ -87,13 +93,20 @@ def build_anime_summary(
         for i in in_progress[:top_limit]
     ]
 
+    episodes_watched = sum(_progress(i) for i in anime)
     return AnimeSummary(
         anime_watched=sum(1 for i in anime if i.status is ItemStatus.consumed),
         manga_read=sum(1 for i in manga if i.status is ItemStatus.consumed),
-        episodes_watched=sum(_progress(i) for i in anime),
+        episodes_watched=episodes_watched,
         chapters_read=sum(_progress(i) for i in manga),
         mean_score=mean_score,
         top_rated=top_rated,
         current=current,
+        # ~20 min por episodio: estimación estándar de un capítulo de anime.
+        hours_estimated=(
+            round(episodes_watched * 20 / 60, 1) if episodes_watched else None
+        ),
+        dropped=sum(1 for i in items if i.status is ItemStatus.abandoned),
+        planned=sum(1 for i in items if i.status is ItemStatus.wishlist),
         last_synced_at=synced_at,
     )

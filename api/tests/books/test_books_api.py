@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from datetime import UTC, datetime
 
 import pytest
 from cryptography.fernet import Fernet
@@ -33,7 +34,10 @@ from tests.helpers import auth_headers
 def test_resumen_agrega_leidos_paginas_y_autores() -> None:
     store = InMemoryBooksStore()
     import_goodreads_csv("user-1", GOODREADS_CSV, store)
-    summary = build_books_summary(store.items_for_user("user-1"))
+    summary = build_books_summary(
+        store.items_for_user("user-1"),
+        now=datetime(2026, 7, 1, tzinfo=UTC),
+    )
     assert summary.books_read == 2
     assert summary.pages_read == 662 + 412
     assert [c.title for c in summary.currently_reading] == ["Project Hail Mary"]
@@ -42,6 +46,16 @@ def test_resumen_agrega_leidos_paginas_y_autores() -> None:
     # La lectura más reciente por Date Read va primero.
     assert summary.recent_reads[0].title == "El nombre del viento"
     assert summary.recent_reads[0].rating == 100
+    # Notas (5★ y 4★ → 90 de media), relecturas (Dune, Read Count 2), año en
+    # curso (ambas terminadas en 2026) y récords de páginas.
+    assert summary.mean_rating == 90.0
+    assert summary.rated_count == 2
+    assert summary.rereads == 1
+    assert summary.books_this_year == 2
+    assert summary.longest_book is not None
+    assert summary.longest_book.title == "El nombre del viento"
+    assert summary.longest_book.pages == 662
+    assert summary.avg_pages == 537
 
 
 @pytest.fixture

@@ -28,6 +28,10 @@ def test_resumen_agrega_conteos_y_nota_media() -> None:
     assert summary.top_rated[0].title == "Berserk"
     assert summary.top_rated[0].score == 100
     assert [c.title for c in summary.current] == ["One Piece"]
+    # 34 episodios x ~20 min = 11.3 h; Monster está en planning.
+    assert summary.hours_estimated == 11.3
+    assert summary.dropped == 0
+    assert summary.planned == 1
 
 
 def test_resumen_vacio_no_rompe() -> None:
@@ -36,6 +40,8 @@ def test_resumen_vacio_no_rompe() -> None:
     assert summary.mean_score is None
     assert summary.top_rated == []
     assert summary.current == []
+    assert summary.hours_estimated is None
+    assert summary.planned == 0
 
 
 def test_refresco_puebla_store_y_estado() -> None:

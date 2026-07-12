@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from ethos_api.connectors.steam.connector import SteamProfile
 from ethos_api.games.service import refresh_user_games
 from ethos_api.games.store import InMemoryGamesStore, SyncState
-from ethos_api.schema import ItemStatus
+from ethos_api.schema import ItemStatus, NormalizedItem
 from tests.games.helpers import FakeSteamApi
 
 
@@ -37,6 +38,31 @@ def test_refresco_persiste_items_perfil_y_estado_fresh() -> None:
     # Géneros enriquecidos desde la store, mismo presupuesto (D55).
     assert sorted(client.genre_calls) == [440, 570]
     assert tf2.work.extra["genres"] == ["Acción", "Indie"]
+
+
+def test_el_perfil_se_persiste_despues_de_los_items() -> None:
+    """Regresión: el perfil guardado al empezar el refresco hacía que
+    /sources/games devolviera un resumen "parcial" con todo a cero durante la
+    primera sincronización, y la web lo pintaba como si ya hubiera datos."""
+
+    class RecordingStore(InMemoryGamesStore):
+        def __init__(self) -> None:
+            super().__init__()
+            self.events: list[str] = []
+
+        def set_profile(self, user_id: str, profile: SteamProfile) -> None:
+            self.events.append("profile")
+            super().set_profile(user_id, profile)
+
+        def replace_items(self, user_id: str, items: list[NormalizedItem]) -> None:
+            self.events.append("items")
+            super().replace_items(user_id, items)
+
+    store = RecordingStore()
+    refresh_user_games("user-1", "765", FakeSteamApi(), store)
+
+    assert store.events == ["items", "profile"]
+    assert store.status_for_user("user-1").state is SyncState.fresh
 
 
 def test_perfil_privado_deja_estado_private_sin_items() -> None:

@@ -51,12 +51,12 @@ def refresh_user_games(
             player_summary=client.get_player_summary(steamid),
         )
         profile = connector.profile(raw)
-        store.set_profile(user_id, profile)
 
         if profile.visibility != _PUBLIC_VISIBILITY:
             # Perfil privado: Steam devuelve la biblioteca vacía. Se deja el
             # estado explícito para que la web guíe a hacerlo público.
             store.replace_items(user_id, [])
+            store.set_profile(user_id, profile)
             store.set_status(
                 user_id,
                 SourceStatus(
@@ -73,7 +73,11 @@ def refresh_user_games(
         )
         raw.genres_by_appid = _genres_for_top(client, connector, raw.owned_games)
 
+        # El perfil se persiste al final, junto a los items: si se guardara al
+        # empezar, /sources/games devolvería a mitad del primer refresco un
+        # resumen "parcial" con todo a cero y la web lo pintaría como datos.
         store.replace_items(user_id, connector.normalize(raw))
+        store.set_profile(user_id, profile)
         store.set_status(
             user_id,
             SourceStatus(state=SyncState.fresh, synced_at=datetime.now(UTC)),

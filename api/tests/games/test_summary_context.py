@@ -49,6 +49,11 @@ def test_resumen_agrega_biblioteca_y_wishlist() -> None:
     assert summary.top_genres[0].name == "Acción"
     assert summary.top_genres[0].games == 2
 
+    # Backlog y actividad reciente agregada: ambos juegos tienen horas, y
+    # solo TF2 suma minutos en dos semanas (90 → 1.5 h).
+    assert summary.never_played == 0
+    assert summary.hours_2weeks == 1.5
+
 
 def test_contexto_tiene_la_forma_d34() -> None:
     items, profile = _items_y_perfil()

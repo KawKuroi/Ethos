@@ -41,6 +41,10 @@ class GamesSummary(BaseModel):
     hours: float
     wishlisted: int
     avg_completion_pct: float | None
+    # Juegos de la biblioteca sin un solo minuto jugado (el "backlog" real).
+    never_played: int = 0
+    # Horas de las últimas dos semanas, agregadas.
+    hours_2weeks: float = 0.0
     top_by_hours: list[TopGame]
     recently_played: list[RecentGame]
     # Géneros dominantes entre los juegos enriquecidos (el top por horas).
@@ -120,6 +124,12 @@ def build_games_summary(
         hours=_hours(total_minutes),
         wishlisted=len(wishlist),
         avg_completion_pct=avg_completion,
+        never_played=sum(
+            1 for i in library if i.engagement.get("playtime_minutes", 0) == 0
+        ),
+        hours_2weeks=_hours(
+            sum(i.engagement.get("playtime_2weeks_minutes", 0) for i in library)
+        ),
         top_by_hours=top,
         recently_played=recently_played,
         top_genres=top_genres,
