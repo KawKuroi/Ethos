@@ -7,12 +7,6 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 
 ## Bloqueantes — configuración que detiene el flujo
 
-- [ ] **Migración 0009 en Supabase (`mcp_usage`)** — aplica
-  `supabase/migrations/0009_mcp_usage.sql` en el SQL Editor. Sin ella,
-  `/mcp-status` responde 500 en producción y Conectar IA, el badge de la
-  sidebar y el banner de Inicio no pueden comprobar la conexión (las tools
-  del MCP siguen funcionando: el contador es best-effort).
-
 ## Para ir revisando — pruebas y decisiones
 
 ### Pruebas end-to-end por categoría
@@ -118,7 +112,8 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
   con las cinco filas (activas o apagadas) y actividad reciente.
 - [ ] **Detalle de categoría** — `/app/categoria/games`: status strip, stat
   band con sparkline, Destacados/Reciente/Listas, Refrescar y el modal
-  "Descargar contexto" (pestañas JSON/MCP, copiar, descargar).
+  "Descargar contexto" (solo vista JSON desde 2026-07-12: la pestaña MCP se
+  retiró por estática y redundante).
 - [ ] **Fuentes** — `/app/fuentes`: resumen y las cinco categorías; con
   todas activas ya no hay grupo "En desarrollo" — confirma que te cuadra
   visualmente.
@@ -169,6 +164,10 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 - [ ] **Stat band de Inicio** — "El gusto en números" sigue mostrando cifras
   de Juegos (su meta ya cuenta las fuentes activas); si quieres que mezcle
   métricas de otras categorías, dilo y lo ajustamos.
+- [ ] **Estimaciones en las stats nuevas (2026-07-12)** — dos constantes
+  elegidas a ojo, revisa si te cuadran: el tiempo de escucha de música
+  estima ~3,5 min por escucha (ninguna fuente guarda duración) y las horas
+  de anime ~20 min por episodio. Ambas se muestran con "≈" en la web.
 - [ ] **Aviso real de "Avísame" (D50)** — hoy solo se guarda el interés
   (correo + categoría); el correo masivo desde `category_interest` se
   define cuando exista proveedor de correo (el SMTP de D52).
