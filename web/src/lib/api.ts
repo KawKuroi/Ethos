@@ -572,6 +572,27 @@ export async function getContextText(slug: string): Promise<string> {
   return JSON.stringify(await response.json(), null, 2);
 }
 
+// Reúne el contexto de las fuentes indicadas en un único `ethos-<fecha>.json`
+// y dispara su descarga. Se compone en el cliente a partir de /context/<slug>,
+// sin endpoint de exportación dedicado en el backend.
+export async function exportAllContext(slugs: string[]): Promise<void> {
+  const sources: Record<string, unknown> = {};
+  for (const slug of slugs) {
+    const response = await apiFetch(`/context/${slug}`);
+    sources[slug] = await response.json();
+  }
+  const bundle = { exported_at: new Date().toISOString(), sources };
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `ethos-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ===== Música / ListenBrainz =====
 
 export function getMusicSource(): Promise<MusicSource> {

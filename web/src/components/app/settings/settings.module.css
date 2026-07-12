@@ -56,6 +56,11 @@
   color: var(--muted);
   cursor: default;
 }
+.pwFields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 .saveRow {
   margin-top: 20px;
 }

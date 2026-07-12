@@ -7,9 +7,12 @@ import { getBrowserClient } from "@/lib/supabase/client";
 export type SessionUser = {
   name: string | null;
   email: string | null;
+  // Proveedores de identidad de la cuenta ("email", "google"…). Sirve para
+  // mostrar el cambio de contraseña solo a quien inició con correo.
+  providers: string[];
 };
 
-const EMPTY: SessionUser = { name: null, email: null };
+const EMPTY: SessionUser = { name: null, email: null, providers: [] };
 
 // El registro guarda el nombre en user_metadata.full_name; Google entrega
 // full_name o name según la cuenta.
@@ -24,9 +27,13 @@ function nameFrom(meta: Record<string, unknown>): string | null {
 
 function toSessionUser(user: User | null): SessionUser {
   if (!user) return EMPTY;
+  const providers = (user.identities ?? [])
+    .map((identity) => identity.provider)
+    .filter((provider): provider is string => typeof provider === "string");
   return {
     name: nameFrom(user.user_metadata ?? {}),
     email: user.email ?? null,
+    providers,
   };
 }
 

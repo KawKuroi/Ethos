@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import {
   deleteAllData,
+  exportAllContext,
   getAccountDeletion,
   requestAccountDeletion,
   undoAccountDeletion,
@@ -80,7 +81,7 @@ export function Settings() {
     () => true,
     () => false,
   );
-  const { name: sessionName, email } = useUser();
+  const { name: sessionName, email, providers } = useUser();
   // Hasta que el usuario edita, el campo sigue al nombre de la sesión
   // (que llega asíncrono desde Supabase); después manda el borrador.
   const [draft, setDraft] = useState<string | null>(null);
@@ -88,12 +89,23 @@ export function Settings() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  // Solo las cuentas con contraseña (registro por correo) pueden cambiarla;
+  // las de Google no tienen una que gestionar aquí.
+  const hasPassword = providers.includes("email");
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSaved, setPwSaved] = useState(false);
+  const [pwSaving, setPwSaving] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmKind>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   // Fecha de purga si el borrado de cuenta ya está programado (D53).
   const [purgeAfter, setPurgeAfter] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportNotice, setExportNotice] = useState<string | null>(null);
   // Fuentes reales del usuario para las cifras de "Datos y contexto".
   const { loading: sourcesLoading, views } = useActiveSources();
 
@@ -133,6 +145,52 @@ export function Settings() {
       setProfileError("No se pudo guardar el nombre. Reinténtalo.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function changePassword() {
+    if (pwSaving) return;
+    setPwError(null);
+    if (currentPw.length === 0) {
+      setPwError("Escribe tu contraseña actual.");
+      return;
+    }
+    if (newPw.length < 8) {
+      setPwError("La nueva contraseña necesita al menos 8 caracteres.");
+      return;
+    }
+    if (newPw !== confirmPw) {
+      setPwError("Las contraseñas nuevas no coinciden.");
+      return;
+    }
+    if (newPw === currentPw) {
+      setPwError("La nueva contraseña debe ser distinta a la actual.");
+      return;
+    }
+    setPwSaving(true);
+    try {
+      const supabase = getBrowserClient();
+      // Supabase no pide la contraseña actual al actualizarla; la verificamos
+      // reautenticando antes de cambiarla.
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email ?? "",
+        password: currentPw,
+      });
+      if (signInError) {
+        setPwError("La contraseña actual no es correcta.");
+        return;
+      }
+      const { error } = await supabase.auth.updateUser({ password: newPw });
+      if (error) throw error;
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+      setPwSaved(true);
+      setTimeout(() => setPwSaved(false), 1600);
+    } catch {
+      setPwError("No se pudo cambiar la contraseña. Reinténtalo.");
+    } finally {
+      setPwSaving(false);
     }
   }
 
@@ -202,6 +260,25 @@ export function Settings() {
     }
   }
 
+  async function exportData() {
+    if (exporting) return;
+    const slugs = liveViews.map((view) => view.slug);
+    if (slugs.length === 0) {
+      setExportNotice("Conecta al menos una fuente para exportar tu contexto.");
+      return;
+    }
+    setExporting(true);
+    setExportNotice(null);
+    try {
+      await exportAllContext(slugs);
+      setExportNotice("Descarga lista: tu contexto normalizado en un archivo JSON.");
+    } catch {
+      setExportNotice("No se pudo exportar. Reinténtalo.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const purgeDate = purgeAfter
     ? new Date(purgeAfter).toLocaleDateString("es-ES", {
         day: "numeric",
@@ -259,6 +336,72 @@ export function Settings() {
         )}
       </div>
 
+      {/* Contraseña */}
+      {hasPassword && (
+        <div className={styles.section}>
+          <div className={styles.sectionTitle}>Contraseña</div>
+          <div className={styles.sectionSub}>
+            Cambia la contraseña con la que entras a Ethos.
+          </div>
+          <div className={styles.pwFields}>
+            <div>
+              <div className={styles.fieldLabel}>Contraseña actual</div>
+              <input
+                className={styles.input}
+                type="password"
+                value={currentPw}
+                onChange={(e) => setCurrentPw(e.target.value)}
+                autoComplete="current-password"
+                aria-label="Contraseña actual"
+              />
+            </div>
+            <div className={styles.grid2}>
+              <div>
+                <div className={styles.fieldLabel}>Nueva contraseña</div>
+                <input
+                  className={styles.input}
+                  type="password"
+                  value={newPw}
+                  onChange={(e) => setNewPw(e.target.value)}
+                  autoComplete="new-password"
+                  aria-label="Nueva contraseña"
+                />
+              </div>
+              <div>
+                <div className={styles.fieldLabel}>Repite la nueva</div>
+                <input
+                  className={styles.input}
+                  type="password"
+                  value={confirmPw}
+                  onChange={(e) => setConfirmPw(e.target.value)}
+                  autoComplete="new-password"
+                  aria-label="Repite la nueva contraseña"
+                />
+              </div>
+            </div>
+          </div>
+          <div className={styles.saveRow}>
+            <button
+              type="button"
+              className={styles.saveBtn}
+              onClick={changePassword}
+              disabled={pwSaving}
+            >
+              {pwSaved
+                ? "Contraseña cambiada ✓"
+                : pwSaving
+                  ? "Cambiando…"
+                  : "Cambiar contraseña"}
+            </button>
+          </div>
+          {pwError && (
+            <div className={styles.notice} role="alert">
+              {pwError}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Apariencia */}
       <div className={styles.section}>
         <div className={styles.sectionTitle}>Apariencia</div>
@@ -315,7 +458,16 @@ export function Settings() {
           <Link href="/app/conectar-ia" className={styles.linkBtn}>
             Conexión con la IA →
           </Link>
+          <button
+            type="button"
+            className={styles.linkBtn}
+            onClick={exportData}
+            disabled={exporting}
+          >
+            {exporting ? "Preparando…" : "Descargar mis datos ↓"}
+          </button>
         </div>
+        {exportNotice && <div className={styles.notice}>{exportNotice}</div>}
       </div>
 
       {/* Sesión */}

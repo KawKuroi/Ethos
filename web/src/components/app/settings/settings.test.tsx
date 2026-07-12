@@ -9,18 +9,25 @@ const requestAccountDeletion = vi.fn();
 const getAccountDeletion = vi.fn();
 const undoAccountDeletion = vi.fn();
 const updateUser = vi.fn();
+const signInWithPassword = vi.fn();
 const signOut = vi.fn();
 const goToLanding = vi.fn();
+const exportAllContext = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   deleteAllData: () => deleteAllData(),
   requestAccountDeletion: () => requestAccountDeletion(),
   getAccountDeletion: () => getAccountDeletion(),
   undoAccountDeletion: () => undoAccountDeletion(),
+  exportAllContext: (slugs: string[]) => exportAllContext(slugs),
 }));
 
 vi.mock("@/lib/use-user", () => ({
-  useUser: () => ({ name: "Axel", email: "axel@correo.com" }),
+  useUser: () => ({
+    name: "Axel",
+    email: "axel@correo.com",
+    providers: ["email"],
+  }),
 }));
 
 vi.mock("@/lib/navigation", () => ({
@@ -43,6 +50,7 @@ vi.mock("@/lib/supabase/client", () => ({
   getBrowserClient: () => ({
     auth: {
       updateUser: (body: unknown) => updateUser(body),
+      signInWithPassword: (body: unknown) => signInWithPassword(body),
       signOut: () => signOut(),
     },
   }),
@@ -63,8 +71,10 @@ describe("Settings", () => {
     getAccountDeletion.mockReset().mockResolvedValue({ scheduled: false, purge_after: null });
     undoAccountDeletion.mockReset();
     updateUser.mockReset();
+    signInWithPassword.mockReset();
     signOut.mockReset().mockResolvedValue(undefined);
     goToLanding.mockReset();
+    exportAllContext.mockReset().mockResolvedValue(undefined);
   });
 
   it("muestra las secciones de ajustes", () => {
@@ -103,6 +113,55 @@ describe("Settings", () => {
       }),
     );
     expect(await screen.findByText(/guardado/i)).toBeInTheDocument();
+  });
+
+  it("reautentica y cambia la contraseña", async () => {
+    signInWithPassword.mockResolvedValueOnce({ error: null });
+    updateUser.mockResolvedValueOnce({ error: null });
+    renderSettings();
+
+    fireEvent.change(screen.getByLabelText("Contraseña actual"), {
+      target: { value: "clave-antigua" },
+    });
+    fireEvent.change(screen.getByLabelText("Nueva contraseña"), {
+      target: { value: "clave-nueva-123" },
+    });
+    fireEvent.change(screen.getByLabelText("Repite la nueva contraseña"), {
+      target: { value: "clave-nueva-123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar contraseña" }));
+
+    await waitFor(() =>
+      expect(signInWithPassword).toHaveBeenCalledWith({
+        email: "axel@correo.com",
+        password: "clave-antigua",
+      }),
+    );
+    await waitFor(() =>
+      expect(updateUser).toHaveBeenCalledWith({ password: "clave-nueva-123" }),
+    );
+    expect(await screen.findByText(/contraseña cambiada/i)).toBeInTheDocument();
+  });
+
+  it("avisa si la contraseña actual es incorrecta", async () => {
+    signInWithPassword.mockResolvedValueOnce({ error: { message: "invalid" } });
+    renderSettings();
+
+    fireEvent.change(screen.getByLabelText("Contraseña actual"), {
+      target: { value: "mala" },
+    });
+    fireEvent.change(screen.getByLabelText("Nueva contraseña"), {
+      target: { value: "clave-nueva-123" },
+    });
+    fireEvent.change(screen.getByLabelText("Repite la nueva contraseña"), {
+      target: { value: "clave-nueva-123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar contraseña" }));
+
+    expect(
+      await screen.findByText(/la contraseña actual no es correcta/i),
+    ).toBeInTheDocument();
+    expect(updateUser).not.toHaveBeenCalled();
   });
 
   it("elimina los datos tras confirmar en el diálogo", async () => {
@@ -153,6 +212,18 @@ describe("Settings", () => {
     // es-ES no agrupa los números de 4 cifras (312 + 5210 = 5522).
     expect(screen.getByText("5522")).toBeInTheDocument();
     expect(screen.getByText("registros de contexto")).toBeInTheDocument();
+  });
+
+  it("exporta el contexto de las fuentes activas", async () => {
+    renderSettings();
+    fireEvent.click(
+      screen.getByRole("button", { name: /descargar mis datos/i }),
+    );
+
+    await waitFor(() =>
+      expect(exportAllContext).toHaveBeenCalledWith(["games", "music"]),
+    );
+    expect(await screen.findByText(/descarga lista/i)).toBeInTheDocument();
   });
 
   it("cierra la sesión y redirige a la landing", async () => {
