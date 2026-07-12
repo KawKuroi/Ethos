@@ -57,6 +57,12 @@ const FRESH: BooksSource = {
         rating: 100,
       },
     ],
+    mean_rating: 82,
+    rated_count: 41,
+    rereads: 3,
+    books_this_year: 14,
+    longest_book: { title: "La historia interminable", pages: 496 },
+    avg_pages: 331,
     last_synced_at: "2026-07-05T09:00:00Z",
   },
 };
@@ -80,6 +86,39 @@ describe("BooksDetail", () => {
     ).toBeInTheDocument();
     // Un import no refresca por API.
     expect(screen.queryByRole("button", { name: /^refrescar$/i })).toBeNull();
+  });
+
+  it("celdas de nota media, año en curso y relecturas, y récords de lectura", () => {
+    mocks.source = FRESH;
+    render(<BooksDetail />);
+    // 82/100 → 4,1 ★.
+    expect(screen.getByText("4,1 ★")).toBeInTheDocument();
+    expect(screen.getByText("este año")).toBeInTheDocument();
+    expect(screen.getByText("relecturas")).toBeInTheDocument();
+    expect(screen.getByText("La historia interminable")).toBeInTheDocument();
+    expect(screen.getByText(/tu libro más largo · 496 páginas/i)).toBeInTheDocument();
+  });
+
+  it("sin páginas ni notas (Open Library) las celdas caen a las básicas", () => {
+    mocks.source = {
+      ...FRESH,
+      provider: "openlibrary",
+      summary: {
+        ...FRESH.summary!,
+        pages_read: 0,
+        mean_rating: null,
+        rated_count: 0,
+        rereads: 0,
+        books_this_year: 0,
+        longest_book: null,
+        avg_pages: null,
+      },
+    };
+    render(<BooksDetail />);
+    expect(screen.getByText("leyendo ahora")).toBeInTheDocument();
+    expect(screen.getByText("por leer")).toBeInTheDocument();
+    expect(screen.queryByText("nota media")).toBeNull();
+    expect(screen.queryByText(/récords de lectura/i)).toBeNull();
   });
 
   it("una fuente API (Hardcover) muestra su modo y ofrece refrescar", () => {

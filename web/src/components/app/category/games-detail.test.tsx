@@ -41,6 +41,8 @@ const FRESH: GamesSource = {
     hours: 1840,
     wishlisted: 47,
     avg_completion_pct: 38,
+    never_played: 124,
+    hours_2weeks: 11.5,
     top_by_hours: [
       {
         title: "Stardew Valley",
@@ -74,6 +76,20 @@ describe("GamesDetail", () => {
     expect(
       screen.getByRole("button", { name: /descargar contexto/i }),
     ).toBeInTheDocument();
+  });
+
+  it("celdas de backlog, completado y concentración en el juego nº 1", () => {
+    mocks.source = FRESH;
+    render(<GamesDetail />);
+    // 124 de 312 sin estrenar → 40%.
+    expect(screen.getByText("40%")).toBeInTheDocument();
+    expect(screen.getByText("sin estrenar")).toBeInTheDocument();
+    expect(screen.getByText("38%")).toBeInTheDocument();
+    // 412 de 1840 horas en Stardew Valley → 22%.
+    expect(screen.getByText("22%")).toBeInTheDocument();
+    expect(screen.getByText("en tu juego nº 1")).toBeInTheDocument();
+    // Con 4 celdas ya cubiertas, las últimas 2 semanas quedan fuera.
+    expect(screen.queryByText("últimas 2 sem")).toBeNull();
   });
 
   it("ofrece conectar Steam cuando está apagada", () => {
@@ -132,6 +148,57 @@ describe("GamesDetail", () => {
       screen.getByText(/sincronizando tu biblioteca/i),
     ).toBeInTheDocument();
     expect(sessionStorage.getItem("ethos_just_connected_games")).toBeNull();
+  });
+
+  it("no pinta la vista conectada con un resumen parcial a ceros mientras sincroniza", () => {
+    // Un backend antiguo podía devolver, a mitad del primer refresco, un
+    // resumen construido solo con el perfil (todo a cero): eso no son datos.
+    mocks.source = {
+      state: "syncing",
+      synced_at: null,
+      detail: null,
+      provider: "steam",
+      mode: "api",
+      persona_name: "Jugador",
+      summary: {
+        games: 0,
+        hours: 0,
+        wishlisted: 0,
+        avg_completion_pct: null,
+        never_played: 0,
+        hours_2weeks: 0,
+        top_by_hours: [],
+        recently_played: [],
+        top_genres: [],
+        persona_name: "Jugador",
+        last_synced_at: null,
+      },
+    };
+    render(<GamesDetail />);
+    expect(screen.getByText(/sincronizando tu biblioteca/i)).toBeInTheDocument();
+    expect(screen.queryByText("Operativa")).not.toBeInTheDocument();
+  });
+
+  it("muestra el error cuando la sincronización falló", () => {
+    mocks.source = {
+      state: "error",
+      synced_at: null,
+      detail: "Steam respondió 500 al pedir la biblioteca",
+      provider: "steam",
+      mode: "api",
+      persona_name: null,
+      summary: null,
+    };
+    render(<GamesDetail />);
+    expect(
+      screen.getByText(/no se pudo sincronizar con steam/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/steam respondió 500 al pedir la biblioteca/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /conectar steam/i }),
+    ).toBeInTheDocument();
   });
 
   it("guía cuando el perfil de Steam es privado", () => {

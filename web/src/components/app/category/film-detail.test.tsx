@@ -46,6 +46,13 @@ const FRESH: FilmSource = {
     recently_watched: [
       { title: "Arrival", media_type: "movie", watched_at: "2026-07-01T20:00:00Z" },
     ],
+    mean_rating: null,
+    rated_count: 0,
+    rating_buckets: [],
+    top_rated: [],
+    rewatched_count: 0,
+    top_genres: [],
+    favorite_decade: 2010,
     last_synced_at: "2026-07-05T09:00:00Z",
   },
 };
@@ -77,6 +84,54 @@ describe("FilmDetail", () => {
     expect(screen.getByText("Letterboxd")).toBeInTheDocument();
     expect(screen.getByText(/import · manual/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /refrescar/i })).toBeNull();
+  });
+
+  it("con Trakt las celdas son de volumen y la década favorita", () => {
+    mocks.source = FRESH;
+    render(<FilmDetail />);
+    expect(screen.getByText("películas")).toBeInTheDocument();
+    expect(screen.getByText("episodios")).toBeInTheDocument();
+    expect(screen.getByText("los 2010")).toBeInTheDocument();
+    // Sin notas no hay top puntuadas ni distribución.
+    expect(screen.queryByText(/mejor puntuadas/i)).toBeNull();
+    expect(screen.queryByText(/cómo puntúas/i)).toBeNull();
+  });
+
+  it("con notas (Letterboxd) el hero es la nota media y aparecen sus secciones", () => {
+    mocks.source = {
+      ...FRESH,
+      provider: "letterboxd",
+      mode: "import",
+      summary: {
+        ...FRESH.summary!,
+        hours: 0,
+        shows_watched: 0,
+        episodes_watched: 0,
+        top_shows: [],
+        mean_rating: 78,
+        rated_count: 40,
+        rating_buckets: [
+          { stars: 1, count: 1 },
+          { stars: 2, count: 3 },
+          { stars: 3, count: 8 },
+          { stars: 4, count: 18 },
+          { stars: 5, count: 10 },
+        ],
+        top_rated: [
+          { title: "Whiplash", year: 2014, media_type: "movie", rating: 100 },
+        ],
+        rewatched_count: 6,
+        top_genres: [{ name: "Drama", works: 21 }],
+      },
+    };
+    render(<FilmDetail />);
+    expect(screen.getByText("tu nota media")).toBeInTheDocument();
+    expect(screen.getByText("3,9 ★")).toBeInTheDocument();
+    expect(screen.getByText(/mejor puntuadas/i)).toBeInTheDocument();
+    expect(screen.getByText("Whiplash")).toBeInTheDocument();
+    expect(screen.getByText(/cómo puntúas · 40 notas/i)).toBeInTheDocument();
+    expect(screen.getByText(/drama · 21/i)).toBeInTheDocument();
+    expect(screen.getByText("repetidas")).toBeInTheDocument();
   });
 
   it("ofrece el selector de proveedores cuando no hay fuente", () => {

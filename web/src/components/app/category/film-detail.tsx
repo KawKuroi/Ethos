@@ -25,14 +25,14 @@ function accentVar(): CSSProperties {
   return { "--catAccent": FILM.accent } as CSSProperties;
 }
 
-function mcpPreview(): string {
-  return [
-    "// Tu IA descubre y llama la herramienta",
-    'ethos.context({ tool: "film_*", ask: "más vistas este año" })',
-    "",
-    "→ 200 OK · contexto acotado servido en vivo",
-    "  { provider, summary, top_movies, top_shows, recently_watched }",
-  ].join("\n");
+// Nota 0-100 → estrellas ("3,5 ★"), la escala natural del cine.
+function stars(rating: number): string {
+  return `${(rating / 20).toLocaleString("es-ES", { maximumFractionDigits: 1 })} ★`;
+}
+
+// 1990 → "los 90"; 2010 → "los 2010".
+function decadeLabel(decade: number): string {
+  return decade >= 2000 ? `los ${decade}` : `los ${decade % 100}`;
 }
 
 function Header({ actions }: { actions?: ReactNode }) {
@@ -44,6 +44,82 @@ function Header({ actions }: { actions?: ReactNode }) {
         <div className={styles.headerBlurb}>{FILM.blurb}</div>
       </div>
       {actions && <div className={styles.headerActions}>{actions}</div>}
+    </div>
+  );
+}
+
+function TopRated({ summary }: { summary: FilmSummary }) {
+  if (summary.top_rated.length === 0) return null;
+  return (
+    <div className={styles.section}>
+      <div className={styles.eyebrow}>Mejor puntuadas · tu nota</div>
+      {summary.top_rated.map((work, i) => (
+        <div key={`${work.title}-${work.year}`} className={styles.topRow}>
+          <div className={styles.rank}>{i + 1}</div>
+          <div className={styles.topBody}>
+            <div className={styles.topHead}>
+              <span className={styles.topName}>{work.title}</span>
+              <span className={styles.topValue}>{stars(work.rating)}</span>
+            </div>
+            <div className={styles.topSub}>
+              {[
+                work.year != null ? String(work.year) : null,
+                work.media_type === "show" ? "Serie" : "Película",
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </div>
+            <div className={styles.topBar}>
+              <div className={styles.topBarFill} style={{ width: `${work.rating}%` }} />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RatingBuckets({ summary }: { summary: FilmSummary }) {
+  if (summary.rating_buckets.length === 0) return null;
+  const max = Math.max(...summary.rating_buckets.map((b) => b.count), 1);
+  return (
+    <div className={styles.section}>
+      <div className={styles.eyebrow}>Cómo puntúas · {summary.rated_count} notas</div>
+      {[...summary.rating_buckets].reverse().map((bucket) => (
+        <div key={bucket.stars} className={styles.topRow}>
+          <div className={styles.rank}>{bucket.stars}★</div>
+          <div className={styles.topBody}>
+            <div className={styles.topHead}>
+              <span className={styles.topName} />
+              <span className={styles.topValue}>
+                {bucket.count} {bucket.count === 1 ? "obra" : "obras"}
+              </span>
+            </div>
+            <div className={styles.topBar}>
+              <div
+                className={styles.topBarFill}
+                style={{ width: `${Math.round((bucket.count / max) * 100)}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TopGenres({ summary }: { summary: FilmSummary }) {
+  if (summary.top_genres.length === 0) return null;
+  return (
+    <div className={styles.section}>
+      <div className={styles.eyebrow}>Géneros dominantes</div>
+      <div className={styles.tags}>
+        {summary.top_genres.map((genre) => (
+          <span key={genre.name} className={styles.tag}>
+            {genre.name} · {genre.works}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -152,11 +228,45 @@ function ConnectedView({
     }
   }
 
+  // Hero según lo que la fuente sepa contar: horas (Trakt) o tu nota media
+  // (Letterboxd/IMDb, que puntúan pero no miden tiempo).
+  const heroIsRating = summary.hours === 0 && summary.mean_rating != null;
+  const hero = heroIsRating
+    ? { value: stars(summary.mean_rating ?? 0), label: "tu nota media" }
+    : { value: fmtInt(summary.hours), label: "horas vistas" };
+
+  // Celdas candidatas por relevancia; se pintan las 4 primeras con dato real.
   const stats = [
-    { value: fmtInt(summary.movies_watched), label: "películas" },
-    { value: fmtInt(summary.shows_watched), label: "series" },
-    { value: fmtInt(summary.episodes_watched), label: "episodios" },
-  ];
+    { value: fmtInt(summary.movies_watched), label: "películas", show: true },
+    { value: fmtInt(summary.shows_watched), label: "series", show: summary.shows_watched > 0 },
+    {
+      value: fmtInt(summary.episodes_watched),
+      label: "episodios",
+      show: summary.episodes_watched > 0,
+    },
+    {
+      value: summary.mean_rating != null ? stars(summary.mean_rating) : "",
+      label: "nota media",
+      show: !heroIsRating && summary.mean_rating != null,
+    },
+    {
+      value: fmtInt(summary.rewatched_count),
+      label: "repetidas",
+      show: summary.rewatched_count > 0,
+    },
+    {
+      value: summary.favorite_decade != null ? decadeLabel(summary.favorite_decade) : "",
+      label: "tu década",
+      show: summary.favorite_decade != null,
+    },
+    {
+      value: fmtInt(summary.rated_count),
+      label: "puntuadas",
+      show: summary.rated_count > 0,
+    },
+  ]
+    .filter((stat) => stat.show)
+    .slice(0, 4);
 
   return (
     <div className="eth-screen" style={accentVar()}>
@@ -229,8 +339,8 @@ function ConnectedView({
       <div className={styles.statBand}>
         <div className={styles.statHero}>
           <div>
-            <div className={styles.heroValue}>{fmtInt(summary.hours)}</div>
-            <div className={styles.heroLabel}>horas vistas</div>
+            <div className={styles.heroValue}>{hero.value}</div>
+            <div className={styles.heroLabel}>{hero.label}</div>
           </div>
         </div>
         <div className={styles.statGrid}>
@@ -243,17 +353,16 @@ function ConnectedView({
         </div>
       </div>
 
+      <TopRated summary={summary} />
+      <RatingBuckets summary={summary} />
       <TopMovies summary={summary} />
       <TopShows summary={summary} />
       <RecentlyWatched summary={summary} />
+      <TopGenres summary={summary} />
       <ManualEntries slug="film" accent={FILM.accent} onChange={onRefresh} />
 
       {modalOpen && (
-        <ContextDownloadModal
-          slug="film"
-          mcpPreview={mcpPreview()}
-          onClose={() => setModalOpen(false)}
-        />
+        <ContextDownloadModal slug="film" onClose={() => setModalOpen(false)} />
       )}
     </div>
   );

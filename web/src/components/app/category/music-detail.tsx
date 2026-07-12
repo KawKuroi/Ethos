@@ -24,15 +24,15 @@ function accentVar(): CSSProperties {
   return { "--catAccent": MUSIC.accent } as CSSProperties;
 }
 
-function mcpPreview(): string {
-  return [
-    "// Tu IA descubre y llama la herramienta",
-    'ethos.context({ tool: "music_*", ask: "más escuchadas este mes" })',
-    "",
-    "→ 200 OK · contexto acotado servido en vivo",
-    "  { provider, summary, top_artists, top_tracks }",
-  ].join("\n");
-}
+const WEEKDAYS = [
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábados",
+  "domingos",
+];
 
 function Header({ actions }: { actions?: ReactNode }) {
   return (
@@ -102,11 +102,42 @@ function ConnectedView({
     }
   }
 
+  // Ritmo, variedad y descubrimiento de la ventana: dicen más del gusto que
+  // el tamaño de los tops. Se pintan las 4 primeras celdas con dato real.
   const stats = [
-    { value: fmt(summary.scrobbles_window), label: `últimos ${summary.window_days} d` },
-    { value: String(summary.top_artists.length), label: "artistas en tu top" },
-    { value: String(summary.top_tracks.length), label: "canciones en tu top" },
-  ];
+    {
+      value: fmt(summary.scrobbles_window),
+      label: `últimos ${summary.window_days} d`,
+      show: true,
+    },
+    {
+      value: `≈ ${summary.estimated_hours_window.toLocaleString("es-ES")} h`,
+      label: "tiempo de escucha",
+      show: summary.scrobbles_window > 0,
+    },
+    {
+      value: fmt(summary.distinct_artists_window),
+      label: "artistas distintos",
+      show: summary.distinct_artists_window > 0,
+    },
+    {
+      value: fmt(summary.new_artists_window),
+      label: "artistas nuevos",
+      show: summary.new_artists_window > 0,
+    },
+    {
+      value: summary.avg_per_day_window.toLocaleString("es-ES"),
+      label: "escuchas al día",
+      show: summary.avg_per_day_window > 0,
+    },
+    {
+      value: summary.peak_weekday ? WEEKDAYS[summary.peak_weekday.weekday] : "",
+      label: "tu día de música",
+      show: summary.peak_weekday != null,
+    },
+  ]
+    .filter((stat) => stat.show)
+    .slice(0, 4);
 
   return (
     <div className="eth-screen" style={accentVar()}>
@@ -198,6 +229,21 @@ function ConnectedView({
       <TopList title={`Top artistas · últimos ${summary.window_days} días`} entries={summary.top_artists} />
       <TopList title={`Top canciones · últimos ${summary.window_days} días`} entries={summary.top_tracks} />
 
+      {summary.top_release && (
+        <div className={styles.section}>
+          <div className={styles.eyebrow}>Álbum de la ventana</div>
+          <div className={styles.recentRow}>
+            <span className={styles.recentDot} />
+            <div className={styles.recentBody}>
+              <div className={styles.recentName}>{summary.top_release.name}</div>
+              <div className={styles.recentSub}>
+                {fmt(summary.top_release.count)} escuchas en {summary.window_days} días
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {summary.scrobbles_window === 0 && (
         <div className={styles.section}>
           <div className={styles.eyebrow}>Sin escuchas recientes</div>
@@ -209,11 +255,7 @@ function ConnectedView({
       )}
 
       {modalOpen && (
-        <ContextDownloadModal
-          slug="music"
-          mcpPreview={mcpPreview()}
-          onClose={() => setModalOpen(false)}
-        />
+        <ContextDownloadModal slug="music" onClose={() => setModalOpen(false)} />
       )}
     </div>
   );

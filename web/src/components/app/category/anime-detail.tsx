@@ -25,16 +25,6 @@ function accentVar(): CSSProperties {
   return { "--catAccent": ANIME.accent } as CSSProperties;
 }
 
-function mcpPreview(): string {
-  return [
-    "// Tu IA descubre y llama la herramienta",
-    'ethos.context({ tool: "anime_*", ask: "mis mejor puntuados" })',
-    "",
-    "→ 200 OK · contexto acotado servido en vivo",
-    "  { provider, summary, top_rated, current }",
-  ].join("\n");
-}
-
 function mediaLabel(mediaType: string): string {
   return mediaType === "manga" ? "Manga" : "Anime";
 }
@@ -122,15 +112,47 @@ function ConnectedView({
     }
   }
 
+  // Celdas candidatas por relevancia: nota media y tasa de drop describen el
+  // criterio; horas ≈ hace comparable el anime con juegos y cine. Se pintan
+  // las 4 primeras con dato real.
   const stats = [
-    { value: fmtInt(summary.anime_watched), label: "animes vistos" },
-    { value: fmtInt(summary.manga_read), label: "mangas leídos" },
-    { value: fmtInt(summary.chapters_read), label: "capítulos" },
+    { value: fmtInt(summary.anime_watched), label: "animes vistos", show: true },
     {
-      value: summary.mean_score != null ? `${Math.round(summary.mean_score)}` : "—",
-      label: "nota media",
+      value: fmtInt(summary.manga_read),
+      label: "mangas leídos",
+      show: summary.manga_read > 0,
     },
-  ];
+    {
+      value: summary.mean_score != null ? `${Math.round(summary.mean_score)}` : "",
+      label: "nota media",
+      show: summary.mean_score != null,
+    },
+    {
+      value:
+        summary.hours_estimated != null
+          ? `≈ ${Math.round(summary.hours_estimated).toLocaleString("es-ES")} h`
+          : "",
+      label: "de anime",
+      show: summary.hours_estimated != null,
+    },
+    {
+      value: fmtInt(summary.chapters_read),
+      label: "capítulos",
+      show: summary.chapters_read > 0,
+    },
+    {
+      value: fmtInt(summary.dropped),
+      label: "abandonados",
+      show: summary.dropped > 0,
+    },
+    {
+      value: fmtInt(summary.planned),
+      label: "pendientes",
+      show: summary.planned > 0,
+    },
+  ]
+    .filter((stat) => stat.show)
+    .slice(0, 4);
 
   return (
     <div className="eth-screen" style={accentVar()}>
@@ -217,11 +239,7 @@ function ConnectedView({
       <ManualEntries slug="anime" accent={ANIME.accent} onChange={onRefresh} />
 
       {modalOpen && (
-        <ContextDownloadModal
-          slug="anime"
-          mcpPreview={mcpPreview()}
-          onClose={() => setModalOpen(false)}
-        />
+        <ContextDownloadModal slug="anime" onClose={() => setModalOpen(false)} />
       )}
     </div>
   );

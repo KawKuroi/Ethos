@@ -39,6 +39,12 @@ const FRESH: MusicSource = {
     window_days: 30,
     top_artists: [{ name: "Radiohead", count: 88 }],
     top_tracks: [{ name: "Idioteque — Radiohead", count: 12 }],
+    distinct_artists_window: 64,
+    avg_per_day_window: 16,
+    new_artists_window: 9,
+    estimated_hours_window: 28,
+    peak_weekday: { weekday: 6, count: 120 },
+    top_release: { name: "Kid A — Radiohead", count: 35 },
     last_listened_at: "2026-07-04T12:00:00Z",
   },
 };
@@ -63,6 +69,37 @@ describe("MusicDetail", () => {
       screen.getByRole("button", { name: /cambiar de fuente/i }),
     ).toBeInTheDocument();
     expect(screen.getByText("ListenBrainz")).toBeInTheDocument();
+  });
+
+  it("las celdas cuentan ritmo, variedad y descubrimiento de la ventana", () => {
+    mocks.source = FRESH;
+    render(<MusicDetail />);
+    // Tiempo de escucha estimado, marcado como aproximación.
+    expect(screen.getByText("≈ 28 h")).toBeInTheDocument();
+    expect(screen.getByText("artistas distintos")).toBeInTheDocument();
+    expect(screen.getByText("artistas nuevos")).toBeInTheDocument();
+    // El álbum más escuchado de la ventana tiene su propia sección.
+    expect(screen.getByText("Kid A — Radiohead")).toBeInTheDocument();
+  });
+
+  it("oculta las celdas sin dato (fuente sin álbum, ventana vacía)", () => {
+    mocks.source = {
+      ...FRESH,
+      summary: {
+        ...FRESH.summary!,
+        scrobbles_window: 0,
+        distinct_artists_window: 0,
+        avg_per_day_window: 0,
+        new_artists_window: 0,
+        estimated_hours_window: 0,
+        peak_weekday: null,
+        top_release: null,
+      },
+    };
+    render(<MusicDetail />);
+    expect(screen.queryByText("tiempo de escucha")).toBeNull();
+    expect(screen.queryByText(/álbum de la ventana/i)).toBeNull();
+    expect(screen.getByText(/sin escuchas recientes/i)).toBeInTheDocument();
   });
 
   it("una fuente de import muestra su modo y no ofrece refrescar", () => {

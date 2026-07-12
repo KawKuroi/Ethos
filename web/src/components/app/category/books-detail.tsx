@@ -21,14 +21,9 @@ function accentVar(): CSSProperties {
   return { "--catAccent": BOOKS.accent } as CSSProperties;
 }
 
-function mcpPreview(): string {
-  return [
-    "// Tu IA descubre y llama la herramienta",
-    'ethos.context({ tool: "books_*", ask: "qué estoy leyendo" })',
-    "",
-    "→ 200 OK · contexto acotado servido en vivo",
-    "  { provider, summary, currently_reading, top_authors, recent_reads }",
-  ].join("\n");
+// Nota 0-100 → estrellas ("4,2 ★"), la escala natural de Goodreads y compañía.
+function stars(rating: number): string {
+  return `${(rating / 20).toLocaleString("es-ES", { maximumFractionDigits: 1 })} ★`;
 }
 
 function Header({ actions }: { actions?: ReactNode }) {
@@ -91,6 +86,27 @@ function TopAuthors({ summary }: { summary: BooksSummary }) {
   );
 }
 
+function ReadingRecords({ summary }: { summary: BooksSummary }) {
+  if (summary.longest_book == null) return null;
+  return (
+    <div className={styles.section}>
+      <div className={styles.eyebrow}>Récords de lectura</div>
+      <div className={styles.recentRow}>
+        <span className={styles.recentDot} />
+        <div className={styles.recentBody}>
+          <div className={styles.recentName}>{summary.longest_book.title}</div>
+          <div className={styles.recentSub}>
+            Tu libro más largo · {fmtInt(summary.longest_book.pages)} páginas
+            {summary.avg_pages != null
+              ? ` — de media lees libros de ${fmtInt(summary.avg_pages)}`
+              : ""}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RecentReads({ summary }: { summary: BooksSummary }) {
   if (summary.recent_reads.length === 0) return null;
   return (
@@ -103,7 +119,7 @@ function RecentReads({ summary }: { summary: BooksSummary }) {
             <div className={styles.recentName}>{read.title}</div>
             <div className={styles.recentSub}>
               {read.author}
-              {read.rating != null ? ` · ${read.rating}/100` : ""}
+              {read.rating != null ? ` · ${stars(read.rating)}` : ""}
             </div>
           </div>
           <span className={styles.recentTime}>{relativeTime(read.finished_at)}</span>
@@ -139,11 +155,43 @@ function ConnectedView({
     }
   }
 
+  // Celdas candidatas según lo que la fuente traiga (páginas y notas no
+  // vienen de todas): se pintan las 4 primeras con dato real.
   const stats = [
-    { value: fmtInt(summary.pages_read), label: "páginas leídas" },
-    { value: fmtInt(summary.currently_reading.length), label: "leyendo ahora" },
-    { value: fmtInt(summary.wishlisted), label: "por leer" },
-  ];
+    {
+      value: fmtInt(summary.pages_read),
+      label: "páginas leídas",
+      show: summary.pages_read > 0,
+    },
+    {
+      value: summary.mean_rating != null ? stars(summary.mean_rating) : "",
+      label: "nota media",
+      show: summary.mean_rating != null,
+    },
+    {
+      value: fmtInt(summary.books_this_year),
+      label: "este año",
+      show: summary.books_this_year > 0,
+    },
+    {
+      value: fmtInt(summary.rereads),
+      label: "relecturas",
+      show: summary.rereads > 0,
+    },
+    {
+      value: fmtInt(summary.currently_reading.length),
+      label: "leyendo ahora",
+      show: summary.currently_reading.length > 0,
+    },
+    { value: fmtInt(summary.wishlisted), label: "por leer", show: true },
+    {
+      value: summary.avg_pages != null ? fmtInt(summary.avg_pages) : "",
+      label: "páginas por libro",
+      show: summary.avg_pages != null,
+    },
+  ]
+    .filter((stat) => stat.show)
+    .slice(0, 4);
 
   return (
     <div className="eth-screen" style={accentVar()}>
@@ -243,14 +291,11 @@ function ConnectedView({
       <CurrentlyReading summary={summary} />
       <TopAuthors summary={summary} />
       <RecentReads summary={summary} />
+      <ReadingRecords summary={summary} />
       <ManualEntries slug="books" accent={BOOKS.accent} onChange={onImported} />
 
       {modalOpen && (
-        <ContextDownloadModal
-          slug="books"
-          mcpPreview={mcpPreview()}
-          onClose={() => setModalOpen(false)}
-        />
+        <ContextDownloadModal slug="books" onClose={() => setModalOpen(false)} />
       )}
     </div>
   );

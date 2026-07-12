@@ -46,6 +46,9 @@ const FRESH: AnimeSource = {
       { title: "Berserk", media_type: "manga", score: 100, progress: 205 },
     ],
     current: [{ title: "One Piece", media_type: "anime", progress: 8 }],
+    hours_estimated: 326.7,
+    dropped: 5,
+    planned: 23,
     last_synced_at: "2026-07-05T09:00:00Z",
   },
 };
@@ -75,6 +78,34 @@ describe("AnimeDetail", () => {
     mocks.source = { ...FRESH, provider: "mal" };
     render(<AnimeDetail />);
     expect(screen.getByText("MyAnimeList")).toBeInTheDocument();
+  });
+
+  it("celdas con horas estimadas de anime y solo las que tienen dato", () => {
+    mocks.source = FRESH;
+    render(<AnimeDetail />);
+    // 980 episodios × ~20 min, marcado como aproximación.
+    expect(screen.getByText("≈ 327 h")).toBeInTheDocument();
+    expect(screen.getByText("nota media")).toBeInTheDocument();
+    // La 5ª candidata (capítulos) queda fuera: el grid pinta 4.
+    expect(screen.queryByText("capítulos")).toBeNull();
+    expect(screen.queryByText("abandonados")).toBeNull();
+  });
+
+  it("sin manga ni horas suben abandonados y pendientes al grid", () => {
+    mocks.source = {
+      ...FRESH,
+      summary: {
+        ...FRESH.summary!,
+        manga_read: 0,
+        chapters_read: 0,
+        episodes_watched: 0,
+        hours_estimated: null,
+      },
+    };
+    render(<AnimeDetail />);
+    expect(screen.getByText("abandonados")).toBeInTheDocument();
+    expect(screen.getByText("pendientes")).toBeInTheDocument();
+    expect(screen.queryByText("mangas leídos")).toBeNull();
   });
 
   it("ofrece el selector de proveedores cuando no hay fuente", () => {

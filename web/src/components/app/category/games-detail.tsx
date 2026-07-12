@@ -20,16 +20,6 @@ function accentVar(): CSSProperties {
   return { "--catAccent": GAMES.accent } as CSSProperties;
 }
 
-function mcpPreview(): string {
-  return [
-    "// Tu IA descubre y llama la herramienta",
-    'ethos.context({ tool: "games_*", ask: "resumen reciente" })',
-    "",
-    "→ 200 OK · contexto acotado servido en vivo",
-    "  { provider, summary, top_by_hours, recently_played, wishlist }",
-  ].join("\n");
-}
-
 function ConnectedView({
   source,
   summary,
@@ -54,18 +44,49 @@ function ConnectedView({
     }
   }
 
+  // Celdas candidatas por relevancia (el hero ya muestra las horas): backlog,
+  // logros y concentración describen al jugador mejor que repetir totales.
+  // Se pintan las 4 primeras con dato real.
+  const topShare =
+    summary.hours > 0 && summary.top_by_hours.length > 0
+      ? Math.round((summary.top_by_hours[0].hours / summary.hours) * 100)
+      : null;
   const stats = [
-    { value: summary.games.toLocaleString("es-ES"), label: "juegos" },
-    { value: Math.round(summary.hours).toLocaleString("es-ES"), label: "horas" },
-    { value: summary.wishlisted.toLocaleString("es-ES"), label: "deseados" },
+    { value: summary.games.toLocaleString("es-ES"), label: "juegos", show: true },
+    {
+      value:
+        summary.games > 0
+          ? `${Math.round((summary.never_played / summary.games) * 100)}%`
+          : "",
+      label: "sin estrenar",
+      show: summary.never_played > 0,
+    },
     {
       value:
         summary.avg_completion_pct != null
           ? `${Math.round(summary.avg_completion_pct)}%`
-          : "—",
+          : "",
       label: "completado",
+      show: summary.avg_completion_pct != null,
     },
-  ];
+    {
+      value: topShare != null ? `${topShare}%` : "",
+      label: "en tu juego nº 1",
+      show: topShare != null && topShare > 0,
+    },
+    {
+      value: `+${Math.round(summary.hours_2weeks).toLocaleString("es-ES")} h`,
+      label: "últimas 2 sem",
+      show: summary.hours_2weeks > 0,
+    },
+    {
+      value: summary.wishlisted.toLocaleString("es-ES"),
+      label: "deseados",
+      show: summary.wishlisted > 0,
+    },
+  ]
+    .filter((stat) => stat.show)
+    .slice(0, 4);
 
   return (
     <div className="eth-screen" style={accentVar()}>
@@ -204,11 +225,7 @@ function ConnectedView({
       <ManualEntries slug="games" accent={GAMES.accent} onChange={onRefresh} />
 
       {modalOpen && (
-        <ContextDownloadModal
-          slug="games"
-          mcpPreview={mcpPreview()}
-          onClose={() => setModalOpen(false)}
-        />
+        <ContextDownloadModal slug="games" onClose={() => setModalOpen(false)} />
       )}
     </div>
   );
@@ -250,6 +267,7 @@ function OffView({
   onChanged: () => void;
 }) {
   const isPrivate = state === "private";
+  const hadError = state === "error";
   return (
     <div className="eth-screen" style={accentVar()}>
       <Link href="/app" className={styles.back}>
@@ -264,18 +282,25 @@ function OffView({
       </div>
       <div className={styles.soon}>
         <div className={styles.soonTitle}>
-          {isPrivate ? "Tu perfil de Steam es privado" : "Esta categoría está apagada"}
+          {isPrivate
+            ? "Tu perfil de Steam es privado"
+            : hadError
+              ? "No se pudo sincronizar con Steam"
+              : "Esta categoría está apagada"}
         </div>
         <p className={styles.soonNote}>
           {isPrivate
             ? (detail ??
               "Pon tu perfil y tus datos de juego en público en Steam, y vuelve a refrescar.")
-            : "Conecta tu cuenta de Steam por OpenID para traer tu biblioteca, horas y deseados. No pedimos tu contraseña."}
+            : hadError
+              ? (detail ??
+                "El último intento de sincronizar falló. Vuelve a conectar Steam para reintentarlo.")
+              : "Conecta tu cuenta de Steam por OpenID para traer tu biblioteca, horas y deseados. No pedimos tu contraseña."}
         </p>
         <div style={{ marginTop: "20px", display: "flex", gap: "10px", justifyContent: "center" }}>
           <ConnectSteamButton className={styles.btnPrimary} />
         </div>
-        {!isPrivate && (
+        {!isPrivate && !hadError && (
           <p className={styles.soonNote} style={{ marginTop: "16px" }}>
             Más proveedores en camino: Xbox (vía OpenXBL con tu propia API
             key) y PlayStation (vía token NPSSO). GOG quedó descartado: no
@@ -340,10 +365,18 @@ export function GamesDetail() {
     );
   }
 
-  const isLive = source.state === "fresh" || source.state === "syncing";
+  // Durante el primer refresco el backend puede devolver un resumen parcial
+  // con todo a cero (p. ej. solo el perfil): con "syncing" solo se pinta la
+  // vista conectada si el resumen trae datos reales; si no, la sincronización.
+  const hasData =
+    source.summary != null &&
+    (source.summary.games > 0 || source.summary.wishlisted > 0);
   // silentReload: el refresco sustituye los datos en sitio, sin volver a
   // pasar por la pantalla de carga (el botón ya muestra su propio spinner).
-  if (isLive && source.summary) {
+  if (
+    source.summary &&
+    (source.state === "fresh" || (source.state === "syncing" && hasData))
+  ) {
     return <ConnectedView source={source} summary={source.summary} onRefresh={silentReload} />;
   }
   // "syncing" real, o recién conectado y el estado aún no se materializa.

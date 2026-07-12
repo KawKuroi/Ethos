@@ -94,6 +94,8 @@ export type GamesSummary = {
   hours: number;
   wishlisted: number;
   avg_completion_pct: number | null;
+  never_played: number;
+  hours_2weeks: number;
   top_by_hours: TopGame[];
   recently_played: RecentGame[];
   top_genres: TopGenre[];
@@ -148,12 +150,23 @@ export type MusicTopEntry = {
   count: number;
 };
 
+export type MusicPeakWeekday = {
+  weekday: number;
+  count: number;
+};
+
 export type MusicSummary = {
   scrobbles_total: number;
   scrobbles_window: number;
   window_days: number;
   top_artists: MusicTopEntry[];
   top_tracks: MusicTopEntry[];
+  distinct_artists_window: number;
+  avg_per_day_window: number;
+  new_artists_window: number;
+  estimated_hours_window: number;
+  peak_weekday: MusicPeakWeekday | null;
+  top_release: MusicTopEntry | null;
   last_listened_at: string | null;
 };
 
@@ -183,6 +196,23 @@ export type RecentWatch = {
   watched_at: string | null;
 };
 
+export type TopRatedFilm = {
+  title: string;
+  year: number | null;
+  media_type: string;
+  rating: number;
+};
+
+export type RatingBucket = {
+  stars: number;
+  count: number;
+};
+
+export type TopFilmGenre = {
+  name: string;
+  works: number;
+};
+
 export type FilmSummary = {
   movies_watched: number;
   shows_watched: number;
@@ -191,6 +221,13 @@ export type FilmSummary = {
   top_movies: TopMovie[];
   top_shows: TopShow[];
   recently_watched: RecentWatch[];
+  mean_rating: number | null;
+  rated_count: number;
+  rating_buckets: RatingBucket[];
+  top_rated: TopRatedFilm[];
+  rewatched_count: number;
+  top_genres: TopFilmGenre[];
+  favorite_decade: number | null;
   last_synced_at: string | null;
 };
 
@@ -224,6 +261,9 @@ export type AnimeSummary = {
   mean_score: number | null;
   top_rated: AnimeTopRated[];
   current: AnimeCurrent[];
+  hours_estimated: number | null;
+  dropped: number;
+  planned: number;
   last_synced_at: string | null;
 };
 
@@ -253,6 +293,11 @@ export type RecentRead = {
   rating: number | null;
 };
 
+export type LongestBook = {
+  title: string;
+  pages: number;
+};
+
 export type BooksSummary = {
   books_read: number;
   pages_read: number;
@@ -260,6 +305,12 @@ export type BooksSummary = {
   wishlisted: number;
   top_authors: TopAuthor[];
   recent_reads: RecentRead[];
+  mean_rating: number | null;
+  rated_count: number;
+  rereads: number;
+  books_this_year: number;
+  longest_book: LongestBook | null;
+  avg_pages: number | null;
   last_synced_at: string | null;
 };
 
