@@ -73,6 +73,21 @@
   justify-content: center;
   flex: 0 0 auto;
 }
+.navSectionLabel {
+  padding: 16px 26px 4px;
+  font-family: var(--fm);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.catDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--catAccent, var(--accent));
+  flex: 0 0 auto;
+}
 .badge {
   width: 7px;
   height: 7px;
@@ -249,6 +264,9 @@
     gap: 4px;
   }
   .navLabel {
+    display: none;
+  }
+  .navSectionLabel {
     display: none;
   }
   .badge {

@@ -39,10 +39,10 @@ describe("Sidebar", () => {
     );
   });
 
-  it("muestra el usuario de la sesión y enlaza el logo a la landing", () => {
+  it("muestra el nombre de la sesión sin el correo y enlaza el logo a la landing", () => {
     render(<Sidebar />);
     expect(screen.getByText("Axel")).toBeInTheDocument();
-    expect(screen.getByText("axel@correo.com")).toBeInTheDocument();
+    expect(screen.queryByText("axel@correo.com")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ethos" })).toHaveAttribute(
       "href",
       "/",
@@ -54,5 +54,32 @@ describe("Sidebar", () => {
     expect(
       container.querySelector('[aria-label="IA sin conectar"]'),
     ).not.toBeNull();
+  });
+
+  it("lista las cinco categorías como enlaces directos", () => {
+    render(<Sidebar />);
+    for (const [name, slug] of [
+      ["Juegos", "games"],
+      ["Música", "music"],
+      ["Cine y TV", "film"],
+      ["Anime y manga", "anime"],
+      ["Libros", "books"],
+    ]) {
+      expect(
+        screen.getByRole("link", { name: new RegExp(name, "i") }),
+      ).toHaveAttribute("href", `/app/categoria/${slug}`);
+    }
+  });
+
+  it("dentro de una categoría resalta su entrada y no Inicio", () => {
+    mocks.pathname = "/app/categoria/music";
+    render(<Sidebar />);
+    expect(screen.getByRole("link", { name: /música/i })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: /inicio/i })).not.toHaveAttribute(
+      "aria-current",
+    );
   });
 });

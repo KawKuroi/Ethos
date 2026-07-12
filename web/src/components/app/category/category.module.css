@@ -593,6 +593,72 @@
   flex: 1;
 }
 
+/* ===== Pager entre categorías ===== */
+.pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+.pagerLink {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 17px;
+  border: var(--bw) solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: var(--sh);
+  min-width: 0;
+  transition: border-color 0.15s ease;
+}
+.pagerLink:hover {
+  border-color: var(--catAccent, var(--accent));
+}
+.pagerNext {
+  flex-direction: row-reverse;
+}
+.pagerArrow {
+  color: var(--muted);
+  font-size: 16px;
+  flex: 0 0 auto;
+}
+.pagerBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.pagerNext .pagerBody {
+  align-items: flex-end;
+}
+.pagerLabel {
+  font-family: var(--fm);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pagerName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--fb);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pagerDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--catAccent, var(--accent));
+  flex: 0 0 auto;
+}
+
 @media (max-width: 720px) {
   .statGrid {
     grid-template-columns: repeat(2, 1fr);

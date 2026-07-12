@@ -35,4 +35,11 @@ describe("Help", () => {
     ).toBeInTheDocument();
     expect(submitFeedback).toHaveBeenCalledWith({ message: "Añadid Spotify" });
   });
+
+  it("documenta los atajos de teclado del panel", () => {
+    render(<Help />);
+    expect(screen.getByText("Atajos de teclado")).toBeInTheDocument();
+    expect(screen.getByText("Ctrl K")).toBeInTheDocument();
+    expect(screen.getByText(/ir a fuentes/i)).toBeInTheDocument();
+  });
 });

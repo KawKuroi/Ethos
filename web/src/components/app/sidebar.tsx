@@ -2,12 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { CSSProperties } from "react";
 import { Logo } from "@/components/logo";
 import { isMcpConnected, useMcpStatus } from "@/lib/use-mcp-status";
 import { useUser } from "@/lib/use-user";
+import { CATEGORY_DETAIL } from "./category/data";
 import { NAV } from "./nav";
 import { NavIcon, GearIcon } from "./nav-icons";
 import styles from "./app.module.css";
+
+const CATEGORIES = Object.values(CATEGORY_DETAIL);
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -18,10 +22,10 @@ export function Sidebar() {
   const displayName = name ?? "Tu perfil";
   const initial = (name ?? email ?? "E").charAt(0).toUpperCase();
 
+  // Las categorías tienen su propia entrada en la barra, así que Inicio solo
+  // se resalta en su ruta exacta.
   function isActive(href: string): boolean {
-    if (href === "/app") {
-      return pathname === "/app" || pathname.startsWith("/app/categoria");
-    }
+    if (href === "/app") return pathname === "/app";
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 
@@ -55,13 +59,38 @@ export function Sidebar() {
         })}
       </nav>
 
+      {/* Acceso directo a cada categoría desde cualquier pantalla, sin pasar
+          por Inicio o Fuentes. El punto lleva el acento de la categoría. */}
+      <div className={styles.navSectionLabel}>Categorías</div>
+      <nav className={styles.nav} aria-label="Categorías">
+        {CATEGORIES.map((category) => {
+          const href = `/app/categoria/${category.slug}`;
+          const active = pathname === href;
+          return (
+            <Link
+              key={category.slug}
+              href={href}
+              className={`${styles.navItem} ${active ? styles.navItemActive : ""}`}
+              aria-current={active ? "page" : undefined}
+            >
+              <span className={styles.navIcon}>
+                <span
+                  className={styles.catDot}
+                  style={{ "--catAccent": category.accent } as CSSProperties}
+                />
+              </span>
+              <span className={styles.navLabel}>{category.name}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
       <div className={styles.spacer} />
 
       <div className={styles.foot}>
         <div className={styles.avatar}>{initial}</div>
         <div className={styles.profile}>
           <span className={styles.profileName}>{displayName}</span>
-          {email && <span className={styles.profileHandle}>{email}</span>}
         </div>
         <Link
           href="/app/ajustes"

@@ -178,6 +178,46 @@
   color: var(--error, #d8543f);
 }
 
+/* ===== Atajos de teclado ===== */
+.shortcuts {
+  margin: 0;
+}
+.shortcutRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 0;
+  border-top: 1px solid var(--hair);
+}
+.shortcutRow:first-of-type {
+  border-top: none;
+}
+.shortcutRow dt {
+  flex: 0 0 auto;
+}
+.shortcutRow dd {
+  margin: 0;
+  min-width: 0;
+}
+.kbd {
+  display: inline-block;
+  font-family: var(--fm);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--chip);
+  border-radius: 5px;
+  padding: 3px 6px;
+  white-space: nowrap;
+  min-width: 52px;
+  text-align: center;
+}
+.shortcutText {
+  font-family: var(--fb);
+  font-size: 13px;
+  color: var(--ink);
+}
+
 @media (max-width: 860px) {
   .grid {
     grid-template-columns: 1fr;

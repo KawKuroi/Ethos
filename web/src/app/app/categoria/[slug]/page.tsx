@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { CATEGORY_DETAIL, categoryBySlug } from "@/components/app/category/data";
 import { CategoryDetail } from "@/components/app/category/category-detail";
+import { CategoryPager } from "@/components/app/category/category-pager";
 import { AnimeDetail } from "@/components/app/category/anime-detail";
 import { BooksDetail } from "@/components/app/category/books-detail";
 import { FilmDetail } from "@/components/app/category/film-detail";
@@ -41,6 +42,10 @@ export default async function CategoryPage({
   const category = categoryBySlug(slug);
   if (!category) notFound();
   const Detail = DETAILS[slug];
-  if (Detail) return <Detail />;
-  return <CategoryDetail category={category} />;
+  return (
+    <>
+      {Detail ? <Detail /> : <CategoryDetail category={category} />}
+      <CategoryPager slug={slug} />
+    </>
+  );
 }

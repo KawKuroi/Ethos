@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { submitFeedback } from "@/lib/api";
+import { KEYBOARD_SHORTCUTS } from "../quick-nav";
 import { FAQS } from "./data";
 import styles from "./help.module.css";
 
@@ -106,6 +107,26 @@ export function Help() {
                 {error}
               </div>
             )}
+          </div>
+
+          {/* La misma lista que abre "?" en cualquier pantalla del panel. */}
+          <div className={styles.card}>
+            <div className={styles.cardTitle}>Atajos de teclado</div>
+            <div className={styles.cardSub}>
+              Muévete por el panel sin soltar el teclado. Pulsa{" "}
+              <kbd className={styles.kbd}>?</kbd> en cualquier pantalla para
+              verlos de nuevo.
+            </div>
+            <dl className={styles.shortcuts}>
+              {KEYBOARD_SHORTCUTS.map((row) => (
+                <div key={row.keys} className={styles.shortcutRow}>
+                  <dt>
+                    <kbd className={styles.kbd}>{row.keys}</kbd>
+                  </dt>
+                  <dd className={styles.shortcutText}>{row.text}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { metaForPath } from "./nav";
+import { QuickNav } from "./quick-nav";
 import styles from "./app.module.css";
 
 export function AppHeader() {
@@ -16,6 +17,8 @@ export function AppHeader() {
         <h1 className={styles.headerTitle}>{title}</h1>
         {sub && <div className={styles.headerSub}>{sub}</div>}
       </div>
+      {/* Paleta Ctrl+K y atajos globales de teclado, vivos en todo el panel. */}
+      <QuickNav />
     </div>
   );
 }
