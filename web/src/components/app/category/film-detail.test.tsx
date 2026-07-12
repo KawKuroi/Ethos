@@ -96,6 +96,8 @@ describe("FilmDetail", () => {
     // TMDB aún no es conectable: aparece deshabilitado como "pronto".
     expect(screen.getByRole("radio", { name: /tmdb/i })).toBeDisabled();
     expect(screen.getByLabelText(/tu usuario de trakt/i)).toBeInTheDocument();
+    // Entradas a mano también sin proveedor conectado (D51).
+    expect(screen.getByText("Añadido a mano")).toBeInTheDocument();
   });
 
   it("guía cuando el perfil de Trakt es privado", () => {

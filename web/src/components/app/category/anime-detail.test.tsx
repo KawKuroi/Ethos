@@ -92,6 +92,8 @@ describe("AnimeDetail", () => {
     expect(screen.getByRole("radio", { name: /myanimelist/i })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /kitsu/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/tu usuario de anilist/i)).toBeInTheDocument();
+    // Entradas a mano también sin proveedor conectado (D51).
+    expect(screen.getByText("Añadido a mano")).toBeInTheDocument();
   });
 
   it("guía cuando las listas son privadas", () => {

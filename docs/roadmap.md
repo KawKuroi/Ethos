@@ -15,15 +15,13 @@ con aviso (D50). Retirada (D31): Actividad física — sin fuente viable.
 
 - Proveedores diferidos de D62: Xbox (OpenXBL con API key del usuario), PlayStation (token NPSSO, no oficial) y TMDB (3-legged, solo ratings+watchlist) — ya visibles como "próximamente" en el selector; cada uno es un conector + alta guiada.
 - D5 completo al cambiar de proveedor: hoy se avisa y se reemplaza (entradas a mano se conservan); falta la opción de conservar el histórico del proveedor anterior como inactivo.
-- Generalizar los endpoints de conexión por proveedor (`POST /sources/{provider}` único despachado por el registry): hoy cada proveedor repite el patrón de router.
+- Generalizar los endpoints de conexión por proveedor (`POST /sources/{provider}` único despachado por el registry): hoy cada proveedor repite el patrón de router. Decidido 2026-07-12: diferida como primer paso de la fase que integre Xbox/PlayStation/TMDB — el refactor toca la inyección de dependencias de los 10 proveedores actuales y su beneficio llega con los nuevos.
 - Categorías diferidas (Lugares, Comida, Juegos de mesa): decidir si alguna se construye ahora que hay lista de interesados (D50).
 - Qué histórico incluye el contexto descargable cuando lleguen los eventos con timestamp (la forma v1 quedó fijada en D34).
 - Resolución de títulos de la wishlist de Steam (D32): candidata a la caché de catálogos globales.
 - Política de retención del histórico inactivo (cuánto tiempo se conserva).
 - Estrategia de caché de catálogos globales (esquema de logros, metadatos de juegos, fichas de géneros D55) compartidos entre usuarios.
-- UI de revocación por cliente OAuth en Ajustes (el cliente ya puede revocar por `POST /oauth/revoke`, D61; falta la vista del usuario).
 - CIMD (client_id como URL de metadata, spec MCP 2025-11) si el registro dinámico de clientes se vuelve ruidoso (D61).
-- Entradas a mano en categorías sin proveedor conectado (hoy solo en el detalle conectado, D51).
 
 ## Histórico de fases completadas
 

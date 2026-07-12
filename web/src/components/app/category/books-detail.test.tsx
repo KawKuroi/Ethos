@@ -114,6 +114,8 @@ describe("BooksDetail", () => {
     expect(
       screen.getByRole("button", { name: /subir export/i }),
     ).toBeInTheDocument();
+    // Entradas a mano también sin proveedor conectado (D51).
+    expect(screen.getByText("Añadido a mano")).toBeInTheDocument();
   });
 
   it("muestra el estado sincronizando de una fuente API", () => {

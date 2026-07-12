@@ -21,6 +21,20 @@ https://ethos-steel.vercel.app
 
 ## Activo
 
+**Entradas a mano sin proveedor conectado (2026-07-12).** La sección
+"Añadido a mano" (D51) se monta también en la vista desconectada de las
+cuatro categorías de obra (juegos, cine, anime, libros): se puede registrar
+sin fuente y el refresco las conserva al conectar una. Solo web — el backend
+de D51 ya lo soportaba. La categoría sigue "apagada" en Inicio/Fuentes hasta
+conectar un proveedor (las entradas a mano no son una fuente).
+
+**Revocación por cliente OAuth desde la web (2026-07-12).** Cierra el
+pendiente de D61: `DELETE /mcp-clients/{client_id}` (sesión de Supabase)
+borra access y refresh del par usuario+cliente vía `revoke_client` del store;
+`/mcp-status` expone `client_id` y los chips de clientes de Conectar IA ganan
+"revocar" (recarga el estado al terminar). El registro DCR del cliente se
+conserva: puede volver a pedir autorización.
+
 **Keep-alive de Supabase desde /health (2026-07-12).** `/health` programa en
 segundo plano (`BackgroundTasks`) un toque mínimo a la BD vía PostgREST
 (`keepalive.py`: select `limit=1` sobre `source_state`), a lo sumo una vez
@@ -92,6 +106,32 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-12 (entradas a mano sin proveedor conectado)
+
+- Cierra el pendiente de D51: `OffView` (juegos) y los `ConnectView` de cine,
+  anime y libros montan `ManualEntries` bajo el bloque de conexión, con
+  `silentReload` como `onChange`. Sin cambios de backend (los endpoints
+  `/items/*` nunca exigieron fuente conectada y `GET /sources/<cat>` ya
+  cuenta las entradas a mano con estado `never`). Música fuera a propósito
+  (eventos con timestamp, sin alta manual). web 102 tests, tsc, eslint y
+  build en verde.
+
+### 2026-07-12 (revocación por cliente OAuth desde la web)
+
+- Cierra el pendiente de D61 (la web no podía revocar; `POST /oauth/revoke`
+  exige el token en claro). Backend: `revoke_client(user_id, client_id)` en
+  `OAuthTokenStore` (Supabase: delete por par; memoria: filtra), endpoint
+  `DELETE /mcp-clients/{client_id}` (204, idempotente, sesión de Supabase) y
+  `client_id` en los clientes de `/mcp-status`. El registro DCR se conserva.
+- Web: `revokeMcpClient` en `lib/api.ts` (`client_id` opcional en `McpClient`
+  para tolerar backends viejos); botón "revocar" en los chips de clientes de
+  la actividad de Conectar IA (estado "revocando…", recarga al terminar, nota
+  de error) y copy de "Qué puede hacer tu IA" actualizado. La revocación vive
+  donde se listan los clientes (Conectar IA), no en Ajustes como decía el
+  roadmap: misma intención, sin duplicar la lista.
+- api 293 tests (90,67%), ruff y mypy; web 102 tests, tsc, eslint y build en
+  verde.
 
 ### 2026-07-12 (keep-alive de Supabase desde /health)
 

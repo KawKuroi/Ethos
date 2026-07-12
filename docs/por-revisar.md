@@ -7,14 +7,6 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 
 ## Bloqueantes — configuración que detiene el flujo
 
-- [ ] **`LASTFM_API_KEY` en Render (y `.env` local)** — crea la API key de
-  la app en https://www.last.fm/api/account/create (solo pide el nombre) y
-  ponla en Render. Sin ella, "Conectar Last.fm" fallará al primer refresco
-  (los demás proveedores no se ven afectados).
-- [ ] **`MAL_CLIENT_ID` en Render (y `.env` local)** — crea el client id en
-  https://myanimelist.net/apiconfig (tipo "other", app personal) y ponlo en
-  Render. Sin él, "Conectar MyAnimeList" fallará al primer refresco.
-
 ## Para ir revisando — pruebas y decisiones
 
 ### Pruebas end-to-end por categoría
@@ -86,9 +78,17 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
   resumen lo cuenta; bórralo y confirma que desaparece.
 - [ ] **Sugerencias (D52)** — envía una sugerencia desde Ayuda y comprueba
   que llega a la tabla `feedback` (y al correo si configuraste el SMTP).
-- [ ] **Borrado de cuenta (D53)** — en Ajustes: "Eliminar datos" limpia las
-  fuentes; "Eliminar cuenta" muestra el banner con la fecha y "Deshacer" lo
-  cancela. El correo de aviso usa el SMTP opcional.
+- [ ] **Borrado de cuenta (D53, ajustado 2026-07-12)** — en Ajustes:
+  "Eliminar datos" limpia las fuentes (Inicio/Fuentes deben volver a
+  "apagadas" sin recargar a mano); "Eliminar cuenta" ahora cierra la sesión y
+  te devuelve a la landing; al iniciar sesión de nuevo, Ajustes muestra el
+  banner con la fecha y "Deshacer" lo cancela. El correo de aviso usa el SMTP
+  opcional.
+- [ ] **Cerrar sesión (2026-07-12)** — en Ajustes → Sesión, "Cerrar sesión"
+  debe llevarte a la landing y `/app` debe pedirte login de nuevo.
+- [ ] **Revocación por cliente (2026-07-12)** — con un cliente OAuth
+  conectado, en Conectar IA pulsa "revocar" en su chip: debe desaparecer de
+  la lista y el cliente debe pedir autorización de nuevo al reconectar.
 - [ ] **Conectar el MCP a Claude (D56/D63)** — en claude.ai: Ajustes →
   Conectores → "Añadir conector personalizado" → pega
   `https://ethos-api-s10w.onrender.com/mcp/` → Conectar; autoriza en la
@@ -116,11 +116,14 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 - [ ] **Fuentes** — `/app/fuentes`: resumen y las cinco categorías; con
   todas activas ya no hay grupo "En desarrollo" — confirma que te cuadra
   visualmente.
-- [ ] **Conectar IA** — `/app/conectar-ia` (rediseñada el 2026-07-11):
-  tarjeta de estado real con "Comprobar conexión", guía en dos pasos con
-  pestañas por cliente, token manual en "Avanzado" y el playground. Ojo: el
-  playground es demostración con datos de ejemplo (D54, decidido así a
-  propósito).
+- [ ] **Conectar IA** — `/app/conectar-ia` (rediseñada el 2026-07-12): sin
+  conexión, tarjeta de estado + guía en dos pasos con pestañas por cliente;
+  conectada, la guía se pliega ("Conectar otro cliente") y aparece "Actividad
+  de la conexión" con consultas atendidas, última consulta, clientes
+  autorizados y tools más usadas (requiere la migración 0009). El banner de
+  Inicio y el badge de la sidebar se apagan solos al conectar. Token manual
+  en "Avanzado" y el playground siguen. Ojo: el playground es demostración
+  con datos de ejemplo (D54, decidido así a propósito).
 - [ ] **Ayuda y Ajustes** — FAQ, envío de sugerencias real, Perfil con tu
   nombre y correo de la cuenta (edítalo y confirma que el pie de la barra
   lateral se actualiza), Apariencia cambia el tema también en la landing
@@ -160,9 +163,6 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 - [ ] **Stat band de Inicio** — "El gusto en números" sigue mostrando cifras
   de Juegos (su meta ya cuenta las fuentes activas); si quieres que mezcle
   métricas de otras categorías, dilo y lo ajustamos.
-- [ ] **Entradas a mano sin proveedor** — hoy la sección "Añadido a mano"
-  vive solo en el detalle conectado; añadirla a categorías sin proveedor
-  queda como mejora si la quieres.
 - [ ] **Aviso real de "Avísame" (D50)** — hoy solo se guarda el interés
   (correo + categoría); el correo masivo desde `category_interest` se
   define cuando exista proveedor de correo (el SMTP de D52).
@@ -180,6 +180,9 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 
 ## Hecho
 
+- [x] **Entradas a mano sin proveedor** (2026-07-12) — la sección "Añadido a
+  mano" aparece también en el detalle desconectado de juegos, cine, anime y
+  libros; la prueba queda cubierta por la verificación e2e de D51.
 - [x] **OAuth Google** (2026-07-11) — app creada en Google Cloud Console y
   proveedor habilitado; verificado contra `/auth/v1/settings`
   (`"google": true`). La prueba del botón en producción queda cubierta por

@@ -284,10 +284,12 @@ function SyncingView({ onReload }: { onReload: () => void }) {
 
 function ConnectView({
   onConnected,
+  onChanged,
   detail,
   hadProblem,
 }: {
   onConnected: () => void;
+  onChanged: () => void;
   detail: string | null;
   hadProblem: boolean;
 }) {
@@ -309,6 +311,9 @@ function ConnectView({
           <ConnectHub slug="film" className={styles.btnPrimary} onConnected={onConnected} />
         </div>
       </div>
+      {/* Entradas a mano sin proveedor (D51): cuentan en el resumen y el
+          refresco las conserva cuando conectes una fuente. */}
+      <ManualEntries slug="film" accent={FILM.accent} onChange={onChanged} />
     </div>
   );
 }
@@ -369,6 +374,7 @@ export function FilmDetail() {
     <ConnectView
       detail={source?.detail ?? null}
       hadProblem={state === "error" || state === "private"}
+      onChanged={silentReload}
       onConnected={() => {
         setJustConnected(true);
         reload();

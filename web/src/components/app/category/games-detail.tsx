@@ -240,7 +240,15 @@ function SyncingView() {
   );
 }
 
-function OffView({ state, detail }: { state: GamesSource["state"]; detail: string | null }) {
+function OffView({
+  state,
+  detail,
+  onChanged,
+}: {
+  state: GamesSource["state"];
+  detail: string | null;
+  onChanged: () => void;
+}) {
   const isPrivate = state === "private";
   return (
     <div className="eth-screen" style={accentVar()}>
@@ -275,6 +283,9 @@ function OffView({ state, detail }: { state: GamesSource["state"]; detail: strin
           </p>
         )}
       </div>
+      {/* Entradas a mano sin proveedor (D51): cuentan en el resumen y el
+          refresco las conserva cuando conectes una fuente. */}
+      <ManualEntries slug="games" accent={GAMES.accent} onChange={onChanged} />
     </div>
   );
 }
@@ -339,5 +350,7 @@ export function GamesDetail() {
   if (source.state === "syncing" || (justConnected && source.state === "never")) {
     return <SyncingView />;
   }
-  return <OffView state={source.state} detail={source.detail} />;
+  return (
+    <OffView state={source.state} detail={source.detail} onChanged={silentReload} />
+  );
 }

@@ -93,6 +93,8 @@ describe("GamesDetail", () => {
     ).toBeInTheDocument();
     // Estado del catálogo de proveedores de Juegos (D62).
     expect(screen.getByText(/más proveedores en camino/i)).toBeInTheDocument();
+    // Entradas a mano también sin proveedor conectado (D51).
+    expect(screen.getByText("Añadido a mano")).toBeInTheDocument();
   });
 
   it("muestra la sincronización mientras corre el primer refresco", () => {
