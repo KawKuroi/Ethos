@@ -67,3 +67,44 @@ class FakeListenBrainzApi:
         if min_ts is not None:
             listens = [x for x in listens if int(x["listened_at"]) > min_ts]
         return {"payload": {"count": len(listens), "listens": listens}}
+
+
+class FakeLastfmApi:
+    """Cliente falso de Last.fm con scrobbles recientes (ventana de 30 días)."""
+
+    def __init__(self, *, status_code: int | None = None) -> None:
+        self.status_code = status_code
+        self.calls: list[int | None] = []
+        now = int(datetime.now(UTC).timestamp())
+        self._tracks: list[dict[str, Any]] = [
+            {
+                "name": "Belinda Says",
+                "artist": {"#text": "Alvvays"},
+                "album": {"#text": "Blue Rev"},
+                "date": {"uts": str(now - 60)},
+            },
+            {
+                "name": "Star",
+                "artist": {"#text": "Mitski"},
+                "album": {"#text": ""},
+                "date": {"uts": str(now - 120)},
+            },
+        ]
+
+    def get_recent_tracks(
+        self,
+        user_name: str,
+        *,
+        from_ts: int | None = None,
+        page: int = 1,
+        limit: int = 200,
+    ) -> dict[str, Any]:
+        from ethos_api.connectors.lastfm.client import LastfmApiError
+
+        self.calls.append(from_ts)
+        if self.status_code is not None:
+            raise LastfmApiError("Last.fm error", status_code=self.status_code)
+        tracks = self._tracks
+        if from_ts is not None:
+            tracks = [t for t in tracks if int(t["date"]["uts"]) > from_ts]
+        return {"recenttracks": {"track": tracks, "@attr": {"page": "1"}}}

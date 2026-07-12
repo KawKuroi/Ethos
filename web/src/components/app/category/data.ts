@@ -45,7 +45,7 @@ const GAMES: CategoryDetailData = {
   name: "Juegos",
   accent: "#3b82c4",
   provider: "Steam",
-  ns: "games.*",
+  ns: "games_*",
   state: "live",
   blurb: "Biblioteca, deseados, horas jugadas y % de completado por juego.",
   hero: { value: "1.840", label: "horas jugadas" },
@@ -83,7 +83,7 @@ const MUSIC: CategoryDetailData = {
   name: "Música",
   accent: "#d8543f",
   provider: "ListenBrainz",
-  ns: "music.*",
+  ns: "music_*",
   state: "live",
   blurb: "Scrobbles, artistas y canciones más escuchadas por periodo.",
 };
@@ -93,7 +93,7 @@ const FILM: CategoryDetailData = {
   name: "Cine y TV",
   accent: "#8b5cf6",
   provider: "Trakt",
-  ns: "film.*",
+  ns: "film_*",
   state: "live",
   blurb: "Películas, series, episodios y tiempo total visto.",
 };
@@ -103,7 +103,7 @@ const ANIME: CategoryDetailData = {
   name: "Anime y manga",
   accent: "#e0883c",
   provider: "AniList",
-  ns: "anime.*",
+  ns: "anime_*",
   state: "live",
   blurb: "Series vistas, capítulos de manga leídos y títulos en curso.",
 };
@@ -113,7 +113,7 @@ const BOOKS: CategoryDetailData = {
   name: "Libros",
   accent: "#2f9e6b",
   provider: "Goodreads",
-  ns: "books.*",
+  ns: "books_*",
   state: "live",
   blurb: "Leídos, páginas, lecturas en curso y autores más leídos.",
 };

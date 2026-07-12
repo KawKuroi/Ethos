@@ -10,12 +10,14 @@ from ethos_api.schema import NormalizedItem
 
 
 def build_books_context(
-    summary: BooksSummary, items: list[NormalizedItem]
+    summary: BooksSummary,
+    items: list[NormalizedItem],
+    provider: str | None = None,
 ) -> dict[str, object]:
     """Arma el contexto de Libros (misma información que sirve el MCP)."""
     return {
-        "namespace": "books.*",
-        "provider": "goodreads",
+        "namespace": "books_*",
+        "provider": provider or "goodreads",
         "generated_at": datetime.now(UTC).isoformat(),
         "summary": {
             "books_read": summary.books_read,

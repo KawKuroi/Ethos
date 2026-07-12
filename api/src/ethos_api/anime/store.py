@@ -81,11 +81,12 @@ class SupabaseAnimeStore:
         return {"user_id": f"eq.{user_id}", "category": f"eq.{self._CATEGORY}"}
 
     def _row(self, user_id: str, item: NormalizedItem) -> dict[str, object]:
-        external_id = (
-            manual_external_id(item)
-            if item.source == "manual"
-            else item.work.external_ids.get("anilist", "")
-        )
+        if item.source == "manual":
+            external_id = manual_external_id(item)
+        else:
+            # El id canónico del proveedor de origen (anilist, mal, kitsu…).
+            ids = item.work.external_ids
+            external_id = ids.get(item.source) or next(iter(ids.values()), "")
         return {
             "user_id": user_id,
             "category": self._CATEGORY,
@@ -133,8 +134,8 @@ class SupabaseAnimeStore:
                 {
                     "user_id": user_id,
                     "category": self._CATEGORY,
-                    "provider": "anilist",
-                    "mode": "api",
+                    "provider": status.provider or "anilist",
+                    "mode": status.mode or "api",
                     "status": STATE_TO_DB[status.state],
                     "detail": status.detail,
                     "last_synced_at": (
@@ -150,7 +151,7 @@ class SupabaseAnimeStore:
             self._STATE,
             {
                 **self._category_params(user_id),
-                "select": "status,detail,last_synced_at",
+                "select": "status,detail,last_synced_at,provider,mode",
                 "limit": "1",
             },
         )
@@ -166,4 +167,6 @@ class SupabaseAnimeStore:
             state=DB_TO_STATE.get(row.get("status", ""), SyncState.never),
             synced_at=synced_at,
             detail=row.get("detail"),
+            provider=row.get("provider"),
+            mode=row.get("mode"),
         )

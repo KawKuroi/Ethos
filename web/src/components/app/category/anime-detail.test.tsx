@@ -22,8 +22,9 @@ vi.mock("@/lib/use-anime-source", () => ({
 vi.mock("@/lib/api", () => ({
   getContextText: () => Promise.resolve("{}"),
   downloadContext: () => Promise.resolve(),
-  refreshAniList: () => Promise.resolve(),
-  connectAniList: () => Promise.resolve(),
+  refreshSource: () => Promise.resolve(),
+  connectSource: () => Promise.resolve(),
+  importFile: () => Promise.resolve({}),
   listManualItems: () => Promise.resolve([]),
   addManualItem: () => Promise.resolve({}),
   deleteManualItem: () => Promise.resolve(),
@@ -33,6 +34,8 @@ const FRESH: AnimeSource = {
   state: "fresh",
   synced_at: "2026-07-05T09:00:00Z",
   detail: null,
+  provider: "anilist",
+  mode: "api",
   summary: {
     anime_watched: 42,
     manga_read: 7,
@@ -63,15 +66,32 @@ describe("AnimeDetail", () => {
     expect(screen.getByText("One Piece")).toBeInTheDocument();
     expect(screen.getByText("episodios vistos")).toBeInTheDocument();
     expect(screen.getByText("nota media")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /cambiar de fuente/i }),
+    ).toBeInTheDocument();
   });
 
-  it("ofrece conectar AniList cuando no hay fuente", () => {
-    mocks.source = { state: "never", synced_at: null, detail: null, summary: null };
+  it("reporta el proveedor real de la fuente (MyAnimeList)", () => {
+    mocks.source = { ...FRESH, provider: "mal" };
+    render(<AnimeDetail />);
+    expect(screen.getByText("MyAnimeList")).toBeInTheDocument();
+  });
+
+  it("ofrece el selector de proveedores cuando no hay fuente", () => {
+    mocks.source = {
+      state: "never",
+      synced_at: null,
+      detail: null,
+      provider: null,
+      mode: null,
+      summary: null,
+    };
     render(<AnimeDetail />);
     expect(screen.getByText(/conecta tu anime y manga/i)).toBeInTheDocument();
-    expect(
-      screen.getByLabelText(/nombre de usuario de anilist/i),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /anilist/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /myanimelist/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /kitsu/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/tu usuario de anilist/i)).toBeInTheDocument();
   });
 
   it("guía cuando las listas son privadas", () => {
@@ -79,6 +99,8 @@ describe("AnimeDetail", () => {
       state: "private",
       synced_at: null,
       detail: "Tu usuario de AniList no existe o sus listas son privadas",
+      provider: "anilist",
+      mode: "api",
       summary: null,
     };
     render(<AnimeDetail />);

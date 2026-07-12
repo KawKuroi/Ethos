@@ -38,6 +38,8 @@ class SourceStatusOut(BaseModel):
     state: SyncState
     synced_at: datetime | None
     detail: str | None
+    provider: str | None
+    mode: str | None
     persona_name: str | None
     summary: GamesSummary | None
 
@@ -123,6 +125,8 @@ def games_status(user_id: CurrentUserId, store: GamesStoreDep) -> SourceStatusOu
         state=source.state,
         synced_at=source.synced_at,
         detail=source.detail,
+        provider=source.provider,
+        mode=source.mode,
         persona_name=profile.persona_name if profile else None,
         summary=summary,
     )

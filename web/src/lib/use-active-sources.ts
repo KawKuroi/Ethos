@@ -1,5 +1,6 @@
 "use client";
 
+import { providerName } from "@/components/app/category/providers";
 import type { GamesSummary } from "@/lib/api";
 import { useAnimeSource } from "@/lib/use-anime-source";
 import { useBooksSource } from "@/lib/use-books-source";
@@ -51,6 +52,18 @@ function fmt(n: number): string {
   return Math.round(n).toLocaleString("es-ES");
 }
 
+// Proveedor y modo reales de la fuente (multi-proveedor, D62), con el
+// proveedor inicial de la categoría como fallback.
+function providerLabel(id: string | null | undefined, fallback: string): string {
+  return providerName(id) ?? fallback;
+}
+
+function modeLabel(mode: string | null | undefined, fallback: "API" | "Import") {
+  if (mode === "import") return "Import" as const;
+  if (mode === "api") return "API" as const;
+  return fallback;
+}
+
 export function useActiveSources(): ActiveSourcesState {
   const games = useGamesSource();
   const music = useMusicSource();
@@ -70,8 +83,8 @@ export function useActiveSources(): ActiveSourcesState {
       name: "Juegos",
       initial: "J",
       accent: "#3b82c4",
-      provider: "Steam",
-      modeLabel: "API",
+      provider: providerLabel(games.source?.provider, "Steam"),
+      modeLabel: modeLabel(games.source?.mode, "API"),
       live: isLive(games.source?.state),
       syncing: games.source?.state === "syncing",
       heroValue: gamesSummary?.hours ?? 0,
@@ -83,8 +96,8 @@ export function useActiveSources(): ActiveSourcesState {
       name: "Música",
       initial: "M",
       accent: "#d8543f",
-      provider: "ListenBrainz",
-      modeLabel: "API",
+      provider: providerLabel(music.source?.provider, "ListenBrainz"),
+      modeLabel: modeLabel(music.source?.mode, "API"),
       live: isLive(music.source?.state),
       syncing: music.source?.state === "syncing",
       heroValue: musicSummary?.scrobbles_total ?? 0,
@@ -96,8 +109,8 @@ export function useActiveSources(): ActiveSourcesState {
       name: "Cine y TV",
       initial: "C",
       accent: "#8b5cf6",
-      provider: "Trakt",
-      modeLabel: "API",
+      provider: providerLabel(film.source?.provider, "Trakt"),
+      modeLabel: modeLabel(film.source?.mode, "API"),
       live: isLive(film.source?.state),
       syncing: film.source?.state === "syncing",
       heroValue: filmSummary?.hours ?? 0,
@@ -111,8 +124,8 @@ export function useActiveSources(): ActiveSourcesState {
       name: "Anime y manga",
       initial: "A",
       accent: "#e0883c",
-      provider: "AniList",
-      modeLabel: "API",
+      provider: providerLabel(anime.source?.provider, "AniList"),
+      modeLabel: modeLabel(anime.source?.mode, "API"),
       live: isLive(anime.source?.state),
       syncing: anime.source?.state === "syncing",
       heroValue: animeSummary?.episodes_watched ?? 0,
@@ -126,8 +139,8 @@ export function useActiveSources(): ActiveSourcesState {
       name: "Libros",
       initial: "L",
       accent: "#2f9e6b",
-      provider: "Goodreads",
-      modeLabel: "Import",
+      provider: providerLabel(books.source?.provider, "Goodreads"),
+      modeLabel: modeLabel(books.source?.mode, "Import"),
       live: isLive(books.source?.state),
       syncing: books.source?.state === "syncing",
       heroValue: booksSummary?.books_read ?? 0,

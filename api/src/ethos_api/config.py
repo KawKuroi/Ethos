@@ -28,8 +28,9 @@ class Settings(BaseSettings):
     # Tamaño máximo del cuerpo de una petición, en bytes.
     max_body_bytes: int = 64_000
     # Tamaño máximo para las rutas de import de archivos (`/imports` y
-    # `/sources/*/import`); un export de Goodreads puede superar los 64 KB.
-    max_import_bytes: int = 5_000_000
+    # `/sources/*/import`); el historial ampliado de Spotify llega en JSON de
+    # varios MB por archivo.
+    max_import_bytes: int = 25_000_000
 
     # Credenciales de servicios externos (vacías por defecto; se inyectan
     # por entorno en cada despliegue).
@@ -45,6 +46,12 @@ class Settings(BaseSettings):
     # client_id de la app de Trakt (categoría Cine y TV); lee datos públicos
     # de un usuario sin OAuth (header trakt-api-key), D41.
     trakt_client_id: SecretStr = SecretStr("")
+    # API key de la app de Last.fm (música); lee los scrobbles públicos de un
+    # usuario sin OAuth (D62).
+    lastfm_api_key: SecretStr = SecretStr("")
+    # client id de la app de MyAnimeList (anime); lee la lista pública de un
+    # usuario con el header X-MAL-CLIENT-ID, sin OAuth (D62).
+    mal_client_id: SecretStr = SecretStr("")
 
     # OAuth 2.1 del MCP (D56). URL pública del API (issuer del authorization
     # server) y de la web (página de consentimiento). Vacías en local: el

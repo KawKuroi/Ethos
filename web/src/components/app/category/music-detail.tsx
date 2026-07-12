@@ -4,17 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import {
-  refreshListenBrainz,
+  refreshSource,
   type MusicSource,
   type MusicSummary,
 } from "@/lib/api";
 import { fmtInt as fmt, relativeTime } from "@/lib/format";
 import { useAutoReload } from "@/lib/use-source";
 import { useMusicSource } from "@/lib/use-music-source";
-import { ConnectListenBrainzForm } from "../connect-listenbrainz";
+import { ConnectHub } from "../connect-hub";
 import { LoadingState } from "../loading-state";
 import { ContextDownloadModal } from "./context-modal";
 import { CATEGORY_DETAIL } from "./data";
+import { providerName } from "./providers";
 import styles from "./category.module.css";
 
 const MUSIC = CATEGORY_DETAIL.music;
@@ -26,7 +27,7 @@ function accentVar(): CSSProperties {
 function mcpPreview(): string {
   return [
     "// Tu IA descubre y llama la herramienta",
-    'ethos.context({ tool: "music.*", ask: "más escuchadas este mes" })',
+    'ethos.context({ tool: "music_*", ask: "más escuchadas este mes" })',
     "",
     "→ 200 OK · contexto acotado servido en vivo",
     "  { provider, summary, top_artists, top_tracks }",
@@ -86,12 +87,15 @@ function ConnectedView({
 }) {
   const [refreshing, setRefreshing] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [hubOpen, setHubOpen] = useState(false);
+  const provider = source.provider ?? "listenbrainz";
+  const isImport = source.mode === "import";
 
   async function refresh() {
     if (refreshing) return;
     setRefreshing(true);
     try {
-      await refreshListenBrainz();
+      await refreshSource(provider);
     } finally {
       setRefreshing(false);
       onRefresh();
@@ -113,9 +117,18 @@ function ConnectedView({
       <Header
         actions={
           <>
-            <button type="button" className={styles.btnGhost} onClick={refresh}>
-              {refreshing ? <span className={styles.spin} /> : null}
-              {refreshing ? "Sincronizando…" : "Refrescar"}
+            {!isImport && (
+              <button type="button" className={styles.btnGhost} onClick={refresh}>
+                {refreshing ? <span className={styles.spin} /> : null}
+                {refreshing ? "Sincronizando…" : "Refrescar"}
+              </button>
+            )}
+            <button
+              type="button"
+              className={styles.btnGhost}
+              onClick={() => setHubOpen((v) => !v)}
+            >
+              {isImport ? "Actualizar o cambiar fuente" : "Cambiar de fuente"}
             </button>
             <button type="button" className={styles.btnPrimary} onClick={() => setModalOpen(true)}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -135,14 +148,35 @@ function ConnectedView({
         </span>
         <span className={styles.stripSep} />
         <span className={styles.stripItem}>
-          Proveedor <span className={styles.provider}>ListenBrainz</span>
+          Proveedor{" "}
+          <span className={styles.provider}>
+            {providerName(provider) ?? "ListenBrainz"}
+          </span>
         </span>
         <span className={styles.stripItem}>
-          Modo <span className={styles.stripStrong}>API · en vivo</span>
+          Modo{" "}
+          <span className={styles.stripStrong}>
+            {isImport ? "Import · manual" : "API · en vivo"}
+          </span>
         </span>
         <span className={styles.stripGrow} />
         <span className={styles.stripItem}>Actualizado {relativeTime(source.synced_at)}</span>
       </div>
+
+      {hubOpen && (
+        <div className={styles.section}>
+          <div className={styles.eyebrow}>Tu fuente de música</div>
+          <ConnectHub
+            slug="music"
+            currentProvider={provider}
+            className={styles.btnPrimary}
+            onConnected={() => {
+              setHubOpen(false);
+              onRefresh();
+            }}
+          />
+        </div>
+      )}
 
       <div className={styles.statBand}>
         <div className={styles.statHero}>
@@ -228,11 +262,11 @@ function ConnectView({
         <p className={styles.soonNote}>
           {hadError
             ? (detail ??
-              "El último intento de sincronizar falló. Revisa tu usuario y vuelve a conectar.")
-            : "Escribe tu nombre de usuario público de ListenBrainz para traer tus escuchas, artistas y canciones. No pedimos tu contraseña."}
+              "El último intento de sincronizar falló. Revisa tu fuente y vuelve a conectar.")
+            : "Elige tu proveedor: por API con tu usuario público, o subiendo tu export. Nunca pedimos tu contraseña."}
         </p>
         <div style={{ marginTop: "20px" }}>
-          <ConnectListenBrainzForm className={styles.btnPrimary} onConnected={onConnected} />
+          <ConnectHub slug="music" className={styles.btnPrimary} onConnected={onConnected} />
         </div>
       </div>
     </div>

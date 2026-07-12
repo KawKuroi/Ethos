@@ -25,6 +25,8 @@ class EventStore(Protocol):
 
     def append_events(self, user_id: str, events: list[NormalizedEvent]) -> None: ...
 
+    def replace_events(self, user_id: str, events: list[NormalizedEvent]) -> None: ...
+
     def events_for_user(self, user_id: str) -> list[NormalizedEvent]: ...
 
     def latest_occurred_at(self, user_id: str) -> datetime | None: ...
@@ -46,6 +48,11 @@ class InMemoryEventStore:
         bucket.extend(events)
         # Del más reciente al más antiguo, como los espera el resumen.
         bucket.sort(key=lambda e: e.occurred_at, reverse=True)
+
+    def replace_events(self, user_id: str, events: list[NormalizedEvent]) -> None:
+        # Un import reemplaza el conjunto (una fuente activa por categoría, D4).
+        self._events[user_id] = []
+        self.append_events(user_id, events)
 
     def events_for_user(self, user_id: str) -> list[NormalizedEvent]:
         return list(self._events.get(user_id, []))
@@ -74,19 +81,27 @@ class SupabaseEventStore:
     def _category_params(self, user_id: str) -> dict[str, str]:
         return {"user_id": f"eq.{user_id}", "category": f"eq.{self._CATEGORY}"}
 
+    # Tamaño de lote de inserción: un import grande (Spotify) no debe viajar
+    # en un solo POST a PostgREST.
+    _INSERT_CHUNK = 1000
+
     def append_events(self, user_id: str, events: list[NormalizedEvent]) -> None:
-        self._rest.insert(
-            self._EVENTS,
-            [
-                {
-                    "user_id": user_id,
-                    "category": self._CATEGORY,
-                    "occurred_at": event.occurred_at.isoformat(),
-                    "payload": event.payload,
-                }
-                for event in events
-            ],
-        )
+        rows = [
+            {
+                "user_id": user_id,
+                "category": self._CATEGORY,
+                "occurred_at": event.occurred_at.isoformat(),
+                "payload": event.payload,
+            }
+            for event in events
+        ]
+        for start in range(0, len(rows), self._INSERT_CHUNK):
+            self._rest.insert(self._EVENTS, rows[start : start + self._INSERT_CHUNK])
+
+    def replace_events(self, user_id: str, events: list[NormalizedEvent]) -> None:
+        # Un import reemplaza el conjunto (una fuente activa por categoría, D4).
+        self._rest.delete(self._EVENTS, self._category_params(user_id))
+        self.append_events(user_id, events)
 
     def events_for_user(self, user_id: str) -> list[NormalizedEvent]:
         rows = self._rest.select(
@@ -97,12 +112,14 @@ class SupabaseEventStore:
                 "order": "occurred_at.desc",
             },
         )
+        # El origen real vive en source_state.provider (multi-proveedor).
+        source = self.status_for_user(user_id).provider or "listenbrainz"
         return [
             NormalizedEvent(
                 category=Category.music,
                 occurred_at=datetime.fromisoformat(row["occurred_at"]),
                 payload=row["payload"],
-                source="listenbrainz",
+                source=source,
             )
             for row in rows
         ]
@@ -126,8 +143,8 @@ class SupabaseEventStore:
                 {
                     "user_id": user_id,
                     "category": self._CATEGORY,
-                    "provider": "listenbrainz",
-                    "mode": "api",
+                    "provider": status.provider or "listenbrainz",
+                    "mode": status.mode or "api",
                     "status": STATE_TO_DB[status.state],
                     "detail": status.detail,
                     "last_synced_at": (
@@ -143,7 +160,7 @@ class SupabaseEventStore:
             self._STATE,
             {
                 **self._category_params(user_id),
-                "select": "status,detail,last_synced_at",
+                "select": "status,detail,last_synced_at,provider,mode",
                 "limit": "1",
             },
         )
@@ -159,4 +176,6 @@ class SupabaseEventStore:
             state=DB_TO_STATE.get(row.get("status", ""), SyncState.never),
             synced_at=synced_at,
             detail=row.get("detail"),
+            provider=row.get("provider"),
+            mode=row.get("mode"),
         )

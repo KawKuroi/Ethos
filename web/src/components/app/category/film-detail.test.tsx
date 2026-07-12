@@ -22,8 +22,9 @@ vi.mock("@/lib/use-film-source", () => ({
 vi.mock("@/lib/api", () => ({
   getContextText: () => Promise.resolve("{}"),
   downloadContext: () => Promise.resolve(),
-  refreshTrakt: () => Promise.resolve(),
-  connectTrakt: () => Promise.resolve(),
+  refreshSource: () => Promise.resolve(),
+  connectSource: () => Promise.resolve(),
+  importFile: () => Promise.resolve({}),
   listManualItems: () => Promise.resolve([]),
   addManualItem: () => Promise.resolve({}),
   deleteManualItem: () => Promise.resolve(),
@@ -33,6 +34,8 @@ const FRESH: FilmSource = {
   state: "fresh",
   synced_at: "2026-07-05T09:00:00Z",
   detail: null,
+  provider: "trakt",
+  mode: "api",
   summary: {
     movies_watched: 84,
     shows_watched: 12,
@@ -63,15 +66,36 @@ describe("FilmDetail", () => {
     expect(
       screen.getByRole("button", { name: /descargar contexto/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /cambiar de fuente/i }),
+    ).toBeInTheDocument();
   });
 
-  it("ofrece conectar Trakt cuando no hay fuente", () => {
-    mocks.source = { state: "never", synced_at: null, detail: null, summary: null };
+  it("una fuente de import (Letterboxd) muestra su modo sin refrescar", () => {
+    mocks.source = { ...FRESH, provider: "letterboxd", mode: "import" };
+    render(<FilmDetail />);
+    expect(screen.getByText("Letterboxd")).toBeInTheDocument();
+    expect(screen.getByText(/import · manual/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /refrescar/i })).toBeNull();
+  });
+
+  it("ofrece el selector de proveedores cuando no hay fuente", () => {
+    mocks.source = {
+      state: "never",
+      synced_at: null,
+      detail: null,
+      provider: null,
+      mode: null,
+      summary: null,
+    };
     render(<FilmDetail />);
     expect(screen.getByText(/conecta tu cine y series/i)).toBeInTheDocument();
-    expect(
-      screen.getByLabelText(/nombre de usuario de trakt/i),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /trakt/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /letterboxd/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /imdb/i })).toBeInTheDocument();
+    // TMDB aún no es conectable: aparece deshabilitado como "pronto".
+    expect(screen.getByRole("radio", { name: /tmdb/i })).toBeDisabled();
+    expect(screen.getByLabelText(/tu usuario de trakt/i)).toBeInTheDocument();
   });
 
   it("guía cuando el perfil de Trakt es privado", () => {
@@ -79,19 +103,26 @@ describe("FilmDetail", () => {
       state: "private",
       synced_at: null,
       detail: "Tu perfil de Trakt es privado o el usuario no existe",
+      provider: "trakt",
+      mode: "api",
       summary: null,
     };
     render(<FilmDetail />);
     expect(
       screen.getByText(/tu perfil de trakt es privado/i),
     ).toBeInTheDocument();
-    expect(
-      screen.getByLabelText(/nombre de usuario de trakt/i),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/tu usuario de trakt/i)).toBeInTheDocument();
   });
 
   it("muestra el estado sincronizando", () => {
-    mocks.source = { state: "syncing", synced_at: null, detail: null, summary: null };
+    mocks.source = {
+      state: "syncing",
+      synced_at: null,
+      detail: null,
+      provider: "trakt",
+      mode: "api",
+      summary: null,
+    };
     render(<FilmDetail />);
     expect(screen.getByText(/sincronizando lo que has visto/i)).toBeInTheDocument();
   });

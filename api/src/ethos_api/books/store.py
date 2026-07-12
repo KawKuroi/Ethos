@@ -81,11 +81,13 @@ class SupabaseBooksStore:
         return {"user_id": f"eq.{user_id}", "category": f"eq.{self._CATEGORY}"}
 
     def _row(self, user_id: str, item: NormalizedItem) -> dict[str, object]:
-        external_id = (
-            manual_external_id(item)
-            if item.source == "manual"
-            else item.work.external_ids.get("goodreads", "")
-        )
+        if item.source == "manual":
+            external_id = manual_external_id(item)
+        else:
+            # El id canónico del proveedor de origen (goodreads, storygraph,
+            # hardcover, openlibrary…); si no dejó uno, el primero disponible.
+            ids = item.work.external_ids
+            external_id = ids.get(item.source) or next(iter(ids.values()), "")
         return {
             "user_id": user_id,
             "category": self._CATEGORY,
@@ -132,8 +134,8 @@ class SupabaseBooksStore:
                 {
                     "user_id": user_id,
                     "category": self._CATEGORY,
-                    "provider": "goodreads",
-                    "mode": "import",
+                    "provider": status.provider or "goodreads",
+                    "mode": status.mode or "import",
                     "status": STATE_TO_DB[status.state],
                     "detail": status.detail,
                     "last_synced_at": (
@@ -149,7 +151,7 @@ class SupabaseBooksStore:
             self._STATE,
             {
                 **self._category_params(user_id),
-                "select": "status,detail,last_synced_at",
+                "select": "status,detail,last_synced_at,provider,mode",
                 "limit": "1",
             },
         )
@@ -165,4 +167,6 @@ class SupabaseBooksStore:
             state=DB_TO_STATE.get(row.get("status", ""), SyncState.never),
             synced_at=synced_at,
             detail=row.get("detail"),
+            provider=row.get("provider"),
+            mode=row.get("mode"),
         )

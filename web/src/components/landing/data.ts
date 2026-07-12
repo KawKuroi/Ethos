@@ -17,7 +17,8 @@ export const CATS: LandingCategory[] = [
     value: "1.840",
     label: "horas jugadas",
     accent: "#3b82c4",
-    providers: ["Steam", "Xbox", "PlayStation", "GOG"],
+    // GOG se retiró (D62): sin API pública ni export autoservicio.
+    providers: ["Steam", "Xbox", "PlayStation"],
   },
   {
     name: "Música",

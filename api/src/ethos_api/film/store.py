@@ -33,7 +33,7 @@ class FilmStore(Protocol):
 
     def delete_item(self, user_id: str, external_id: str) -> bool: ...
 
-    def set_stats(self, user_id: str, stats: TraktStats) -> None: ...
+    def set_stats(self, user_id: str, stats: TraktStats | None) -> None: ...
 
     def stats_for_user(self, user_id: str) -> TraktStats | None: ...
 
@@ -66,8 +66,12 @@ class InMemoryFilmStore:
         self._items[user_id] = kept
         return len(kept) != len(items)
 
-    def set_stats(self, user_id: str, stats: TraktStats) -> None:
-        self._stats[user_id] = stats
+    def set_stats(self, user_id: str, stats: TraktStats | None) -> None:
+        # None limpia los agregados del proveedor anterior (imports sin stats).
+        if stats is None:
+            self._stats.pop(user_id, None)
+        else:
+            self._stats[user_id] = stats
 
     def stats_for_user(self, user_id: str) -> TraktStats | None:
         return self._stats.get(user_id)
@@ -93,11 +97,13 @@ class SupabaseFilmStore:
         return {"user_id": f"eq.{user_id}", "category": f"eq.{self._CATEGORY}"}
 
     def _row(self, user_id: str, item: NormalizedItem) -> dict[str, object]:
-        external_id = (
-            manual_external_id(item)
-            if item.source == "manual"
-            else item.work.external_ids.get("trakt", "")
-        )
+        if item.source == "manual":
+            external_id = manual_external_id(item)
+        else:
+            # El id canónico del proveedor de origen (trakt, letterboxd, imdb…);
+            # si el conector no dejó uno con su nombre, el primero disponible.
+            ids = item.work.external_ids
+            external_id = ids.get(item.source) or next(iter(ids.values()), "")
         return {
             "user_id": user_id,
             "category": self._CATEGORY,
@@ -135,18 +141,23 @@ class SupabaseFilmStore:
         )
         return [NormalizedItem.model_validate(row["payload"]) for row in rows]
 
-    def set_stats(self, user_id: str, stats: TraktStats) -> None:
+    def set_stats(self, user_id: str, stats: TraktStats | None) -> None:
+        profile = None
+        if stats is not None:
+            profile = {
+                "movies_watched": stats.movies_watched,
+                "movies_minutes": stats.movies_minutes,
+                "shows_watched": stats.shows_watched,
+                "episodes_watched": stats.episodes_watched,
+                "episodes_minutes": stats.episodes_minutes,
+            }
+        # Preserva el proveedor actual: los stats no saben de qué fuente vienen.
+        current = self.status_for_user(user_id)
         self._upsert_state(
             user_id,
-            {
-                "provider_profile": {
-                    "movies_watched": stats.movies_watched,
-                    "movies_minutes": stats.movies_minutes,
-                    "shows_watched": stats.shows_watched,
-                    "episodes_watched": stats.episodes_watched,
-                    "episodes_minutes": stats.episodes_minutes,
-                }
-            },
+            {"provider_profile": profile},
+            provider=current.provider,
+            mode=current.mode,
         )
 
     def stats_for_user(self, user_id: str) -> TraktStats | None:
@@ -175,6 +186,8 @@ class SupabaseFilmStore:
                     status.synced_at.isoformat() if status.synced_at else None
                 ),
             },
+            provider=status.provider,
+            mode=status.mode,
         )
 
     def status_for_user(self, user_id: str) -> SourceStatus:
@@ -182,7 +195,7 @@ class SupabaseFilmStore:
             self._STATE,
             {
                 **self._category_params(user_id),
-                "select": "status,detail,last_synced_at",
+                "select": "status,detail,last_synced_at,provider,mode",
                 "limit": "1",
             },
         )
@@ -196,17 +209,26 @@ class SupabaseFilmStore:
             state=DB_TO_STATE.get(row.get("status", ""), SyncState.never),
             synced_at=synced_at,
             detail=row.get("detail"),
+            provider=row.get("provider"),
+            mode=row.get("mode"),
         )
 
-    def _upsert_state(self, user_id: str, fields: dict[str, Any]) -> None:
+    def _upsert_state(
+        self,
+        user_id: str,
+        fields: dict[str, Any],
+        *,
+        provider: str | None = None,
+        mode: str | None = None,
+    ) -> None:
         self._rest.upsert(
             self._STATE,
             [
                 {
                     "user_id": user_id,
                     "category": self._CATEGORY,
-                    "provider": "trakt",
-                    "mode": "api",
+                    "provider": provider or "trakt",
+                    "mode": mode or "api",
                     **fields,
                 }
             ],

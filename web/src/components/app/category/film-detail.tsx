@@ -4,19 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import {
-  connectTrakt,
-  refreshTrakt,
+  refreshSource,
   type FilmSource,
   type FilmSummary,
 } from "@/lib/api";
 import { fmtInt, relativeTime } from "@/lib/format";
 import { useAutoReload } from "@/lib/use-source";
 import { useFilmSource } from "@/lib/use-film-source";
-import { ConnectUsernameForm } from "../connect-username";
+import { ConnectHub } from "../connect-hub";
 import { LoadingState } from "../loading-state";
 import { ContextDownloadModal } from "./context-modal";
 import { CATEGORY_DETAIL } from "./data";
 import { ManualEntries } from "./manual-entries";
+import { providerName } from "./providers";
 import styles from "./category.module.css";
 
 const FILM = CATEGORY_DETAIL.film;
@@ -28,7 +28,7 @@ function accentVar(): CSSProperties {
 function mcpPreview(): string {
   return [
     "// Tu IA descubre y llama la herramienta",
-    'ethos.context({ tool: "film.*", ask: "más vistas este año" })',
+    'ethos.context({ tool: "film_*", ask: "más vistas este año" })',
     "",
     "→ 200 OK · contexto acotado servido en vivo",
     "  { provider, summary, top_movies, top_shows, recently_watched }",
@@ -137,12 +137,15 @@ function ConnectedView({
 }) {
   const [refreshing, setRefreshing] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [hubOpen, setHubOpen] = useState(false);
+  const provider = source.provider ?? "trakt";
+  const isImport = source.mode === "import";
 
   async function refresh() {
     if (refreshing) return;
     setRefreshing(true);
     try {
-      await refreshTrakt();
+      await refreshSource(provider);
     } finally {
       setRefreshing(false);
       onRefresh();
@@ -164,9 +167,18 @@ function ConnectedView({
       <Header
         actions={
           <>
-            <button type="button" className={styles.btnGhost} onClick={refresh}>
-              {refreshing ? <span className={styles.spin} /> : null}
-              {refreshing ? "Sincronizando…" : "Refrescar"}
+            {!isImport && (
+              <button type="button" className={styles.btnGhost} onClick={refresh}>
+                {refreshing ? <span className={styles.spin} /> : null}
+                {refreshing ? "Sincronizando…" : "Refrescar"}
+              </button>
+            )}
+            <button
+              type="button"
+              className={styles.btnGhost}
+              onClick={() => setHubOpen((v) => !v)}
+            >
+              {isImport ? "Actualizar o cambiar fuente" : "Cambiar de fuente"}
             </button>
             <button type="button" className={styles.btnPrimary} onClick={() => setModalOpen(true)}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -186,14 +198,33 @@ function ConnectedView({
         </span>
         <span className={styles.stripSep} />
         <span className={styles.stripItem}>
-          Proveedor <span className={styles.provider}>Trakt</span>
+          Proveedor{" "}
+          <span className={styles.provider}>{providerName(provider) ?? "Trakt"}</span>
         </span>
         <span className={styles.stripItem}>
-          Modo <span className={styles.stripStrong}>API · en vivo</span>
+          Modo{" "}
+          <span className={styles.stripStrong}>
+            {isImport ? "Import · manual" : "API · en vivo"}
+          </span>
         </span>
         <span className={styles.stripGrow} />
         <span className={styles.stripItem}>Actualizado {relativeTime(source.synced_at)}</span>
       </div>
+
+      {hubOpen && (
+        <div className={styles.section}>
+          <div className={styles.eyebrow}>Tu fuente de cine y series</div>
+          <ConnectHub
+            slug="film"
+            currentProvider={provider}
+            className={styles.btnPrimary}
+            onConnected={() => {
+              setHubOpen(false);
+              onRefresh();
+            }}
+          />
+        </div>
+      )}
 
       <div className={styles.statBand}>
         <div className={styles.statHero}>
@@ -271,18 +302,11 @@ function ConnectView({
         <p className={styles.soonNote}>
           {hadProblem
             ? (detail ??
-              "El último intento de sincronizar falló. Revisa tu usuario y vuelve a conectar.")
-            : "Escribe tu nombre de usuario público de Trakt para traer tus películas y series vistas. No pedimos tu contraseña; tu perfil debe ser público."}
+              "El último intento de sincronizar falló. Revisa tu fuente y vuelve a conectar.")
+            : "Elige tu proveedor: Trakt por API con tu usuario público, o sube tu export de Letterboxd o IMDb. Nunca pedimos tu contraseña."}
         </p>
         <div style={{ marginTop: "20px" }}>
-          <ConnectUsernameForm
-            className={styles.btnPrimary}
-            placeholder="Tu usuario de Trakt"
-            ariaLabel="Nombre de usuario de Trakt"
-            errorText="No se pudo conectar. Revisa tu nombre de usuario de Trakt e inténtalo de nuevo."
-            connect={connectTrakt}
-            onConnected={onConnected}
-          />
+          <ConnectHub slug="film" className={styles.btnPrimary} onConnected={onConnected} />
         </div>
       </div>
     </div>

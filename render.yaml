@@ -39,6 +39,12 @@ services:
         sync: false
       - key: TRAKT_CLIENT_ID
         sync: false
+      # Proveedores alternativos por API (D62): Last.fm y MyAnimeList leen
+      # datos públicos con la key/client id de la app.
+      - key: LASTFM_API_KEY
+        sync: false
+      - key: MAL_CLIENT_ID
+        sync: false
       # Aviso por correo de sugerencias y borrado de cuenta (D52/D53);
       # opcionales: sin ellos se persiste igual, solo no se envía correo.
       - key: SMTP_HOST

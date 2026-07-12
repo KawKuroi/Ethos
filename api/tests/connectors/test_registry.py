@@ -30,16 +30,27 @@ def test_registro_por_defecto_resuelve_conectores() -> None:
     assert registry.get(Category.film, "trakt") is TraktConnector
     assert registry.get(Category.anime, "anilist") is AniListConnector
     assert registry.get(Category.books, "goodreads") is GoodreadsConnector
+    # Catálogo de proveedores alternativos integrado (D62).
     assert registry.providers(Category.games) == ["steam"]
-    assert registry.providers(Category.music) == ["listenbrainz"]
-    assert registry.providers(Category.film) == ["trakt"]
-    assert registry.providers(Category.anime) == ["anilist"]
-    assert registry.providers(Category.books) == ["goodreads"]
+    assert registry.providers(Category.music) == [
+        "applemusic",
+        "lastfm",
+        "listenbrainz",
+        "spotify",
+    ]
+    assert registry.providers(Category.film) == ["imdb", "letterboxd", "trakt"]
+    assert registry.providers(Category.anime) == ["anilist", "kitsu", "mal"]
+    assert registry.providers(Category.books) == [
+        "goodreads",
+        "hardcover",
+        "openlibrary",
+        "storygraph",
+    ]
 
 
 def test_get_inexistente_lanza_lookup_error() -> None:
     with pytest.raises(LookupError):
-        registry.get(Category.anime, "kitsu")
+        registry.get(Category.games, "gog")
 
 
 def test_registro_duplicado_lanza_value_error() -> None:

@@ -46,7 +46,7 @@ def build_games_context(
         }
 
     return {
-        "namespace": "games.*",
+        "namespace": "games_*",
         "provider": "steam",
         "generated_at": datetime.now(UTC).isoformat(),
         "profile": profile_block,

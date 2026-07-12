@@ -21,6 +21,26 @@ https://ethos-steel.vercel.app
 
 ## Activo
 
+**Catálogo de proveedores alternativos integrado (2026-07-11, D62).** Diez
+proveedores nuevos sobre el registry (D21): Last.fm, MyAnimeList, Kitsu,
+Open Library (API por username), Hardcover (API por token) y los imports con
+autodetección de Spotify, Apple Music, Letterboxd, IMDb y StoryGraph. La web
+estrena el selector de proveedor por categoría (ConnectHub) con guía paso a
+paso enlazada y aviso de reemplazo (D4/D5); `provider`/`mode` reales viajan
+en los `GET /sources/<cat>`, los contextos y Fuentes/Inicio. GOG eliminado
+de docs y landing (sin API ni export autoservicio); Xbox, PlayStation y TMDB
+quedan "próximamente" (pendiente del roadmap). Env vars nuevas:
+`LASTFM_API_KEY` y `MAL_CLIENT_ID` — ver `por-revisar.md`.
+
+**MCP conectable de verdad (2026-07-11, D63).** Las tools del MCP se
+renombran a snake_case (`games_summary`, `music_top_artists`,
+`profile_search`…): el separador `.` de D28 violaba el patrón
+`^[a-zA-Z0-9_-]{1,64}$` que exigen los clientes de Claude, así que el conector
+completaba el OAuth pero las tools fallaban. Conectar IA rediseñada: estado
+real vía `GET /mcp-status` con "Comprobar conexión", guía en dos pasos con
+pestañas por cliente (Claude, Claude Code, Cursor, otros) con OAuth como vía
+principal, y el token manual relegado a "Avanzado".
+
 **Pulido de UI (2026-07-07).** Spinners y badges vuelven a animarse
 (keyframes locales por módulo: CSS Modules hasheaba los globales), el tema se
 cambia solo desde Ajustes (aplica a landing + app), el perfil usa el nombre
@@ -64,6 +84,56 @@ producción.
 - Alcance del arranque: backend + infraestructura primero; `/web` después.
 
 ## Bitácora
+
+### 2026-07-11 (catálogo de proveedores alternativos, D62)
+
+- Investigación de viabilidad de los proveedores alternativos de D27 (estado
+  2026): conectables por API Last.fm (key de app), MyAnimeList (client id),
+  Kitsu y Open Library (sin key), Hardcover (token del usuario); conectables
+  por import Spotify (JSON del historial ampliado), Apple Music (CSV de
+  privacy.apple.com), Letterboxd (CSV gratis — el "solo Pro" era SEO spam;
+  confirmado en su zendesk), IMDb (ratings CSV) y StoryGraph (CSV). **GOG
+  eliminado** (sin API ni export autoservicio); Xbox (OpenXBL), PlayStation
+  (NPSSO) y TMDB (3-legged) diferidos como pendiente del roadmap.
+- Backend: 10 conectores nuevos registrados (D21); `SourceStatus` gana
+  `provider`/`mode` (persisten en `source_state`, viajan en los
+  `GET /sources/<cat>` y los contextos); endpoints de conexión nuevos
+  (`/sources/lastfm|mal|kitsu|openlibrary|hardcover[/refresh]`,
+  `/sources/storygraph/import`); import genérico (D49) con firmas nuevas y
+  despacho a música (merge con dedupe, tope 10.000 eventos) y cine (merge por
+  obra entre los CSV de Letterboxd); conectar o importar desconecta al
+  proveedor anterior de la categoría (D4) y su primer refresco reemplaza;
+  `max_import_bytes` a 25 MB; config `LASTFM_API_KEY`/`MAL_CLIENT_ID`
+  (blueprint y `.env.example` actualizados). api 280 tests (90,8%), ruff y
+  mypy en verde.
+- Web: catálogo `CATEGORY_PROVIDERS` con guía paso a paso enlazada por
+  proveedor; `ConnectHub` (selector + alta por username/token/import + aviso
+  de reemplazo); los cuatro detalles (música, cine, anime, libros) lo usan al
+  conectar y para "Cambiar de fuente"; Libros gana refresco API y vista de
+  sincronización; proveedor/modo reales en strips, Fuentes e Inicio;
+  `connectSource`/`refreshSource` genéricos en `lib/api.ts`; GOG fuera de la
+  landing y nota de "en camino" (Xbox/PlayStation) en Juegos. web 94 tests,
+  gates de cobertura, tsc, eslint y build en verde.
+
+### 2026-07-11 (MCP conectable: tools snake_case + Conectar IA guiada, D63)
+
+- Diagnóstico del "no funciona": la cadena OAuth completa se verificó en
+  producción (401 + WWW-Authenticate, discovery, DCR, authorize →
+  consentimiento), pero los nombres de tool con punto (`games.summary`) violan
+  el patrón `^[a-zA-Z0-9_-]{1,64}$` de los clientes de Claude — conectaba y
+  las tools fallaban. Renombradas las 21 tools a `<categoria>_<accion>`;
+  `namespace` de los contextos y previews de la web alineados (`games_*`).
+- `GET /mcp-status` nuevo (sesión de Supabase): `oauth_connected` (access
+  token OAuth vigente, `has_active_access`) y `token_issued` (`has_token`),
+  para que la web muestre estado real.
+- Conectar IA rediseñada: fuera el toggle simulado; tarjeta de estado real con
+  "Comprobar conexión"; tarjeta "Conecta tu cliente" en dos pasos (URL copiable
+  → autorizar) con pestañas Claude (menús exactos de Conectores), Claude Code
+  (`claude mcp add --transport http ethos <url>` copiable), Cursor (JSON de
+  `mcpServers`) y otros; tarjeta "Qué puede hacer tu IA" (solo lectura, KB
+  servidos, revocable); token manual como "Avanzado · token manual".
+- api 224 tests (90,1%), ruff y mypy; web 84 tests, gates de cobertura, tsc,
+  eslint y build en verde.
 
 ### 2026-07-07 (favicon definitivo + SEO del panel)
 

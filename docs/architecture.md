@@ -47,21 +47,32 @@ modo de ingesta y sus `capabilities`. Las capas río abajo (normalización,
 persistencia, MCP, web) resuelven por el registro; añadir una categoría o un
 proveedor es implementar y registrar un conector. (D21)
 
-Catálogo (D27) — proveedor inicial y alternativas visibles en la UI:
+Catálogo (D27, integrado por D62) — proveedores por categoría y su modo
+verificado (investigación 2026-07-11):
 
-| Categoría | Proveedor inicial | Modo | Alternativas |
-|-----------|------------------|------|--------------|
-| Juegos | Steam | API | Xbox (API no oficial), PlayStation (API no oficial), GOG (import) |
-| Música | ListenBrainz | API | Last.fm (API), Spotify (import), Apple Music (import) |
-| Cine y TV | Trakt | API | TMDB (API), Letterboxd (import), IMDb (import) |
-| Anime y manga | AniList | API | MyAnimeList (API), Kitsu (API) |
-| Libros | Goodreads | Import | Hardcover (API), StoryGraph (import), Open Library (API) |
+| Categoría | Proveedores integrados | Diferidos |
+|-----------|------------------------|-----------|
+| Juegos | Steam (API, OpenID) | Xbox (OpenXBL, key del usuario), PlayStation (NPSSO, no oficial) |
+| Música | ListenBrainz (API, username), Last.fm (API, username + `LASTFM_API_KEY`), Spotify (import JSON del historial ampliado), Apple Music (import CSV de privacy.apple.com) | — |
+| Cine y TV | Trakt (API, username), Letterboxd (import CSV, gratis), IMDb (import CSV de ratings) | TMDB (API 3-legged; solo ratings+watchlist) |
+| Anime y manga | AniList (API, username), MyAnimeList (API, username + `MAL_CLIENT_ID`), Kitsu (API, username, sin key) | — |
+| Libros | Goodreads (import CSV), StoryGraph (import CSV), Hardcover (API, token del usuario), Open Library (API, username, reading log público) | — |
 
-Modos según la investigación de fuentes del 2026-07-03 (bitácora en
-`current.md`): descartados de plano Epic y Backloggd (sin API ni export),
-Deezer y Tidal (API cerrada / sin historial) y TV Time (cierra 2026-07-15).
-Xbox y PlayStation dependen de APIs no oficiales (OpenXBL, psn-api):
-funcionales pero revocables.
+Eliminado del catálogo: **GOG** (D62 — sin API pública ni export
+autoservicio; solo un ticket GDPR de semanas). Descartados de plano en la
+investigación del 2026-07-03: Epic y Backloggd (sin API ni export), Deezer y
+Tidal (API cerrada / sin historial) y TV Time (cerró 2026-07-15). Xbox y
+PlayStation dependen de APIs no oficiales (OpenXBL, psn-api): funcionales
+pero revocables; su alta guiada y la de TMDB quedan como tarea siguiente,
+visibles como "próximamente" en el selector de la web.
+
+El alta por proveedor la resuelve la web con un selector por categoría
+(ConnectHub) que muestra la guía paso a paso con enlaces (dónde pedir el
+export, qué ajuste de privacidad activar) y el alta que aplique: username
+público, token del usuario (cifrado, D20) o subida del export al import
+genérico con autodetección (D49). Una sola fuente activa por categoría (D4):
+conectar un proveedor elimina la credencial del anterior y su primer refresco
+o import reemplaza los datos (las entradas a mano se conservan, D51).
 
 Diferidas (fuera del catálogo por D27, se reevaluarán): Lugares (Swarm),
 Comida (Beli, solo import) y Juegos de mesa (BoardGameGeek, solo import).
@@ -93,7 +104,7 @@ Actividad física dejó de ser necesaria al retirarse la categoría (D23/D31).
 - Transporte: streamable-HTTP, con `stateless_http=True` para escalar sin estado de sesión en memoria.
 - Autenticación: token simple por usuario (`eth_live_…`), validado por middleware; endpoint por usuario (`/mcp/u/<id>`). Migrable a OAuth 2.1 más adelante.
 - Expone: un resource de resumen compacto (lo siempre relevante) y tools de consulta parametrizadas (ventana, tipo, límite) sobre datos indexados.
-- Tools con namespace por categoría (D28): `games.top_by_hours`, `music.recent`, `books.currently_reading`, `<categoria>.summary`, …, más `profile.search` global. Mantener el total bajo (~25-30 máximo).
+- Tools con namespace por categoría (D28; separador `_` por D63 — los clientes exigen `^[a-zA-Z0-9_-]{1,64}$`): `games_top_by_hours`, `music_recent`, `books_currently_reading`, `<categoria>_summary`, …, más `profile_search` global. Mantener el total bajo (~25-30 máximo).
 - Cada respuesta informa cuánto contexto viajó (KB servidos vs. tamaño total del contexto de la categoría); la web lo enseña en el playground de Conectar IA.
 - Regla de seguridad: el token con que la IA se autentica ante el MCP nunca se reenvía a las APIs de terceros; las tools usan las credenciales del servidor.
 - Guardrail (D22): las tools que exponen datos del usuario requieren el middleware de token por usuario. Mientras no exista, solo se publican tools no sensibles (hoy `ping`); el endpoint `/mcp` no debe servir datos sin auth.

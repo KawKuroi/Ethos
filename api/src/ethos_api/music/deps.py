@@ -6,8 +6,10 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from ethos_api.config import settings
+from ethos_api.connectors.lastfm.client import LastfmClient
 from ethos_api.connectors.listenbrainz.client import ListenBrainzClient
-from ethos_api.music.service import ListenBrainzApi
+from ethos_api.music.service import LastfmApi, ListenBrainzApi
 from ethos_api.music.store import EventStore, InMemoryEventStore, SupabaseEventStore
 from ethos_api.supabase_rest import get_rest
 
@@ -28,5 +30,11 @@ def get_listenbrainz_client() -> ListenBrainzApi:
     return ListenBrainzClient()
 
 
+def get_lastfm_client() -> LastfmApi:
+    """Cliente real de Last.fm (API key de config, D62); los tests lo sustituyen."""
+    return LastfmClient(settings.lastfm_api_key.get_secret_value())
+
+
 EventStoreDep = Annotated[EventStore, Depends(get_event_store)]
 ListenBrainzClientDep = Annotated[ListenBrainzApi, Depends(get_listenbrainz_client)]
+LastfmClientDep = Annotated[LastfmApi, Depends(get_lastfm_client)]

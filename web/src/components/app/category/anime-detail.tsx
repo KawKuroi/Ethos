@@ -4,19 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import {
-  connectAniList,
-  refreshAniList,
+  refreshSource,
   type AnimeSource,
   type AnimeSummary,
 } from "@/lib/api";
 import { fmtInt, relativeTime } from "@/lib/format";
 import { useAutoReload } from "@/lib/use-source";
 import { useAnimeSource } from "@/lib/use-anime-source";
-import { ConnectUsernameForm } from "../connect-username";
+import { ConnectHub } from "../connect-hub";
 import { LoadingState } from "../loading-state";
 import { ContextDownloadModal } from "./context-modal";
 import { CATEGORY_DETAIL } from "./data";
 import { ManualEntries } from "./manual-entries";
+import { providerName } from "./providers";
 import styles from "./category.module.css";
 
 const ANIME = CATEGORY_DETAIL.anime;
@@ -28,7 +28,7 @@ function accentVar(): CSSProperties {
 function mcpPreview(): string {
   return [
     "// Tu IA descubre y llama la herramienta",
-    'ethos.context({ tool: "anime.*", ask: "mis mejor puntuados" })',
+    'ethos.context({ tool: "anime_*", ask: "mis mejor puntuados" })',
     "",
     "→ 200 OK · contexto acotado servido en vivo",
     "  { provider, summary, top_rated, current }",
@@ -108,12 +108,14 @@ function ConnectedView({
 }) {
   const [refreshing, setRefreshing] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [hubOpen, setHubOpen] = useState(false);
+  const provider = source.provider ?? "anilist";
 
   async function refresh() {
     if (refreshing) return;
     setRefreshing(true);
     try {
-      await refreshAniList();
+      await refreshSource(provider);
     } finally {
       setRefreshing(false);
       onRefresh();
@@ -143,6 +145,13 @@ function ConnectedView({
               {refreshing ? <span className={styles.spin} /> : null}
               {refreshing ? "Sincronizando…" : "Refrescar"}
             </button>
+            <button
+              type="button"
+              className={styles.btnGhost}
+              onClick={() => setHubOpen((v) => !v)}
+            >
+              Cambiar de fuente
+            </button>
             <button type="button" className={styles.btnPrimary} onClick={() => setModalOpen(true)}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 3v11m0 0 4-4m-4 4-4-4" strokeLinecap="round" strokeLinejoin="round" />
@@ -161,7 +170,8 @@ function ConnectedView({
         </span>
         <span className={styles.stripSep} />
         <span className={styles.stripItem}>
-          Proveedor <span className={styles.provider}>AniList</span>
+          Proveedor{" "}
+          <span className={styles.provider}>{providerName(provider) ?? "AniList"}</span>
         </span>
         <span className={styles.stripItem}>
           Modo <span className={styles.stripStrong}>API · en vivo</span>
@@ -169,6 +179,21 @@ function ConnectedView({
         <span className={styles.stripGrow} />
         <span className={styles.stripItem}>Actualizado {relativeTime(source.synced_at)}</span>
       </div>
+
+      {hubOpen && (
+        <div className={styles.section}>
+          <div className={styles.eyebrow}>Tu fuente de anime y manga</div>
+          <ConnectHub
+            slug="anime"
+            currentProvider={provider}
+            className={styles.btnPrimary}
+            onConnected={() => {
+              setHubOpen(false);
+              onRefresh();
+            }}
+          />
+        </div>
+      )}
 
       <div className={styles.statBand}>
         <div className={styles.statHero}>
@@ -245,18 +270,11 @@ function ConnectView({
         <p className={styles.soonNote}>
           {hadProblem
             ? (detail ??
-              "El último intento de sincronizar falló. Revisa tu usuario y vuelve a conectar.")
-            : "Escribe tu nombre de usuario de AniList para traer tus listas de anime y manga. No pedimos tu contraseña; tus listas deben ser públicas."}
+              "El último intento de sincronizar falló. Revisa tu fuente y vuelve a conectar.")
+            : "Elige tu proveedor: AniList, MyAnimeList o Kitsu, con tu usuario público. Nunca pedimos tu contraseña; tus listas deben ser públicas."}
         </p>
         <div style={{ marginTop: "20px" }}>
-          <ConnectUsernameForm
-            className={styles.btnPrimary}
-            placeholder="Tu usuario de AniList"
-            ariaLabel="Nombre de usuario de AniList"
-            errorText="No se pudo conectar. Revisa tu nombre de usuario de AniList e inténtalo de nuevo."
-            connect={connectAniList}
-            onConnected={onConnected}
-          />
+          <ConnectHub slug="anime" className={styles.btnPrimary} onConnected={onConnected} />
         </div>
       </div>
     </div>

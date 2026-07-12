@@ -13,6 +13,9 @@ con aviso (D50). Retirada (D31): Actividad física — sin fuente viable.
 
 ## Pendientes y decisiones por resolver
 
+- Proveedores diferidos de D62: Xbox (OpenXBL con API key del usuario), PlayStation (token NPSSO, no oficial) y TMDB (3-legged, solo ratings+watchlist) — ya visibles como "próximamente" en el selector; cada uno es un conector + alta guiada.
+- D5 completo al cambiar de proveedor: hoy se avisa y se reemplaza (entradas a mano se conservan); falta la opción de conservar el histórico del proveedor anterior como inactivo.
+- Generalizar los endpoints de conexión por proveedor (`POST /sources/{provider}` único despachado por el registry): hoy cada proveedor repite el patrón de router.
 - Categorías diferidas (Lugares, Comida, Juegos de mesa): decidir si alguna se construye ahora que hay lista de interesados (D50).
 - Qué histórico incluye el contexto descargable cuando lleguen los eventos con timestamp (la forma v1 quedó fijada en D34).
 - Resolución de títulos de la wishlist de Steam (D32): candidata a la caché de catálogos globales.

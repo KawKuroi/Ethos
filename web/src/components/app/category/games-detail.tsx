@@ -23,7 +23,7 @@ function accentVar(): CSSProperties {
 function mcpPreview(): string {
   return [
     "// Tu IA descubre y llama la herramienta",
-    'ethos.context({ tool: "games.*", ask: "resumen reciente" })',
+    'ethos.context({ tool: "games_*", ask: "resumen reciente" })',
     "",
     "→ 200 OK · contexto acotado servido en vivo",
     "  { provider, summary, top_by_hours, recently_played, wishlist }",
@@ -267,6 +267,13 @@ function OffView({ state, detail }: { state: GamesSource["state"]; detail: strin
         <div style={{ marginTop: "20px", display: "flex", gap: "10px", justifyContent: "center" }}>
           <ConnectSteamButton className={styles.btnPrimary} />
         </div>
+        {!isPrivate && (
+          <p className={styles.soonNote} style={{ marginTop: "16px" }}>
+            Más proveedores en camino: Xbox (vía OpenXBL con tu propia API
+            key) y PlayStation (vía token NPSSO). GOG quedó descartado: no
+            ofrece API ni export autoservicio.
+          </p>
+        )}
       </div>
     </div>
   );

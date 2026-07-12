@@ -10,10 +10,20 @@ from __future__ import annotations
 from typing import Any
 
 from ethos_api.connectors.anilist.connector import AniListConnector
+from ethos_api.connectors.applemusic.connector import AppleMusicConnector
 from ethos_api.connectors.base import Connector
 from ethos_api.connectors.goodreads.connector import GoodreadsConnector
+from ethos_api.connectors.hardcover.connector import HardcoverConnector
+from ethos_api.connectors.imdb.connector import ImdbConnector
+from ethos_api.connectors.kitsu.connector import KitsuConnector
+from ethos_api.connectors.lastfm.connector import LastfmConnector
+from ethos_api.connectors.letterboxd.connector import LetterboxdConnector
 from ethos_api.connectors.listenbrainz.connector import ListenBrainzConnector
+from ethos_api.connectors.mal.connector import MalConnector
+from ethos_api.connectors.openlibrary.connector import OpenLibraryConnector
+from ethos_api.connectors.spotify.connector import SpotifyConnector
 from ethos_api.connectors.steam.connector import SteamConnector
+from ethos_api.connectors.storygraph.connector import StorygraphConnector
 from ethos_api.connectors.trakt.connector import TraktConnector
 from ethos_api.schema import Category
 
@@ -55,6 +65,16 @@ class ConnectorRegistry:
 registry = ConnectorRegistry()
 registry.register(SteamConnector)
 registry.register(ListenBrainzConnector)
+registry.register(LastfmConnector)
+registry.register(SpotifyConnector)
+registry.register(AppleMusicConnector)
 registry.register(TraktConnector)
+registry.register(LetterboxdConnector)
+registry.register(ImdbConnector)
 registry.register(AniListConnector)
+registry.register(MalConnector)
+registry.register(KitsuConnector)
 registry.register(GoodreadsConnector)
+registry.register(StorygraphConnector)
+registry.register(HardcoverConnector)
+registry.register(OpenLibraryConnector)

@@ -10,12 +10,14 @@ from ethos_api.schema import NormalizedItem
 
 
 def build_film_context(
-    summary: FilmSummary, items: list[NormalizedItem]
+    summary: FilmSummary,
+    items: list[NormalizedItem],
+    provider: str | None = None,
 ) -> dict[str, object]:
     """Arma el contexto de Cine y TV (misma información que sirve el MCP)."""
     return {
-        "namespace": "film.*",
-        "provider": "trakt",
+        "namespace": "film_*",
+        "provider": provider or "trakt",
         "generated_at": datetime.now(UTC).isoformat(),
         "summary": {
             "movies_watched": summary.movies_watched,

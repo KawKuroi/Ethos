@@ -212,7 +212,7 @@ class SupabaseGamesStore:
             self._STATE,
             {
                 **self._category_params(user_id),
-                "select": "status,detail,last_synced_at",
+                "select": "status,detail,last_synced_at,provider,mode",
                 "limit": "1",
             },
         )
@@ -226,6 +226,8 @@ class SupabaseGamesStore:
             state=DB_TO_STATE.get(row.get("status", ""), SyncState.never),
             synced_at=synced_at,
             detail=row.get("detail"),
+            provider=row.get("provider"),
+            mode=row.get("mode"),
         )
 
     def _upsert_state(self, user_id: str, fields: dict[str, Any]) -> None:

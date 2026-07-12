@@ -7,9 +7,13 @@ marca `[x]` conforme lo resuelvas y lo movemos a Hecho.
 
 ## Bloqueantes — configuración que detiene el flujo
 
-Nada pendiente (2026-07-11): keys, env vars, auth, SMTP y el job de purga
-quedaron configurados — ver Hecho. Lo que sigue son verificaciones sin
-prisa.
+- [ ] **`LASTFM_API_KEY` en Render (y `.env` local)** — crea la API key de
+  la app en https://www.last.fm/api/account/create (solo pide el nombre) y
+  ponla en Render. Sin ella, "Conectar Last.fm" fallará al primer refresco
+  (los demás proveedores no se ven afectados).
+- [ ] **`MAL_CLIENT_ID` en Render (y `.env` local)** — crea el client id en
+  https://myanimelist.net/apiconfig (tipo "other", app personal) y ponlo en
+  Render. Sin él, "Conectar MyAnimeList" fallará al primer refresco.
 
 ## Para ir revisando — pruebas y decisiones
 
@@ -17,25 +21,60 @@ prisa.
 
 - [ ] **Juegos / Steam (Fase 1)** — conecta Steam desde Fuentes, espera el
   refresco y revisa Inicio y el Detalle de Juegos con tus datos; en Conectar
-  IA genera el token y prueba `games.summary` desde un cliente MCP; descarga
+  IA genera el token y prueba `games_summary` desde un cliente MCP; descarga
   `games.context.json`.
 - [ ] **Música / ListenBrainz (Fase 2)** — conecta tu usuario público de
   ListenBrainz y revisa escuchas, top artistas y top canciones (últimos 30
   días); comprueba que Inicio muestra la fila activa y Fuentes la lista en
-  "Activas"; prueba `music.top_artists` por MCP y descarga
+  "Activas"; prueba `music_top_artists` por MCP y descarga
   `music.context.json`.
 - [ ] **Cine y TV / Trakt (Fase 3)** — la key ya está en Render: conecta tu
   usuario (perfil público), revisa horas, tops y vistos recientes; prueba
-  `film.top_movies` por MCP y descarga `film.context.json`.
+  `film_top_movies` por MCP y descarga `film.context.json`.
 - [ ] **Anime y manga / AniList (Fase 3)** — sin keys ni OAuth: escribe tu
   usuario de AniList (listas públicas) y revisa episodios, nota media, mejor
-  puntuados y en curso; prueba `anime.top_rated` por MCP y descarga
+  puntuados y en curso; prueba `anime_top_rated` por MCP y descarga
   `anime.context.json`.
 - [ ] **Libros / Goodreads (Fase 3)** — exporta tu biblioteca (My Books →
   Import and export → Export Library), súbela en el Detalle de Libros y
   revisa leídos, páginas, leyendo ahora y autores; prueba
-  `books.currently_reading` por MCP y descarga `books.context.json`. Un
+  `books_currently_reading` por MCP y descarga `books.context.json`. Un
   archivo que no sea el export debe rechazarse con guía (422).
+
+### Proveedores alternativos (D62, 2026-07-11)
+
+- [ ] **Música / Last.fm** — con la key puesta: conecta tu usuario (historial
+  visible en https://www.last.fm/settings/privacy) y revisa los tops; cambia
+  luego a ListenBrainz y confirma que reemplaza los datos y que el refresh de
+  Last.fm responde 404 (proveedor desconectado, D4).
+- [ ] **Música / Spotify (import)** — pide el "Historial de streaming
+  ampliado" en https://www.spotify.com/account/privacy/ (tarda días); cuando
+  llegue, sube un `Streaming_History_Audio_*.json` desde el selector y luego
+  otro: los archivos deben combinarse sin duplicar. Tope: 10.000 escuchas más
+  recientes.
+- [ ] **Música / Apple Music (import)** — pide tus datos en
+  https://privacy.apple.com (Apple Media Services) y sube
+  `Apple Music - Play History Daily Tracks.csv`. El historial viene agregado
+  por día (sin hora exacta): los tops cuentan días con escucha.
+- [ ] **Cine y TV / Letterboxd (import)** — exporta en
+  https://letterboxd.com/settings/data/ (gratis), sube `diary.csv` y después
+  `watched.csv`/`ratings.csv`: deben combinarse por película.
+- [ ] **Cine y TV / IMDb (import)** — exporta tus ratings
+  (https://www.imdb.com/list/ratings → Export, descarga en "Your exports") y
+  súbelo; las horas vistas quedan en 0 (IMDb no las da).
+- [ ] **Anime / MyAnimeList y Kitsu** — con `MAL_CLIENT_ID` puesto: conecta
+  tu usuario de MAL (listas públicas) y revisa el resumen; luego prueba Kitsu
+  (sin key). El selector debe avisar del reemplazo al cambiar.
+- [ ] **Libros / StoryGraph (import)** — exporta en Manage Account → Manage
+  Your Data → Export StoryGraph Library y sube el CSV.
+- [ ] **Libros / Hardcover (API)** — pega tu token de
+  https://hardcover.app/account/api; el token caduca cada 1 de enero
+  (reconectar entonces). Un token inválido debe dejar el estado "privado" con
+  guía.
+- [ ] **Libros / Open Library (API)** — pon tu reading log en público
+  (Settings → Privacy) y conecta tu usuario; sin páginas por libro (la API no
+  las da), así que "páginas leídas" queda en 0.
+- [ ] **Landing** — confirma que Juegos ya no lista GOG como fuente.
 
 ### Flujos de Fase 4
 
@@ -50,11 +89,14 @@ prisa.
 - [ ] **Borrado de cuenta (D53)** — en Ajustes: "Eliminar datos" limpia las
   fuentes; "Eliminar cuenta" muestra el banner con la fecha y "Deshacer" lo
   cancela. El correo de aviso usa el SMTP opcional.
-- [ ] **OAuth del MCP (D56)** — añade el MCP de Ethos a un cliente
-  compatible (p. ej. Claude) SIN token: debe recibir el 401, descubrir el
-  authorization server, registrarse solo y abrirte `/oauth/autorizar` para
-  aprobar. El token legacy `eth_live_` de Conectar IA sigue funcionando en
-  paralelo.
+- [ ] **Conectar el MCP a Claude (D56/D63)** — en claude.ai: Ajustes →
+  Conectores → "Añadir conector personalizado" → pega
+  `https://ethos-api-s10w.onrender.com/mcp/` → Conectar; autoriza en la
+  página de Ethos que se abre y, en un chat con el conector activado,
+  pregunta "¿mis juegos con más horas?" (debe llamar `games_top_by_hours`).
+  Al volver a Conectar IA, pulsa "Comprobar conexión": debe ponerse en verde.
+  La pantalla trae la guía por cliente (Claude, Claude Code, Cursor); el
+  token legacy `eth_live_` sigue funcionando para clientes sin OAuth.
 
 ### Verificación visual en producción
 
@@ -74,9 +116,11 @@ prisa.
 - [ ] **Fuentes** — `/app/fuentes`: resumen y las cinco categorías; con
   todas activas ya no hay grupo "En desarrollo" — confirma que te cuadra
   visualmente.
-- [ ] **Conectar IA** — `/app/conectar-ia`: endpoint y token reales, tres
-  pasos y el playground. Ojo: el playground es demostración con datos de
-  ejemplo (D54, decidido así a propósito).
+- [ ] **Conectar IA** — `/app/conectar-ia` (rediseñada el 2026-07-11):
+  tarjeta de estado real con "Comprobar conexión", guía en dos pasos con
+  pestañas por cliente, token manual en "Avanzado" y el playground. Ojo: el
+  playground es demostración con datos de ejemplo (D54, decidido así a
+  propósito).
 - [ ] **Ayuda y Ajustes** — FAQ, envío de sugerencias real, Perfil con tu
   nombre y correo de la cuenta (edítalo y confirma que el pie de la barra
   lateral se actualiza), Apariencia cambia el tema también en la landing

@@ -105,12 +105,20 @@ export type GamesSource = {
   state: GamesSyncState;
   synced_at: string | null;
   detail: string | null;
+  provider: string | null;
+  mode: string | null;
   persona_name: string | null;
   summary: GamesSummary | null;
 };
 
 export type McpToken = {
   token: string;
+  endpoint: string;
+};
+
+export type McpStatus = {
+  oauth_connected: boolean;
+  token_issued: boolean;
   endpoint: string;
 };
 
@@ -132,6 +140,8 @@ export type MusicSource = {
   state: SyncState;
   synced_at: string | null;
   detail: string | null;
+  provider: string | null;
+  mode: string | null;
   summary: MusicSummary | null;
 };
 
@@ -167,6 +177,8 @@ export type FilmSource = {
   state: SyncState;
   synced_at: string | null;
   detail: string | null;
+  provider: string | null;
+  mode: string | null;
   summary: FilmSummary | null;
 };
 
@@ -198,6 +210,8 @@ export type AnimeSource = {
   state: SyncState;
   synced_at: string | null;
   detail: string | null;
+  provider: string | null;
+  mode: string | null;
   summary: AnimeSummary | null;
 };
 
@@ -232,6 +246,8 @@ export type BooksSource = {
   state: SyncState;
   synced_at: string | null;
   detail: string | null;
+  provider: string | null;
+  mode: string | null;
   summary: BooksSummary | null;
 };
 
@@ -432,6 +448,11 @@ export function issueMcpToken(): Promise<McpToken> {
   return apiJson<McpToken>("/mcp-token", { method: "POST" });
 }
 
+// Estado real de la conexión del MCP: clientes OAuth autorizados y token emitido.
+export function getMcpStatus(): Promise<McpStatus> {
+  return apiJson<McpStatus>("/mcp-status");
+}
+
 // Endpoint del MCP por usuario, construido sin llamar al API.
 export function mcpEndpoint(): string {
   return `${baseUrl()}/mcp/`;
@@ -530,18 +551,57 @@ export function refreshAniList(): Promise<void> {
   return apiFetch("/sources/anilist/refresh", { method: "POST" }).then(() => undefined);
 }
 
-// ===== Libros / import (Goodreads) =====
+// ===== Libros =====
 
 export function getBooksSource(): Promise<BooksSource> {
   return apiJson<BooksSource>("/sources/books");
 }
 
 // Sube un export como texto al import genérico: el backend detecta el
-// proveedor por la firma del archivo (D49) y ejecuta su flujo.
+// proveedor por la firma del archivo (D49/D62) y ejecuta su flujo.
 export function importFile(text: string): Promise<ImportResult> {
   return apiJson<ImportResult>("/imports", {
     method: "POST",
-    headers: { "Content-Type": "text/csv" },
+    headers: { "Content-Type": "text/plain" },
     body: text,
   });
+}
+
+// ===== Conexión genérica por proveedor (D62) =====
+
+// Proveedores que se conectan con un secreto por JSON: username público o,
+// en Hardcover, el token de API del usuario. Steam (OpenID) va aparte.
+const TOKEN_PROVIDERS = new Set(["hardcover"]);
+const SECRET_PROVIDERS = new Set([
+  "listenbrainz",
+  "lastfm",
+  "trakt",
+  "anilist",
+  "mal",
+  "kitsu",
+  "openlibrary",
+  "hardcover",
+]);
+
+// Conecta una fuente por proveedor (guarda el secreto cifrado y encola el
+// primer refresco). El backend desconecta al proveedor anterior (D4).
+export function connectSource(provider: string, secret: string): Promise<void> {
+  if (!SECRET_PROVIDERS.has(provider)) {
+    return Promise.reject(new Error(`Proveedor no conectable: ${provider}`));
+  }
+  const body = TOKEN_PROVIDERS.has(provider)
+    ? { token: secret }
+    : { user_name: secret };
+  return apiFetch(`/sources/${provider}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }).then(() => undefined);
+}
+
+// Encola un refresco de la fuente conectada del proveedor.
+export function refreshSource(provider: string): Promise<void> {
+  return apiFetch(`/sources/${provider}/refresh`, { method: "POST" }).then(
+    () => undefined,
+  );
 }

@@ -23,11 +23,18 @@ class SyncState(StrEnum):
 
 @dataclass
 class SourceStatus:
-    """Estado del refresco de una fuente de un usuario."""
+    """Estado del refresco de una fuente de un usuario.
+
+    `provider` y `mode` identifican la fuente activa de la categoría (D4):
+    con varios proveedores por categoría, la web y los contextos los leen de
+    aquí en vez de asumir el proveedor inicial.
+    """
 
     state: SyncState = SyncState.never
     synced_at: datetime | None = None
     detail: str | None = None
+    provider: str | None = None
+    mode: str | None = None
 
 
 # Mapeo entre SyncState y el enum `status` de source_state (0001/0003).

@@ -10,12 +10,14 @@ from ethos_api.schema import NormalizedEvent
 
 
 def build_music_context(
-    summary: MusicSummary, events: list[NormalizedEvent]
+    summary: MusicSummary,
+    events: list[NormalizedEvent],
+    provider: str | None = None,
 ) -> dict[str, object]:
     """Arma el contexto de música (misma información que sirve el MCP)."""
     return {
-        "namespace": "music.*",
-        "provider": "listenbrainz",
+        "namespace": "music_*",
+        "provider": provider or "listenbrainz",
         "generated_at": datetime.now(UTC).isoformat(),
         "summary": {
             "scrobbles_total": summary.scrobbles_total,

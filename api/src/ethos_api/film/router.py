@@ -36,6 +36,8 @@ class FilmSourceOut(BaseModel):
     state: SyncState
     synced_at: datetime | None
     detail: str | None
+    provider: str | None
+    mode: str | None
     summary: FilmSummary | None
 
 
@@ -107,6 +109,8 @@ def film_status(user_id: CurrentUserId, store: FilmStoreDep) -> FilmSourceOut:
         state=source.state,
         synced_at=source.synced_at,
         detail=source.detail,
+        provider=source.provider,
+        mode=source.mode,
         summary=summary,
     )
 
@@ -118,7 +122,7 @@ def download_film_context(user_id: CurrentUserId, store: FilmStoreDep) -> JSONRe
     if source.state in (SyncState.never, SyncState.syncing):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Aún no hay contexto: conecta Trakt y espera el refresco",
+            detail="Aún no hay contexto: conecta una fuente y espera el refresco",
         )
     items = store.items_for_user(user_id)
     summary = build_film_summary(
@@ -127,6 +131,6 @@ def download_film_context(user_id: CurrentUserId, store: FilmStoreDep) -> JSONRe
         synced_at=source.synced_at,
     )
     return JSONResponse(
-        content=build_film_context(summary, items),
+        content=build_film_context(summary, items, provider=source.provider),
         headers={"Content-Disposition": 'attachment; filename="film.context.json"'},
     )

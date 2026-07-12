@@ -10,12 +10,14 @@ from ethos_api.schema import NormalizedItem
 
 
 def build_anime_context(
-    summary: AnimeSummary, items: list[NormalizedItem]
+    summary: AnimeSummary,
+    items: list[NormalizedItem],
+    provider: str | None = None,
 ) -> dict[str, object]:
     """Arma el contexto de Anime y manga (misma información que sirve el MCP)."""
     return {
-        "namespace": "anime.*",
-        "provider": "anilist",
+        "namespace": "anime_*",
+        "provider": provider or "anilist",
         "generated_at": datetime.now(UTC).isoformat(),
         "summary": {
             "anime_watched": summary.anime_watched,

@@ -3,14 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
-import type { BooksSource, BooksSummary } from "@/lib/api";
+import { refreshSource, type BooksSource, type BooksSummary } from "@/lib/api";
 import { fmtInt, relativeTime } from "@/lib/format";
+import { useAutoReload } from "@/lib/use-source";
 import { useBooksSource } from "@/lib/use-books-source";
-import { ImportPanel } from "../import-panel";
+import { ConnectHub } from "../connect-hub";
 import { LoadingState } from "../loading-state";
 import { ContextDownloadModal } from "./context-modal";
 import { CATEGORY_DETAIL } from "./data";
 import { ManualEntries } from "./manual-entries";
+import { providerName } from "./providers";
 import styles from "./category.module.css";
 
 const BOOKS = CATEGORY_DETAIL.books;
@@ -22,7 +24,7 @@ function accentVar(): CSSProperties {
 function mcpPreview(): string {
   return [
     "// Tu IA descubre y llama la herramienta",
-    'ethos.context({ tool: "books.*", ask: "qué estoy leyendo" })',
+    'ethos.context({ tool: "books_*", ask: "qué estoy leyendo" })',
     "",
     "→ 200 OK · contexto acotado servido en vivo",
     "  { provider, summary, currently_reading, top_authors, recent_reads }",
@@ -121,7 +123,21 @@ function ConnectedView({
   onImported: () => void;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
+  const [hubOpen, setHubOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const provider = source.provider ?? "goodreads";
+  const isImport = source.mode !== "api";
+
+  async function refresh() {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await refreshSource(provider);
+    } finally {
+      setRefreshing(false);
+      onImported();
+    }
+  }
 
   const stats = [
     { value: fmtInt(summary.pages_read), label: "páginas leídas" },
@@ -138,12 +154,18 @@ function ConnectedView({
       <Header
         actions={
           <>
+            {!isImport && (
+              <button type="button" className={styles.btnGhost} onClick={refresh}>
+                {refreshing ? <span className={styles.spin} /> : null}
+                {refreshing ? "Sincronizando…" : "Refrescar"}
+              </button>
+            )}
             <button
               type="button"
               className={styles.btnGhost}
-              onClick={() => setImportOpen((v) => !v)}
+              onClick={() => setHubOpen((v) => !v)}
             >
-              Volver a importar
+              {isImport ? "Actualizar o cambiar fuente" : "Cambiar de fuente"}
             </button>
             <button type="button" className={styles.btnPrimary} onClick={() => setModalOpen(true)}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -163,28 +185,38 @@ function ConnectedView({
         </span>
         <span className={styles.stripSep} />
         <span className={styles.stripItem}>
-          Proveedor <span className={styles.provider}>Goodreads</span>
+          Proveedor{" "}
+          <span className={styles.provider}>
+            {providerName(provider) ?? "Goodreads"}
+          </span>
         </span>
         <span className={styles.stripItem}>
-          Modo <span className={styles.stripStrong}>Import · manual</span>
+          Modo{" "}
+          <span className={styles.stripStrong}>
+            {isImport ? "Import · manual" : "API · en vivo"}
+          </span>
         </span>
         <span className={styles.stripGrow} />
         <span className={styles.stripItem}>
-          Importado {relativeTime(source.synced_at)}
+          {isImport ? "Importado" : "Actualizado"} {relativeTime(source.synced_at)}
         </span>
       </div>
 
-      {importOpen && (
+      {hubOpen && (
         <div className={styles.section}>
-          <div className={styles.eyebrow}>Actualizar tus libros</div>
-          <p className={styles.recentSub} style={{ marginBottom: "12px" }}>
-            El refresco de un import es volver a subir el export: reemplaza tus
-            libros con el archivo nuevo.
-          </p>
-          <ImportPanel
+          <div className={styles.eyebrow}>Tu fuente de libros</div>
+          {isImport && (
+            <p className={styles.recentSub} style={{ marginBottom: "12px" }}>
+              El refresco de un import es volver a subir el export: reemplaza
+              tus libros con el archivo nuevo.
+            </p>
+          )}
+          <ConnectHub
+            slug="books"
+            currentProvider={provider}
             className={styles.btnPrimary}
-            onImported={() => {
-              setImportOpen(false);
+            onConnected={() => {
+              setHubOpen(false);
               onImported();
             }}
           />
@@ -224,7 +256,7 @@ function ConnectedView({
   );
 }
 
-function ImportView({ onImported }: { onImported: () => void }) {
+function SyncingView({ onReload }: { onReload: () => void }) {
   return (
     <div className="eth-screen" style={accentVar()}>
       <Link href="/app" className={styles.back}>
@@ -232,13 +264,46 @@ function ImportView({ onImported }: { onImported: () => void }) {
       </Link>
       <Header />
       <div className={styles.soon}>
-        <div className={styles.soonTitle}>Sube tus libros</div>
+        <div className={styles.soonTitle}>Sincronizando tus libros…</div>
         <p className={styles.soonNote}>
-          Goodreads no tiene API pública: exporta tu biblioteca y súbela aquí.
-          Leemos el CSV, lo normalizamos y tu IA podrá consultarlo.
+          Estamos trayendo tu biblioteca. Esto tarda unos segundos y la
+          pantalla se actualizará sola.
+        </p>
+        <div style={{ marginTop: "20px", display: "flex", gap: "10px", justifyContent: "center" }}>
+          <button type="button" className={styles.btnPrimary} onClick={onReload}>
+            Actualizar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConnectView({
+  onConnected,
+  detail,
+  hadProblem,
+}: {
+  onConnected: () => void;
+  detail: string | null;
+  hadProblem: boolean;
+}) {
+  return (
+    <div className="eth-screen" style={accentVar()}>
+      <Link href="/app" className={styles.back}>
+        ← Inicio
+      </Link>
+      <Header />
+      <div className={styles.soon}>
+        <div className={styles.soonTitle}>Conecta tus libros</div>
+        <p className={styles.soonNote}>
+          {hadProblem
+            ? (detail ??
+              "El último intento de sincronizar falló. Revisa tu fuente y vuelve a conectar.")
+            : "Elige tu proveedor: sube tu export de Goodreads o StoryGraph, o conecta Hardcover u Open Library por API. Nunca pedimos tu contraseña."}
         </p>
         <div style={{ marginTop: "20px" }}>
-          <ImportPanel className={styles.btnPrimary} onImported={onImported} />
+          <ConnectHub slug="books" className={styles.btnPrimary} onConnected={onConnected} />
         </div>
       </div>
     </div>
@@ -247,8 +312,17 @@ function ImportView({ onImported }: { onImported: () => void }) {
 
 export function BooksDetail() {
   const { loading, source, error, reload, silentReload } = useBooksSource();
+  const [justConnected, setJustConnected] = useState(false);
+  // Las fuentes API de libros refrescan en segundo plano: la vista se
+  // actualiza sola hasta llegar el resumen o un estado terminal.
+  const state = source?.state;
+  const settled =
+    (state === "fresh" && !!source?.summary) ||
+    state === "private" ||
+    state === "error";
+  useAutoReload((justConnected || state === "syncing") && !settled, silentReload);
 
-  if (loading) {
+  if (loading && !justConnected) {
     return (
       <div className="eth-screen">
         <Link href="/app" className={styles.back}>
@@ -259,7 +333,7 @@ export function BooksDetail() {
     );
   }
 
-  if (error || !source) {
+  if (!justConnected && (error || !source)) {
     return (
       <div className="eth-screen">
         <Link href="/app" className={styles.back}>
@@ -272,11 +346,30 @@ export function BooksDetail() {
     );
   }
 
-  // silentReload: reimportar o editar entradas sustituye las cifras en sitio,
-  // sin volver a pasar por la pantalla de carga. El primer import sí usa
-  // reload: la transición a la vista conectada necesita su estado de carga.
-  if (source.state === "fresh" && source.summary) {
+  // silentReload: reimportar, refrescar o editar entradas sustituye las
+  // cifras en sitio, sin volver a pasar por la pantalla de carga. La primera
+  // conexión sí usa reload: la transición necesita su estado de carga.
+  if (source?.state === "fresh" && source.summary) {
     return <ConnectedView source={source} summary={source.summary} onImported={silentReload} />;
   }
-  return <ImportView onImported={reload} />;
+  if (state === "syncing" || (justConnected && (!state || state === "never"))) {
+    return (
+      <SyncingView
+        onReload={() => {
+          setJustConnected(false);
+          reload();
+        }}
+      />
+    );
+  }
+  return (
+    <ConnectView
+      detail={source?.detail ?? null}
+      hadProblem={state === "error" || state === "private"}
+      onConnected={() => {
+        setJustConnected(true);
+        reload();
+      }}
+    />
+  );
 }

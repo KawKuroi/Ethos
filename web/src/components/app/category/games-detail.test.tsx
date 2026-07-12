@@ -33,6 +33,8 @@ const FRESH: GamesSource = {
   state: "fresh",
   synced_at: "2026-07-03T12:00:00Z",
   detail: null,
+  provider: "steam",
+  mode: "api",
   persona_name: "Jugador",
   summary: {
     games: 312,
@@ -79,6 +81,8 @@ describe("GamesDetail", () => {
       state: "never",
       synced_at: null,
       detail: null,
+      provider: null,
+      mode: null,
       persona_name: null,
       summary: null,
     };
@@ -87,6 +91,8 @@ describe("GamesDetail", () => {
     expect(
       screen.getByRole("button", { name: /conectar steam/i }),
     ).toBeInTheDocument();
+    // Estado del catálogo de proveedores de Juegos (D62).
+    expect(screen.getByText(/más proveedores en camino/i)).toBeInTheDocument();
   });
 
   it("muestra la sincronización mientras corre el primer refresco", () => {
@@ -94,6 +100,8 @@ describe("GamesDetail", () => {
       state: "syncing",
       synced_at: null,
       detail: null,
+      provider: "steam",
+      mode: "api",
       persona_name: null,
       summary: null,
     };
@@ -112,6 +120,8 @@ describe("GamesDetail", () => {
       state: "never",
       synced_at: null,
       detail: null,
+      provider: null,
+      mode: null,
       persona_name: null,
       summary: null,
     };
@@ -127,6 +137,8 @@ describe("GamesDetail", () => {
       state: "private",
       synced_at: null,
       detail: "El perfil de Steam es privado",
+      provider: "steam",
+      mode: "api",
       persona_name: "Jugador",
       summary: null,
     };

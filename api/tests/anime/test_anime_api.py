@@ -9,13 +9,18 @@ from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
-from ethos_api.anime.deps import get_anilist_client, get_anime_store
+from ethos_api.anime.deps import (
+    get_anilist_client,
+    get_anime_store,
+    get_kitsu_client,
+    get_mal_client,
+)
 from ethos_api.anime.store import InMemoryAnimeStore
 from ethos_api.config import settings
 from ethos_api.credentials.deps import get_repository
 from ethos_api.credentials.repository import InMemoryCredentialRepository
 from ethos_api.main import app
-from tests.anime.helpers import FakeAniListApi
+from tests.anime.helpers import FakeAniListApi, FakeKitsuApi, FakeMalApi
 from tests.helpers import auth_headers
 
 
@@ -31,6 +36,8 @@ def client(
     app.dependency_overrides[get_repository] = lambda: repo
     app.dependency_overrides[get_anime_store] = lambda: store
     app.dependency_overrides[get_anilist_client] = FakeAniListApi
+    app.dependency_overrides[get_mal_client] = FakeMalApi
+    app.dependency_overrides[get_kitsu_client] = FakeKitsuApi
     with TestClient(app) as test_client:
         yield test_client, store
     app.dependency_overrides.clear()
@@ -85,7 +92,7 @@ def test_descarga_de_contexto_de_anime(
         == 'attachment; filename="anime.context.json"'
     )
     contexto = respuesta.json()
-    assert contexto["namespace"] == "anime.*"
+    assert contexto["namespace"] == "anime_*"
     assert contexto["provider"] == "anilist"
 
 
@@ -104,3 +111,74 @@ def test_los_datos_no_se_cruzan_entre_usuarios(
     _connect(test_client, "user-1")
     ajeno = test_client.get("/sources/anime", headers=auth_headers("user-2")).json()
     assert ajeno["state"] == "never"
+
+
+def test_conectar_mal_refresca_y_reporta_proveedor(
+    client: tuple[TestClient, InMemoryAnimeStore],
+) -> None:
+    test_client, _ = client
+    respuesta = test_client.post(
+        "/sources/mal", json={"user_name": "otaku"}, headers=auth_headers()
+    )
+    assert respuesta.status_code == 201
+    estado = test_client.get("/sources/anime", headers=auth_headers()).json()
+    assert estado["state"] == "fresh"
+    assert estado["provider"] == "mal"
+    assert estado["summary"]["anime_watched"] == 1
+    assert estado["summary"]["chapters_read"] == 380
+
+
+def test_conectar_kitsu_refresca_y_reporta_proveedor(
+    client: tuple[TestClient, InMemoryAnimeStore],
+) -> None:
+    test_client, _ = client
+    respuesta = test_client.post(
+        "/sources/kitsu", json={"user_name": "otaku"}, headers=auth_headers()
+    )
+    assert respuesta.status_code == 201
+    estado = test_client.get("/sources/anime", headers=auth_headers()).json()
+    assert estado["state"] == "fresh"
+    assert estado["provider"] == "kitsu"
+    assert estado["summary"]["anime_watched"] == 1
+
+
+def test_cambiar_de_proveedor_desconecta_al_anterior(
+    client: tuple[TestClient, InMemoryAnimeStore],
+) -> None:
+    test_client, _ = client
+    _connect(test_client)  # AniList
+    test_client.post(
+        "/sources/mal", json={"user_name": "otaku"}, headers=auth_headers()
+    )
+    # La credencial de AniList se elimina: su refresh ya no aplica (D4).
+    respuesta = test_client.post("/sources/anilist/refresh", headers=auth_headers())
+    assert respuesta.status_code == 404
+    estado = test_client.get("/sources/anime", headers=auth_headers()).json()
+    assert estado["provider"] == "mal"
+
+
+def test_mal_lista_privada_deja_estado_privado(
+    client: tuple[TestClient, InMemoryAnimeStore],
+) -> None:
+    test_client, _ = client
+    app.dependency_overrides[get_mal_client] = lambda: FakeMalApi(status_code=403)
+    test_client.post(
+        "/sources/mal", json={"user_name": "privado"}, headers=auth_headers()
+    )
+    estado = test_client.get("/sources/anime", headers=auth_headers()).json()
+    assert estado["state"] == "private"
+    assert "MyAnimeList" in estado["detail"]
+
+
+def test_refresh_mal_y_kitsu_sin_conectar_dan_404(
+    client: tuple[TestClient, InMemoryAnimeStore],
+) -> None:
+    test_client, _ = client
+    assert (
+        test_client.post("/sources/mal/refresh", headers=auth_headers()).status_code
+        == 404
+    )
+    assert (
+        test_client.post("/sources/kitsu/refresh", headers=auth_headers()).status_code
+        == 404
+    )

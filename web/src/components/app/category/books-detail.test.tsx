@@ -22,6 +22,8 @@ vi.mock("@/lib/use-books-source", () => ({
 vi.mock("@/lib/api", () => ({
   getContextText: () => Promise.resolve("{}"),
   downloadContext: () => Promise.resolve(),
+  refreshSource: () => Promise.resolve(),
+  connectSource: () => Promise.resolve(),
   importFile: () =>
     Promise.resolve({
       provider: "goodreads",
@@ -39,6 +41,8 @@ const FRESH: BooksSource = {
   state: "fresh",
   synced_at: "2026-07-05T09:00:00Z",
   detail: null,
+  provider: "goodreads",
+  mode: "import",
   summary: {
     books_read: 58,
     pages_read: 19204,
@@ -70,21 +74,58 @@ describe("BooksDetail", () => {
     expect(screen.getByText("Project Hail Mary")).toBeInTheDocument();
     expect(screen.getByText("Ursula K. Le Guin")).toBeInTheDocument();
     expect(screen.getByText("libros leídos")).toBeInTheDocument();
+    expect(screen.getByText("Goodreads")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /volver a importar/i }),
+      screen.getByRole("button", { name: /actualizar o cambiar fuente/i }),
+    ).toBeInTheDocument();
+    // Un import no refresca por API.
+    expect(screen.queryByRole("button", { name: /^refrescar$/i })).toBeNull();
+  });
+
+  it("una fuente API (Hardcover) muestra su modo y ofrece refrescar", () => {
+    mocks.source = { ...FRESH, provider: "hardcover", mode: "api" };
+    render(<BooksDetail />);
+    expect(screen.getByText("Hardcover")).toBeInTheDocument();
+    expect(screen.getByText(/api · en vivo/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /refrescar/i }),
     ).toBeInTheDocument();
   });
 
-  it("ofrece subir el export cuando no hay datos", () => {
-    mocks.source = { state: "never", synced_at: null, detail: null, summary: null };
+  it("ofrece el selector de proveedores cuando no hay datos", () => {
+    mocks.source = {
+      state: "never",
+      synced_at: null,
+      detail: null,
+      provider: null,
+      mode: null,
+      summary: null,
+    };
     render(<BooksDetail />);
-    expect(screen.getByText(/sube tus libros/i)).toBeInTheDocument();
+    expect(screen.getByText(/conecta tus libros/i)).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /goodreads/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /storygraph/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /hardcover/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /open library/i })).toBeInTheDocument();
+    // Goodreads es el proveedor por defecto: guía + botón de subida.
+    expect(
+      screen.getByLabelText(/cómo conectar goodreads/i),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /subir export/i }),
     ).toBeInTheDocument();
-    // La guía de Goodreads acompaña al panel de import.
-    expect(
-      screen.getByLabelText(/cómo conseguir tu export de goodreads/i),
-    ).toBeInTheDocument();
+  });
+
+  it("muestra el estado sincronizando de una fuente API", () => {
+    mocks.source = {
+      state: "syncing",
+      synced_at: null,
+      detail: null,
+      provider: "openlibrary",
+      mode: "api",
+      summary: null,
+    };
+    render(<BooksDetail />);
+    expect(screen.getByText(/sincronizando tus libros/i)).toBeInTheDocument();
   });
 });
